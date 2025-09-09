@@ -1,0 +1,44 @@
+* {
+    margin: 0;
+    padding: 0;
+}
+
+* {
+    /* font-family: "Outfit", sans-serif; */
+    font-family: "Poppins", sans-serif !important;
+}
+
+.LogoImage {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 12%;
+}
+
+.secondBox {
+    background-color: #42602E;
+}
+
+.NavbarLogo {
+    width: 9%;
+}
+
+.forgot {
+    font-size: 13px;
+}
+
+.remember {
+    font-size: 13px;
+}
+
+.tags {
+    /* background-color: #42602E; */
+    padding: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+    border-radius: 50px;
+    /* color: white; */
+    color: #42602E;
+    border: 1px solid #42602E;
+    font-size: 12px;
+}

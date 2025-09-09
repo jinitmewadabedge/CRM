@@ -1,0 +1,132 @@
+[{
+  "_id": {
+    "$oid": "68a5f1eb73087cacab51a1b9"
+  },
+  "name": "Jinit",
+  "email": "jinitmewada41@gmail.com",
+  "password": "$2b$10$esBHoWHeyzXy6UwTLPG6SeVClYkNNGoUlD/61G7pf6.ZwnKAkHBH2",
+  "role": "Sales",
+  "isActive": true,
+  "updatedAt": {
+    "$date": "2025-08-26T21:52:53.319Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "68acac482137e2f36691d38f"
+  },
+  "email": "sales@bedge.com",
+  "password": "$2b$10$IItsejPGTCfPlgsp/Eq7oeUSyxvZgtpEr6SCyt7G6Ay27tRAzsBh.",
+  "plainPassword": "Sales@123",
+  "role": "Sales",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-25T18:32:40.777Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-25T18:32:40.777Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68acac9b2137e2f36691d395"
+  },
+  "email": "marketing@bedge.com",
+  "password": "$2b$10$nMQL8ja7fDNl2aNar9rD3.kraytVi55PK1QmubEE1UTsg4OcK9i8G",
+  "plainPassword": "Marketing@123",
+  "role": "Marketing",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-25T18:34:03.073Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-25T18:34:03.073Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68acacb62137e2f36691d399"
+  },
+  "email": "technical@bedge.com",
+  "password": "$2b$10$LGymHXRPR.GiThyaqJS6pej9RzILI1TcRvziQ6Y0Zjnrs3TXKD2fG",
+  "plainPassword": "Technical@123",
+  "role": "Technical",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-25T18:34:30.989Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-25T18:35:27.180Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68ade0d47ddabd0010c55a64"
+  },
+  "email": "rutvik@bedge.com",
+  "password": "$2b$10$bRHqPj7TkeHtnY/bE.zaJOOUQa2OB4Eho.ywmi3SZh9YAcpfLeJhS",
+  "plainPassword": "Rutvik@123",
+  "role": "Technical",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-26T16:29:08.861Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-26T16:29:08.861Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68ade1947ddabd0010c55a71"
+  },
+  "email": "mishra.naman1911@gmail.com",
+  "password": "$2b$10$JAfZpP634EfN5q5uDDaI0.N1rKMGz1b2WyM6F0lCY7tnkrQchdcSq",
+  "plainPassword": "Naman@123",
+  "role": "Technical",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-26T16:32:20.750Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-26T16:32:20.750Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68ade2637ddabd0010c55a80"
+  },
+  "email": "jinitmewadabedge@gmail.com",
+  "password": "$2b$10$fMyA43o6a4mmjhLowab1eeDp/4j7fcfW4x1EpOZO4jk0kFL3XaF.2",
+  "plainPassword": "demo@123",
+  "role": "Technical",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-26T16:35:47.479Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-26T17:28:42.251Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "68af30030ca0bc020caa9f05"
+  },
+  "email": "admin@bedge.com",
+  "password": "$2b$10$En.pwKC.UwrAToFyM7UsV.kviS8a5gzDIi9dp5gEHvxY3JSxi8hVm",
+  "plainPassword": "Admin@123",
+  "role": "Admin",
+  "isActive": true,
+  "createdAt": {
+    "$date": "2025-08-27T16:19:15.837Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-27T16:19:15.837Z"
+  },
+  "__v": 0
+}]

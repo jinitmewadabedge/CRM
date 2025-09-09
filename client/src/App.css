@@ -1,0 +1,389 @@
+.backgroundColor {
+  background: #1f4037;
+  background: -webkit-linear-gradient(to right, #99f2c8, #1f4037);
+  background: linear-gradient(to right, #99f2c8, #1f4037);
+}
+
+@media (max-width: 1200px) {
+  .secondBox {
+    display: none !important;
+  }
+}
+
+.LeadBGColor {
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.mainContent {
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+@media (max-width: 767px) {
+  .container-fluid .px-5 {
+    padding: 0px !important;
+  }
+}
+
+
+.sidebar-item div {
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.sidebar-item div:hover {
+  background-color: rgb(241, 243, 255);
+}
+
+@media (min-width: 992px) {
+
+  #collapsibleAdminNavbar {
+    display: block !important;
+    height: auto !important;
+    visibility: visible !important;
+  }
+
+  .navbar-toggler {
+    display: none;
+  }
+}
+
+@media (min-width: 992px) {
+  .navbar-collapse {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .navbar-toggler {
+    display: none;
+  }
+}
+
+
+.buttonContainer {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+}
+
+@media (max-width: 430px) {
+  .buttonContainer {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .addUserBtn,
+  .exportBtn,
+  .importLead,
+  .refresh,
+  .exportLead {
+    width: 100% !important;
+  }
+
+  .adminButtons {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 5px;
+  }
+
+  .addUser {
+    width: 100% !important;
+  }
+
+  .importCsv {
+    width: 100% !important;
+  }
+
+  .form-select.roleSelect {
+    width: 100% !important;
+  }
+
+  .adminButtons .refresh {
+    width: 100% !important;
+    margin-left: 0px !important;
+  }
+
+  .form-control.emailInput {
+    width: 100% !important;
+  }
+
+  .form-control.startDate,
+  .form-control.endDate {
+    width: 50% !important;
+  }
+
+  .innerButtons {
+    justify-content: space-between !important;
+    width: 100% !important;
+  }
+
+  .roleSelect,
+  .emailInput {
+    width: 100% !important;
+  }
+
+  .searchBox.d-flex {
+    justify-content: center !important;
+  }
+}
+
+.editUserTitle {
+  /* background: linear-gradient(90deg, #0099A7, #0072BC, #3B4CCA); */
+  /* background: linear-gradient(90deg, #00A86B, #28A745, #3CB371); */
+  background: linear-gradient(#385326);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 30px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.editUserCancel {
+  /* background: linear-gradient(90deg, #0099A7, #0072BC, #3B4CCA); */
+  /* background: linear-gradient(90deg, #00A86B, #28A745, #3CB371); */
+  background: linear-gradient(#42602E);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 13px;
+  text-decoration: underline !important;
+  font-weight: 600;
+  text-align: center;
+}
+
+.editFooterText {
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.btnColor {
+  /* background: linear-gradient(90deg, #0099A7, #0072BC, #3B4CCA); */
+  background-color: #385326;
+  color: white !important;
+}
+
+.forgot-password {
+  font-size: 13px;
+}
+
+.form-check-label {
+  font-size: 13px;
+}
+
+.adminDashboardTitle {
+  font-size: 22px;
+}
+
+.adminDashboardBG {
+  background-color: #FFFFFF;
+  background-color: #F9FAFF !important;
+}
+
+.userTableFont {
+  font-family: 'Inter', sans-serif !important;
+}
+
+.userTableFont table tbody tr:hover {
+  background-color: #f9f9f9;
+  cursor: pointer;
+}
+
+.userTableFont table {
+  border-radius: 8px;
+  font-size: 0.95rem;
+  overflow: hidden;
+}
+
+.userTableFont .badge {
+  font-size: 0.65rem;
+  padding: 6px 10px;
+}
+
+.userTableFont .btn {
+  border-radius: 6px;
+  padding: 4px 12px;
+}
+
+.userTableFont .btn-outline-primary {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.userTableFont .btn-outline-primary:hover {
+  background-color: #2563eb;
+  color: white;
+}
+
+.emailText {
+  font-weight: 510;
+}
+
+.primaryColor {
+  background-color: #42602E;
+  height: 7%;
+}
+
+.adminDashboardLogo {
+  width: 45%;
+}
+
+.icon-color {
+  color: #1f4037;
+}
+
+.text-color {
+  color: #1f4037 !important;
+}
+
+.btnColor {
+  color: #1f4037;
+}
+
+.leadManagementTitle {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.leadManagementSubtitle {
+  font-size: 13px;
+  color: #42602E;
+}
+
+.LeadBGColor {
+  background-color: rgb(241, 243, 255);
+}
+
+.tableHeader {
+  font-size: 14px;
+  font-weight: 400;
+  color: #B5B7C0 !important;
+}
+
+th,
+td {
+  padding: 10px !important;
+}
+
+.tableData {
+  font-size: 14px;
+  font-weight: 400;
+  color: #292D32 !important;
+}
+
+.table th,
+.table td {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.LeadContentWrapper {
+  padding: 0px !important;
+  margin: 0px !important;
+}
+
+.allLeadsTitle {
+  font-size: 14px;
+  font-weight: 400;
+  color: #acacac;
+}
+
+.leadCount {
+  font-size: 32px;
+  font-weight: 600;
+}
+
+.leadPadding {
+  padding: 0px !important;
+}
+
+.status-badge {
+  border-radius: 10px;
+  min-width: 110px;
+  font-size: 11px;
+  font-weight: 400;
+  color: #fff;
+  text-align: center;
+}
+
+.BGColor {
+  background-color: #ffffff;
+  border-radius: 20px;
+}
+
+.nav-link {
+  font-size: 14px !important;
+  padding-left: 15px !important;
+  color: #B5B7C0;
+}
+
+.status-badge {
+  display: inline-block;
+  min-width: 110px !important;
+  text-align: center;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #fff;
+}
+
+.bg-new {
+  background-color: rgb(26, 26, 141);
+}
+
+.bg-connected {
+  background-color: green;
+}
+
+.bg-inprogress {
+  background-color: #ffc107;
+  font-weight: 400;
+  color: #ffffff;
+}
+
+.bg-shortlisted {
+  background-color: #17a2b8;
+  font-weight: 400;
+  color: white !important;
+}
+
+.bg-rejected {
+  font-weight: 400;
+  background-color: #dc3545;
+}
+
+.bg-converted {
+  font-weight: 400;
+  background-color: #20c997;
+}
+
+.csvFont {
+  font-size: 13px;
+}
+
+.leadDetailsBG {
+  height: 100vh;
+  background-color: #F9FAFF;
+}
+
+.technologyFont {
+  font-size: 11.2px;
+}
+
+.table-container {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.table-container table {
+  min-width: 1000px;
+  width: 100%;
+  border-collapse: collapse;
+}
