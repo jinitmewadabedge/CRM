@@ -5,11 +5,12 @@ import { useState, useEffect } from 'react';
 const Home = () => {
 
     const [totalUser, setTotalUser] = useState(0);
+    const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
     useEffect(() => {
         const fetchActiveUser = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/auth/active-user-count');
+                const res = await axios.get(`${BASE_URL}/api/auth/active-user-count`);
                 setTotalUser(res.data.count);
                 console.log(res.data.count);
             } catch (error) {

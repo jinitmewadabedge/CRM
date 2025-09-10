@@ -17,13 +17,14 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [csvData, setCsvData] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/auth/users")
+    axios.get(`${BASE_URL}/api/auth/users`)
       .then(res => setUsers(res.data))
       .catch(err => console.error(err));
 
-    axios.get("http://localhost:5000/api/roles")
+    axios.get(`${BASE_URL}/api/roles`)
       .then(res => setRoles(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -71,7 +72,7 @@ const AdminDashboard = () => {
   const handleRefresh = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/auth/users");
+      const res = await axios.get(`${BASE_URL}/api/auth/users`);
       console.log("User Data:", res.data);
       setUsers(res.data);
     } catch (err) {
@@ -91,7 +92,7 @@ const AdminDashboard = () => {
         password: newUser.password,
         role: newUser.role
       };
-      const res = await axios.post("http://localhost:5000/api/auth/users", payload);
+      const res = await axios.post(`${BASE_URL}/api/auth/users`, payload);
       setUsers([...users, res.data]);
       Modal.getInstance(document.getElementById("addUserModal")).hide();
     } catch (error) {
@@ -116,7 +117,7 @@ const AdminDashboard = () => {
         role: editUser.role
       }
       const res = await axios.put(
-        `http://localhost:5000/api/auth/users/${editUser._id}`,
+        `${BASE_URL}/api/auth/users/${editUser._id}`,
         payload
       );
       setUsers(prev => prev.map(u => (u._id === editUser._id ? res.data : u)));
@@ -146,12 +147,12 @@ const AdminDashboard = () => {
       console.log("Parsed usersData:", usersData);
 
       try {
-        await axios.post("http://localhost:5000/api/auth/users/import", {
+        await axios.post(`${BASE_URL}/api/auth/users/import`, {
           users: usersData,
         });
         alert("Excel Imported Successfully");
 
-        const res = await axios.get("http://localhost:5000/api/auth/users");
+        const res = await axios.get(`${BASE_URL}/api/auth/users`);
         setUsers(res.data);
       } catch (error) {
         console.error("Excel Import Error:", error.response?.data || error.message);
@@ -163,7 +164,7 @@ const AdminDashboard = () => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/auth/users/${id}`);
+      await axios.delete(`${BASE_URL}/api/auth/users/${id}`);
       setUsers(users.filter(u => u._id !== id));
     } catch (err) {
       console.error(err);
