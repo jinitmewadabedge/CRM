@@ -1,0 +1,17 @@
+# Files
+
+hashPassword.js
+bedgetechservices.users.json
+README.md
+
+
+
+# Folders
+
+node_modules/
+SeedRoles/
+seeds/
+migration/
+Leads Collections/
+Roles Collections/
+Users Collections/
