@@ -29,19 +29,19 @@ app.use("/api/roles", roleRoutes);
 
 (async () => {
     try {
-        console.log("⏳ Connecting to MongoDB...");
+        console.log("Connecting to MongoDB...");
         await mongoose.connect(process.env.MONGO_URL, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             serverSelectionTimeoutMS: 10000 // 10s timeout
         });
-        console.log("✅ MongoDB connected successfully!");
+        console.log("MongoDB connected successfully!");
 
         // Start server only after DB connected
-        app.listen(PORT, () => console.log(`🚀 Server running on PORT ${PORT}`));
+        app.listen(PORT, () => console.log(`Server running on PORT ${PORT}`));
 
     } catch (err) {
-        console.error("❌ MongoDB connection error:", err.message);
+        console.error("MongoDB connection error:", err.message);
     }
 
     // Log connection state every 5s (for debugging)
