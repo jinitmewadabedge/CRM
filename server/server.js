@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
-const testRoute = require('./routes/authRoutes');
+const testRoute = require('./routes/test');
 const leadRoute = require('./routes/leadRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const { importUsers } = require('./controllers/authController');
@@ -21,7 +21,7 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use('/api/auth', authRoutes);
-app.use('/api/test', testRoute);
+app.use('/', testRoute);
 app.use('/api/leads', leadRoute);
 app.use('/api/roles', roleRoutes);
 app.use('/users/import', importUsers);
