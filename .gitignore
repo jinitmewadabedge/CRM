@@ -12,6 +12,6 @@ node_modules/
 SeedRoles/
 seeds/
 migration/
-Leads Collections/
-Roles Collections/
-Users Collections/
+Leads_Collections/
+Roles_Collections/
+Users_Collections/
