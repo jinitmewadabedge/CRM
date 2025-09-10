@@ -1,5 +1,5 @@
 // const { app, BrowserWindow } = require("electron");
-import { app, BrowserWindow, globalShortcut } from "electron";
+import { app, BrowserWindow, globalShortcut, Menu } from "electron";
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -23,6 +23,31 @@ function createWindow() {
             win.webContents.navigationHistory.goForward();
         }
     });
+
+    const template = [
+        {
+            label: "Navigation",
+            submenu: [
+                {
+                    label: "Back",
+                    accelerator: "Alt+Left",
+                    click: () => {
+                        if (win.webContents.canGoBack()) win.webContents.goBack();
+                    },
+                },
+                {
+                    label: "Forward",
+                    accelerator: "Alt+Right",
+                    click: () => {
+                        if (win.webContents.canGoForward()) win.webContents.goForward();
+                    },
+                },
+            ],
+        },
+    ];
+
+    const menu = Menu.buildFromTemplate(template);
+    Menu.setApplicationMenu(menu);
 
 }
 
