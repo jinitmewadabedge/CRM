@@ -22,3 +22,20 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Files
+
+hashPassword.js
+bedgetechservices.users.json
+README.md
+server/.env
+
+# Folders
+
+node_modules/
+SeedRoles/
+seeds/
+migrations/
+Leads_Collections/
+Roles_Collections/
+Users_Collections/
