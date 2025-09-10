@@ -1,6 +1,6 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const mongoose = require('mongoose');
 const cors = require('cors');
 const authRoutes = require('./routes/authRoutes');
 const testRoute = require('./routes/test');
@@ -27,8 +27,31 @@ app.use('/api/roles', roleRoutes);
 app.use('/users/import', importUsers);
 app.use("/api/roles", roleRoutes);
 
-mongoose.connect(process.env.MONGO_URL)
-    .then(() => console.log("MongoDB Connected"))
-    .catch((err) => console.log("Error in Connecting MongoDB", err));
+(async () => {
+    try {
+        console.log("⏳ Connecting to MongoDB...");
+        await mongoose.connect(process.env.MONGO_URL, {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+            serverSelectionTimeoutMS: 10000 // 10s timeout
+        });
+        console.log("✅ MongoDB connected successfully!");
 
-app.listen(PORT, () => console.log(`Server running on PORT ${PORT}`));  
+        // Start server only after DB connected
+        app.listen(PORT, () => console.log(`🚀 Server running on PORT ${PORT}`));
+
+    } catch (err) {
+        console.error("❌ MongoDB connection error:", err.message);
+    }
+
+    // Log connection state every 5s (for debugging)
+    setInterval(() => {
+        console.log("MongoDB connection state:", mongoose.connection.readyState);
+    }, 5000);
+})();
+
+// mongoose.connect(process.env.MONGO_URL)
+//     .then(() => console.log("MongoDB Connected"))
+//     .catch((err) => console.log("Error in Connecting MongoDB", err));
+
+// app.listen(PORT, () => console.log(`Server running on PORT ${PORT}`));  
