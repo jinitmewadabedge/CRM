@@ -530,30 +530,30 @@ const Leads = () => {
                 <option value="Citizen">Citizen</option>
               </select>
 
-                <input
-                  type="date"
-                  className="form-control form-control-sm w-auto startDate"
-                  value={filters.startDate}
-                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                />
+              <input
+                type="date"
+                className="form-control form-control-sm w-auto startDate"
+                value={filters.startDate}
+                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+              />
 
-                <input type="date"
-                  className="form-control form-control-sm w-auto endDate"
-                  value={filters.endDate}
-                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                />
+              <input type="date"
+                className="form-control form-control-sm w-auto endDate"
+                value={filters.endDate}
+                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+              />
 
-                <input type="time"
-                  className="form-control form-control-sm w-auto startTime"
-                  value={filters.startTime}
-                  onChange={(e) => setFilters({ ...filters, startTime: e.target.value })}
-                />
+              <input type="time"
+                className="form-control form-control-sm w-auto startTime"
+                value={filters.startTime}
+                onChange={(e) => setFilters({ ...filters, startTime: e.target.value })}
+              />
 
-                <input type="time"
-                  className="form-control form-control-sm w-auto endTime"
-                  value={filters.endTime}
-                  onChange={(e) => setFilters({ ...filters, endTime: e.target.value })}
-                />
+              <input type="time"
+                className="form-control form-control-sm w-auto endTime"
+                value={filters.endTime}
+                onChange={(e) => setFilters({ ...filters, endTime: e.target.value })}
+              />
 
               <select
                 className="form-select form-select-sm w-auto dateSort"
@@ -633,16 +633,17 @@ const Leads = () => {
                   </label>
                 )}
 
-                <button
-                  className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
-                  <FaSync className="me-1" /> Refresh
-                </button>
 
                 {exports && (
                   <button className="btn btn-outline-primary btn-sm csvFont exportLead" onClick={exportToCSV}>
                     <FaArrowUp />  Export Leads to CSV
                   </button>
                 )}
+
+                <button
+                  className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
+                  <FaSync className="me-1" /> Refresh
+                </button>
               </div>
 
             </div>
