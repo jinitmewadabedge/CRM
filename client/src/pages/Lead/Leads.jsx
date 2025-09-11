@@ -628,14 +628,14 @@ const Leads = () => {
                 />
 
                 {bulkAdd && (
-                  <label htmlFor="importExcel" className="btn btn-outline-primary me-3 btn-sm importLead">
+                  <label htmlFor="importExcel" className="btn btn-outline-primary me-1 btn-sm importLead">
                     <FaDownload /> Import Leads
                   </label>
                 )}
 
 
                 {exports && (
-                  <button className="btn btn-outline-primary btn-sm csvFont exportLead" onClick={exportToCSV}>
+                  <button className="btn btn-outline-primary btn-sm csvFont exportLead me-1" onClick={exportToCSV}>
                     <FaArrowUp />  Export Leads to CSV
                   </button>
                 )}
