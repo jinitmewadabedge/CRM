@@ -11,6 +11,7 @@ import {
     FaCog,
 } from "react-icons/fa";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import LogoutButton from "./LogoutButton";
 
 
 const AdminNavbar = () => {
@@ -126,6 +127,7 @@ const AdminNavbar = () => {
                                 Settings
                             </NavLink>
                         </li>
+                        <LogoutButton />
                     </ul>
                 </div>
             </nav>
