@@ -9,6 +9,7 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState("All");
+  const [userToDelete, setUserToDelete] = useState(null);
   const [selectedEmail, setSelectedEmail] = useState("");
   const [editUser, setEditUser] = useState({ _id: "", email: "", plainPassword: "", role: "" });
   const [newUser, setNewUser] = useState({ email: "", password: "", role: "Admin" });
@@ -320,7 +321,8 @@ const AdminDashboard = () => {
                         <td className="mb-0 text-left tableData">{user.role?.name || "N/A"}</td>
                         <td>
                           <button className="btn btn-outline-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#editUserModal" onClick={() => handleEditClick(user)}>Edit</button>
-                          <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(user._id)}>Delete</button>
+                          {/* <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(user._id)}>Delete</button> */}
+                          <button className="btn btn-outline-danger btn-sm" onClick={() => setUserToDelete(user)}>Delete</button>
                         </td>
                       </tr>
                     )) : (
@@ -487,6 +489,44 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* DELETE CONFIRM MODAL */}
+      <div className="modal fade" id="deleteUserModal" tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title text-danger">Confirm Delete</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div className="modal-body">
+              {userToDelete && (
+                <p>
+                  Are you sure you want to delete <strong>{userToDelete.email}</strong>?
+                </p>
+              )}
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={async () => {
+                  if (userToDelete) {
+                    await handleDelete(userToDelete._id);
+                    setUserToDelete(null);
+                    Modal.getInstance(document.getElementById("deleteUserModal")).hide();
+                  }
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
 
     </div>
   );
