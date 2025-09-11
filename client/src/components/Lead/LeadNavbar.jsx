@@ -2,7 +2,7 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from "../../assets/logo.png"
 import { FaHome, FaUser, FaUserShield, FaChartBar, FaFileAlt, FaBullhorn, FaCog } from 'react-icons/fa'
-
+import {FiLogOut} from 'react-icons/fi'
 const LeadNavbar = () => {
 
     const navigate = useNavigate();
