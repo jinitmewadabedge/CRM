@@ -1,25 +1,41 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
+// import React from 'react'
+// import { NavLink, useNavigate } from 'react-router-dom'
 
-const LogoutButton = () => {
+// const LogoutButton = () => {
 
-    const navigate = useNavigate();
+//     const navigate = useNavigate();
 
-    const handleLogout = () => {
-        localStorage.clear();
-        sessionStorage.clear();
+//     const handleLogout = () => {
 
-        navigate("/");
-    }
+//         console.log("Before clear:", {
+//             local: localStorage.getItem("token"),
+//             session: localStorage.getItem("token"),
+//         });
 
-    return (
-        <button className={({ isActive }) =>
-            `nav-link d-flex align-items-center px-2 ${isActive ? "fw-bold text-color" : ""
-            }`
-        } onClick={handleLogout}>
-            Logout
-        </button>
-    )
-}
+//         localStorage.removeItem("role");
+//         localStorage.removeItem("token");
+//         localStorage.removeItem("user");
 
-export default LogoutButton
+//         sessionStorage.removeItem("role");
+//         sessionStorage.removeItem("token");
+//         sessionStorage.removeItem("user");
+
+//         console.log("After clear:", {
+//             local: localStorage.getItem("token"),
+//             session: sessionStorage.getItem("token"),
+//         });
+
+//         navigate("/");
+//     }
+
+//     return (
+//         <NavLink className={({ isActive }) =>
+//             `nav-link d-flex align-items-center px-2 ${isActive ? "fw-bold text-color" : ""
+//             }`
+//         } onClick={handleLogout}>
+//             Logout
+//         </NavLink>
+//     )
+// }
+
+// export default LogoutButton

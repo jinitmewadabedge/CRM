@@ -1,9 +1,24 @@
 import React from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from "../../assets/logo.png"
 import { FaHome, FaUser, FaUserShield, FaChartBar, FaFileAlt, FaBullhorn, FaCog } from 'react-icons/fa'
 
 const LeadNavbar = () => {
+
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+
+        localStorage.removeItem("role");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        sessionStorage.removeItem("role");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+
+        navigate("/");
+    }
     return (
         <>
             <img src={Logo} alt="" className='img-fluid mt-3 mx-auto adminDashboardLogo' />
@@ -35,13 +50,13 @@ const LeadNavbar = () => {
                                 <FaHome className="icon-color me-2" />
                                 Leads</NavLink>
                         </li>
-
-                        {/* <li className="nav-item w-100">
-                            <div className="d-flex align-items-center justify-content-start">
-                                <FaUser className="icon-color me-2" />
-                                <NavLink to="/leads/all-leads" className={({ isActive }) => `nav-link ${isActive ? "fw-bold text-color" : ""}`}>All Leads</NavLink>
-                            </div>
-                        </li> */}
+                        <li className="nav-item w-100">
+                            <button onClick={handleLogout}
+                                className="nav-link d-flex align-items-center px-2 btn btn-link text-danger">
+                                <FiLogOut className="me-2" />
+                                Logout
+                            </button>
+                        </li>
                     </ul>
                 </div>
             </nav >

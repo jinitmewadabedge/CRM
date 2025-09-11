@@ -1,6 +1,6 @@
 import React from "react";
 import Logo from '../assets/logo.png'
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
     FaHome,
     FaUser,
@@ -10,11 +10,31 @@ import {
     FaBullhorn,
     FaCog,
 } from "react-icons/fa";
+import { FiLogOut } from "react-icons/fi";
 import 'bootstrap/dist/css/bootstrap.min.css';
-import LogoutButton from "./LogoutButton";
 
 
 const AdminNavbar = () => {
+
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+
+        console.log("Before clear:", sessionStorage.getItem("role"), sessionStorage.getItem("token"), sessionStorage.getItem("user"));
+
+        localStorage.removeItem("role");
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+
+        sessionStorage.removeItem("role");
+        sessionStorage.removeItem("token");
+        sessionStorage.removeItem("user");
+
+        console.log("After clear:", sessionStorage.getItem("role"), sessionStorage.getItem("token"), sessionStorage.getItem("user"));
+
+        navigate("/");
+    }
+
     return (
         <>
             <img src={Logo} className='img-fluid mt-3 mx-auto adminDashboardLogo' alt="" />
@@ -127,7 +147,16 @@ const AdminNavbar = () => {
                                 Settings
                             </NavLink>
                         </li>
-                        <LogoutButton />
+                        <li className="nav-item w-100">
+                            <button onClick={handleLogout}
+                                className="nav-link d-flex align-items-center px-2 btn btn-link text-danger">
+                                <FiLogOut className="me-2" />
+                                Logout
+                            </button>
+                        </li>
+
+
+                        {/* <LogoutButton /> */}
                     </ul>
                 </div>
             </nav>
