@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Modal } from "bootstrap";
+import { Modal, Tooltip } from "bootstrap";
 import UsersImg from "../assets/Lead_Img.png"
 import { FaEye, FaSync, FaEyeSlash, FaPlus, FaDownload, FaUserAlt, FaUserCircle, FaArrowUp } from "react-icons/fa";
 import * as XLSX from 'xlsx';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -18,6 +19,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [csvData, setCsvData] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [toast, setToast] = useState({ show: false, message: "", type: "success" });
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -29,6 +31,16 @@ const AdminDashboard = () => {
       .then(res => setRoles(res.data))
       .catch(err => console.error(err));
   }, []);
+
+  useEffect(() => {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+    tooltipTriggerList.forEach(el => {
+      if (!el._tooltip) {
+        el._tooltip = new Tooltip(el);
+      }
+    });
+  }, [users]);
+
 
   const filteredUsers = users.filter(user => {
     const roleMatch = selectedRole === "All" || user.role?.name === selectedRole;
@@ -83,7 +95,12 @@ const AdminDashboard = () => {
     }
   };
 
-
+  const showToastMessage = (message, type = "success") => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 5000);
+  }
 
   const handleAddUser = async (e) => {
     e.preventDefault();
@@ -151,13 +168,15 @@ const AdminDashboard = () => {
         await axios.post(`${BASE_URL}/api/auth/users/import`, {
           users: usersData,
         });
-        alert("Excel Imported Successfully");
+        // alert("Excel Imported Successfully");
+        showToastMessage("Users imported Successfully", "success");
 
         const res = await axios.get(`${BASE_URL}/api/auth/users`);
         setUsers(res.data);
       } catch (error) {
-        console.error("Excel Import Error:", error.response?.data || error.message);
-        alert("Error importing Excel");
+        // console.error("Excel Import Error:", error.response?.data || error.message);
+        // alert("Error importing Excel");
+        showToastMessage("Failed to Importing Users", "error");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -167,8 +186,10 @@ const AdminDashboard = () => {
     try {
       await axios.delete(`${BASE_URL}/api/auth/users/${id}`);
       setUsers(users.filter(u => u._id !== id));
+      showToastMessage("User deleted successfully", "success");
     } catch (err) {
       console.error(err);
+      showToastMessage("Failed to delete user:", "error");
     }
   };
 
@@ -322,7 +343,35 @@ const AdminDashboard = () => {
                         <td>
                           <button className="btn btn-outline-success btn-sm me-2" data-bs-toggle="modal" data-bs-target="#editUserModal" onClick={() => handleEditClick(user)}>Edit</button>
                           {/* <button className="btn btn-outline-danger btn-sm" onClick={() => handleDelete(user._id)}>Delete</button> */}
-                          <button className="btn btn-outline-danger btn-sm" onClick={() => setUserToDelete(user)}>Delete</button>
+                          {/* <button className="btn btn-outline-danger btn-sm" data-bs-toggle="modal" data-bs-target="#deleteUserModal" disabled={user.email === "admin@bedge.com"} onClick={() => setUserToDelete(user)}>Delete</button> */}
+
+                          {user.email === "admin@bedge.com" ? (
+                            <span
+                              data-bs-toggle="tooltip"
+                              data-bs-custom-class="admin-tooltip"
+                              data-bs-placement="right"
+                              title="Cannot delete admin user"
+                              style={{ display: "inline-block" }}
+                            >
+                              <button
+                                className="btn btn-outline-danger btn-sm"
+                                disabled
+                                style={{ pointerEvents: "none" }}
+                              >
+                                Delete
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              className="btn btn-outline-danger btn-sm"
+                              data-bs-toggle="modal"
+                              data-bs-target="#deleteUserModal"
+                              onClick={() => setUserToDelete(user)}
+                            >
+                              Delete
+                            </button>
+                          )}
+
                         </td>
                       </tr>
                     )) : (
@@ -351,6 +400,32 @@ const AdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {toast.show && (
+        <div
+          style={{
+            position: "fixed",
+            top: "20px",
+            right: "20px",
+            fontSize: "14px",
+            backgroundColor: toast.type === "success" ? "green" : "red",
+            color: "white",
+            padding: "10px 20px",
+            borderRadius: "5px",
+            zIndex: 9999,
+          }}
+        >
+          {toast.message}
+          <button
+            style={{ marginLeft: "10px", color: "white", background: "none", border: "none", fontSize: "12px", fontWeight: "bold", cursor: "pointer" }}
+            onClick={() => setToast({ ...toast, show: false })}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+
 
       {/* <div className="modal fade" id="editUserModal" tabIndex="-1">
         <div className="modal-dialog">

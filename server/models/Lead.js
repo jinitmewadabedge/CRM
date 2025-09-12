@@ -58,11 +58,7 @@ const leadSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
     },
-    createdBy: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
-        required: true
-    },
+
     departmentId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Department"
@@ -82,6 +78,5 @@ const leadSchema = new mongoose.Schema({
 
 leadSchema.index({ departmentId: 1 });
 leadSchema.index({ teamId: 1 });
-leadSchema.index({ createdBy: 1 });
 
-module.exports = mongoose.model('Lead', leadSchema);
+module.exports = mongoose.models.Lead || mongoose.model('Lead', leadSchema);

@@ -145,7 +145,7 @@ const Leads = () => {
         visa: "",
         preferred_time_to_talk: "",
         source: "",
-        status: ""
+        status: "",
       })
 
     } catch (error) {
