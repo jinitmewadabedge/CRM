@@ -1,0 +1,6 @@
+com.bedge.crm.test.app-core-1.6.1-0 C:\Users\Admin1\.gradle\caches\8.11.1\transforms\0dfb94e8e9f7930d0d4cbce98a17f1aa\transformed\core-1.6.1\res
+com.bedge.crm.test.app-tracing-1.2.0-1 C:\Users\Admin1\.gradle\caches\8.11.1\transforms\640934fa0c2deb02232fb188bbe4540c\transformed\tracing-1.2.0\res
+com.bedge.crm.test.app-androidTest-2 D:\Bedge-CRM\client\android\app\build\generated\res\resValues\androidTest\debug
+com.bedge.crm.test.app-mergeDebugAndroidTestResources-3 D:\Bedge-CRM\client\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.bedge.crm.test.app-mergeDebugAndroidTestResources-4 D:\Bedge-CRM\client\android\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.bedge.crm.test.app-debugAndroidTest-5 D:\Bedge-CRM\client\android\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources

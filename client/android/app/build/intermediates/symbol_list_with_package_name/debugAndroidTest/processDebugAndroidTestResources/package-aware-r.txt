@@ -1,0 +1,3 @@
+com.bedge.crm.test
+style WhiteBackgroundDialogTheme
+style WhiteBackgroundTheme
