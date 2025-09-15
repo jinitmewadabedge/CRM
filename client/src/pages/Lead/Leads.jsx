@@ -12,8 +12,8 @@ const Leads = () => {
   const { id } = useParams();
   const user = JSON.parse(localStorage.getItem("user")) || JSON.parse(sessionStorage.getItem("user"));
   console.log(user?.permission?.lead?.bulkAdd);
-  const bulkAdd = user?.permission?.lead?.bulkAdd === true
-  const exports = user?.permission?.lead?.export === true
+  // const bulkAdd = user?.permission?.lead?.bulkAdd === true
+  // const exports = user?.permission?.lead?.export === true
   const [leads, setLeads] = useState([]);
   const [viewLead, setViewLead] = useState(null);
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const Leads = () => {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [permissions, setPermissions] = useState({});
   const [formData, setFormData] = useState({
     type: "",
     candidate_name: "",
@@ -99,7 +100,25 @@ const Leads = () => {
     fetchLead();
   }, [id]);
 
+  useEffect(() => {
+    fetchPermissions();
+  }, [])
+
   // if (!viewLead) return <p className="text-center mt-5">Loading...</p>;
+
+  const fetchPermissions = async () => {
+    try {
+      const role = localStorage.getItem("role"); // e.g. "Admin" ya "Sales"
+      const res = await axios.get(`${BASE_URL}/api/roles`);
+
+      const currentRole = res.data.find(r => r.name === role);
+      if (currentRole) {
+        setPermissions(currentRole.permissions);
+      }
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+    }
+  };
 
   const handleChange = (e) => {
     setNewLead({
@@ -196,6 +215,9 @@ const Leads = () => {
       const res = await axios.get("http://localhost:5000/api/leads");
       console.log("User Data:", res.data);
       setLeads(res.data);
+
+      await fetchPermissions();
+
     } catch (err) {
       console.error("Error refreshing users:", err);
     } finally {
@@ -627,14 +649,14 @@ const Leads = () => {
                   id="importExcel"
                 />
 
-                {bulkAdd && (
+                {permissions?.bulkAdd && (
                   <label htmlFor="importExcel" className="btn btn-outline-primary me-1 btn-sm importLead">
                     <FaDownload /> Import Leads
                   </label>
                 )}
 
 
-                {exports && (
+                {permissions?.exports && (
                   <button className="btn btn-outline-primary btn-sm csvFont exportLead me-1" onClick={exportToCSV}>
                     <FaArrowUp />  Export Leads to CSV
                   </button>

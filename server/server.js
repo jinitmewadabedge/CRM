@@ -25,7 +25,6 @@ app.use('/', testRoute);
 app.use('/api/leads', leadRoute);
 app.use('/api/roles', roleRoutes);
 app.use('/users/import', importUsers);
-app.use("/api/roles", roleRoutes);
 
 (async () => {
     try {
