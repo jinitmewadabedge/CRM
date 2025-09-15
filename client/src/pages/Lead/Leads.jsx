@@ -23,6 +23,7 @@ const Leads = () => {
   const [selectedLead, setSelectedLead] = useState(null);
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   const [formData, setFormData] = useState({
     type: "",
     candidate_name: "",
@@ -182,7 +183,7 @@ const Leads = () => {
     };
 
     try {
-      await axios.put(`http://localhost:5000/api/leads/${selectedLead._id}`, payload);
+      await axios.put(`${BASE_URL}/api/leads/${selectedLead._id}`, payload);
       alert("Lead updated successfully!");
       setLeads(leads.map(l => (l._id === formData._id ? payload : l)));
     } catch (error) {
@@ -212,7 +213,7 @@ const Leads = () => {
   const handleRefresh = async () => {
     try {
       setLoading(true);
-      const res = await axios.get("http://localhost:5000/api/leads");
+      const res = await axios.get(`${BASE_URL}/api/leads`);
       console.log("User Data:", res.data);
       setLeads(res.data);
 
@@ -270,7 +271,7 @@ const Leads = () => {
       const worksheet = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName]);
 
       try {
-        await axios.post("http://localhost:5000/api/leads/import", { leads: worksheet });
+        await axios.post(`${BASE_URL}/api/leads/import`, { leads: worksheet });
         alert("Excel Imported Successfully");
 
         const res = await getLeads();
@@ -435,7 +436,7 @@ const Leads = () => {
   useEffect(() => {
     const fetchActiveLead = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/leads/active-lead-count');
+        const res = await axios.get(`${BASE_URL}/api/leads/active-lead-count`);
         SetTotalLeads(res.data.count);
         console.log(res.data.count);
       } catch (error) {
