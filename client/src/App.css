@@ -387,3 +387,6 @@ td {
   width: 100%;
   border-collapse: collapse;
 }
+.roles-form-select{
+  font-size: 12.5px !important;
+}

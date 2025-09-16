@@ -11,13 +11,13 @@ exports.getRoles = async (req, res) => {
 
 exports.updateRolePermissions = async (req, res) => {
     try {
-        const { id } = req.params; 
-        const { permissions } = req.body;
+        const { id } = req.params;
+        const { entity, field, value } = req.body;
 
         const updatedRole = await Role.findByIdAndUpdate(
             id,
-            { permissions },
-            { new: true } 
+            { $set: { [`permissions.${entity}.${field}`]: value } },
+            { new: true }
         );
 
         if (!updatedRole) {

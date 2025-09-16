@@ -109,8 +109,9 @@ const Leads = () => {
 
   const fetchPermissions = async () => {
     try {
-      const role = localStorage.getItem("role"); // e.g. "Admin" ya "Sales"
+      const role = localStorage.getItem("role");
       const res = await axios.get(`${BASE_URL}/api/roles`);
+      console.log("Fetched permission from backend:", res.data);
 
       const currentRole = res.data.find(r => r.name === role);
       if (currentRole) {
@@ -214,8 +215,9 @@ const Leads = () => {
     try {
       setLoading(true);
       const res = await axios.get(`${BASE_URL}/api/leads`);
-      console.log("User Data:", res.data);
+      console.log("Lead fetched:", res.data);
       setLeads(res.data);
+      console.log("Current permission:", permissions);
 
       await fetchPermissions();
 
@@ -444,9 +446,10 @@ const Leads = () => {
       }
     }
     fetchActiveLead();
-  }, [])
+  }, []);
 
   return (
+
     <div className="container-fluid mt-5 px-5">
       <div className="row g-5">
         <h4 className='mt-4 text-left adminDashboardTitle'>Hello Leads <img src={LeadImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }} /> ,</h4>
@@ -650,14 +653,14 @@ const Leads = () => {
                   id="importExcel"
                 />
 
-                {permissions?.bulkAdd && (
+                {permissions?.lead?.bulkAdd && (
                   <label htmlFor="importExcel" className="btn btn-outline-primary me-1 btn-sm importLead">
                     <FaDownload /> Import Leads
                   </label>
                 )}
 
 
-                {permissions?.exports && (
+                {permissions?.lead?.exports && (
                   <button className="btn btn-outline-primary btn-sm csvFont exportLead me-1" onClick={exportToCSV}>
                     <FaArrowUp />  Export Leads to CSV
                   </button>

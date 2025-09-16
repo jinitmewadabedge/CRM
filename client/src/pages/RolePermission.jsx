@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
+import LeadImg from "../../src/assets/Lead_Img.png";
 
 const RolePermission = () => {
   const [roles, setRoles] = useState([]);
@@ -22,192 +23,211 @@ const RolePermission = () => {
     }
   };
 
-
-  const handlePermissionChange = async (roleId, section, key, value) => {
+  const handlePermissionChange = async (roleId, entity, field, value) => {
     try {
-      const updatedRoles = roles.map(r =>
-        r._id === roleId
-          ? {
-            ...r,
-            permissions: {
-              ...r.permissions,
-              [section]: {
-                ...r.permissions[section],
-                [key]: value,
-              },
-            },
-          }
-          : r
-      );
+      const updatedPermissions = { entity, field, value };
+      console.log("Sending permission update:", updatedPermissions);
 
-      setRoles(updatedRoles);
+      const res = await axios.put(`${BASE_URL}/api/roles/${roleId}`, updatedPermissions);
+      console.log("Backend response:", res.data); 
 
-      const updatedRole = updatedRoles.find(r => r._id === roleId);
-
-      await axios.put(`${BASE_URL}/api/roles/${roleId}`, {
-        permissions: updatedRole.permissions,
-      });
+      fetchRoles();
     } catch (err) {
-      console.error("Failed to update permission", err);
+      console.error("Error updating permission:", err);
     }
   };
 
 
   return (
-    <div className="container mt-4">
-      <h4 className="mb-3">Roles & Permissions</h4>
+    <div className="container-fluid mt-5 px-5" style={{ fontSize: "14px" }}>
+      <div className="row g-5">
+        <h5 className="mb-0">
+          Roles & Permissions{" "}
+          <img
+            src={LeadImg}
+            alt="Users"
+            className="mb-2"
+            style={{
+              width: "40px",
+              border: "0px solid green",
+              borderRadius: "20px",
+            }}
+          />
+        </h5>
+      </div>
+      <div className="col-12 col-md-8 col-lg-12 mt-2">
+        <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+          <div className="card-body">
+            {loading ? (
+              <p>Loading...</p>
+            ) : (
+              <div className="table-container">
+                <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="text-left tableHeader">Role Name</th>
+                      <th className="text-left tableHeader">Create Scope</th>
+                      <th className="text-left tableHeader">Read Scope</th>
+                      <th className="text-left tableHeader">Update Scope</th>
+                      <th className="text-left tableHeader">Delete Scope</th>
+                      <th className="text-left tableHeader">Assign To Sales</th>
+                      <th className="text-left tableHeader">Bulk Add</th>
+                      <th className="text-left tableHeader">Export</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {roles.map((role) => {
+                      const isAdmin = role.name === "Admin";
+                      return (
+                        <tr key={role._id}>
+                          <td>
+                            <p className="mb-0 text-left tableData">
+                              {role.name}
+                            </p>
+                          </td>
 
-      {loading ? (
-        <p>Loading...</p>
-      ) : (
-        <table className="table table-bordered align-middle text-center">
-          <thead className="table-light">
-            <tr>
-              <th>Role Name</th>
-              <th>Create Scope</th>
-              <th>Read Scope</th>
-              <th>Update Scope</th>
-              <th>Delete Scope</th>
-              <th>Assign To Sales</th>
-              <th>Bulk Add</th>
-              <th>Export</th>
-            </tr>
-          </thead>
-          <tbody>
-            {roles.map(role => (
-              <tr key={role._id}>
-                <td className="fw-bold">{role.name}</td>
+                          <td>
+                            <select
+                              className="form-select form-select-sm roles-form-select"
+                              value={role.permissions?.lead?.createScope || "own"}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "createScope",
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <option value="own">Own</option>
+                              <option value="dept">Dept</option>
+                              <option value="team+dept">Team+Dept</option>
+                              <option value="all">All</option>
+                            </select>
+                          </td>
 
-                <td>
-                  <select
-                    className="form-select form-select-sm"
-                    value={role.permissions?.lead?.createScope || "own"}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "createScope",
-                        e.target.value
-                      )
-                    }
-                  >
-                    <option value="own">Own</option>
-                    <option value="dept">Dept</option>
-                    <option value="team+dept">Team+Dept</option>
-                    <option value="all">All</option>
-                  </select>
-                </td>
+                          <td>
+                            <select
+                              className="form-select form-select-sm roles-form-select"
+                              value={role.permissions?.lead?.readScope || "own"}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "readScope",
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <option value="own">Own</option>
+                              <option value="dept">Dept</option>
+                              <option value="team+dept">Team+Dept</option>
+                              <option value="all">All</option>
+                            </select>
+                          </td>
 
-                <td>
-                  <select
-                    className="form-select form-select-sm"
-                    value={role.permissions?.lead?.readScope || "own"}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "readScope",
-                        e.target.value
-                      )
-                    }
-                  >
-                    <option value="own">Own</option>
-                    <option value="dept">Dept</option>
-                    <option value="team+dept">Team+Dept</option>
-                    <option value="all">All</option>
-                  </select>
-                </td>
+                          <td>
+                            <select
+                              className="form-select form-select-sm roles-form-select"
+                              value={role.permissions?.lead?.updateScope || "own"}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "updateScope",
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <option value="own">Own</option>
+                              <option value="dept">Dept</option>
+                              <option value="team+dept">Team+Dept</option>
+                              <option value="all">All</option>
+                            </select>
+                          </td>
 
-                <td>
-                  <select
-                    className="form-select form-select-sm"
-                    value={role.permissions?.lead?.updateScope || "own"}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "updateScope",
-                        e.target.value
-                      )
-                    }
-                  >
-                    <option value="own">Own</option>
-                    <option value="dept">Dept</option>
-                    <option value="team+dept">Team+Dept</option>
-                    <option value="all">All</option>
-                  </select>
-                </td>
+                          <td>
+                            <select
+                              className="form-select form-select-sm roles-form-select"
+                              value={role.permissions?.lead?.deleteScope || "none"}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "deleteScope",
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <option value="none">None</option>
+                              <option value="own">Own</option>
+                              <option value="dept">Dept</option>
+                              <option value="team+dept">Team+Dept</option>
+                              <option value="all">All</option>
+                            </select>
+                          </td>
 
-                <td>
-                  <select
-                    className="form-select form-select-sm"
-                    value={role.permissions?.lead?.deleteScope || "none"}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "deleteScope",
-                        e.target.value
-                      )
-                    }
-                  >
-                    <option value="none">None</option>
-                    <option value="own">Own</option>
-                    <option value="dept">Dept</option>
-                    <option value="team+dept">Team+Dept</option>
-                    <option value="all">All</option>
-                  </select>
-                </td>
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              checked={role.permissions?.lead?.assignToSales || false}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "assignToSales",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          </td>
 
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={role.permissions?.lead?.assignToSales || false}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "assignToSales",
-                        e.target.checked
-                      )
-                    }
-                  />
-                </td>
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              checked={role.permissions?.lead?.bulkAdd || false}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "bulkAdd",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          </td>
 
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={role.permissions?.lead?.bulkAdd || false}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "bulkAdd",
-                        e.target.checked
-                      )
-                    }
-                  />
-                </td>
-
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={role.permissions?.lead?.export || false}
-                    onChange={e =>
-                      handlePermissionChange(
-                        role._id,
-                        "lead",
-                        "export",
-                        e.target.checked
-                      )
-                    }
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+                          <td className="text-center">
+                            <input
+                              type="checkbox"
+                              checked={role.permissions?.lead?.export || false}
+                              disabled={isAdmin}
+                              onChange={(e) =>
+                                handlePermissionChange(
+                                  role._id,
+                                  "lead",
+                                  "export",
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
