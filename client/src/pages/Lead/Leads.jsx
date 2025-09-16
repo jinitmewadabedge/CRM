@@ -102,19 +102,26 @@ const Leads = () => {
   }, [id]);
 
   useEffect(() => {
+    console.log("Permissions for user:", permissions);
+  }, [permissions]);
+
+
+  useEffect(() => {
     fetchPermissions();
   }, [])
 
-  // if (!viewLead) return <p className="text-center mt-5">Loading...</p>;
-
   const fetchPermissions = async () => {
     try {
-      const role = localStorage.getItem("role");
+      // const role = localStorage.getItem("role");
+      const role = sessionStorage.getItem("role");
+      console.log("Role from localStorage:", role);
+
       const res = await axios.get(`${BASE_URL}/api/roles`);
       console.log("Fetched permission from backend:", res.data);
 
       const currentRole = res.data.find(r => r.name === role);
       if (currentRole) {
+        console.log("Permission for current real user permission:", currentRole.permissions);
         setPermissions(currentRole.permissions);
       }
     } catch (error) {
