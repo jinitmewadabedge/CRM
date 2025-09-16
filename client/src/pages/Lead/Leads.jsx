@@ -660,7 +660,7 @@ const Leads = () => {
                 )}
 
 
-                {permissions?.lead?.exports && (
+                {permissions?.lead?.export && (
                   <button className="btn btn-outline-primary btn-sm csvFont exportLead me-1" onClick={exportToCSV}>
                     <FaArrowUp />  Export Leads to CSV
                   </button>
