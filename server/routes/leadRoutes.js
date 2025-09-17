@@ -11,7 +11,7 @@ router.get('/:id', getLeadById);
 router.put('/:id', updateLead);
 router.delete('/:id', deleteLead);
 router.post('/import', importLeads);
-router.post("/assign/:id", authMiddleware, assign);
+router.post("/assign/:id", assign);
 router.get("/myleads", myleads);
 
 module.exports = router;
