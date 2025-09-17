@@ -24,31 +24,6 @@ const Login = () => {
     Lead_Generator: "/leads"
   };
 
-  useEffect(() => {
-    const fetchApi = async () => {
-
-      const options = {
-        method: 'GET',
-        url: 'https://cors-proxy4.p.rapidapi.com/',
-        params: {
-          url: 'https://bedge-crm-backend.vercel.app/api/auth/login'
-        },
-        headers: {
-          'x-rapidapi-key': 'dcb387b74dmshfc4269100f8cdb9p1c5053jsnc0ff5b369718',
-          'x-rapidapi-host': 'cors-proxy4.p.rapidapi.com'
-        }
-      };
-
-      try {
-        const response = await axios.request(options);
-        console.log(response.data);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    fetchApi();
-  }, [])
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
