@@ -29,6 +29,12 @@ app.use('/', testRoute);
 app.use('/api/leads', leadRoute);
 app.use('/api/roles', roleRoutes);
 app.use('/users/import', importUsers);
+app.get("/api/ping", (req, res) => {
+    res.setHeader("Access-Control-Allow-Origin", "https://bedge-crm.vercel.app");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.json({ message: "Pong! CORS is working 🚀" });
+});
 
 (async () => {
     try {
