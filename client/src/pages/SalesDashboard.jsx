@@ -39,9 +39,15 @@ const SalesDashboard = () => {
     if (!selectedLead || !selectedMember) return;
 
     try {
-      await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`, {
-        teamMemberId: selectedMember,
-      });
+      const token = localStorage.getItem("token");
+      await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
+        { teamMemberId: selectedMember },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
 
       alert("Lead assigned successfully!");
 
