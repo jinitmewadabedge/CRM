@@ -7,7 +7,6 @@ const testRoute = require('./routes/test');
 const leadRoute = require('./routes/leadRoutes');
 const roleRoutes = require('./routes/roleRoutes');
 const { importUsers } = require('./controllers/authController');
-const { importLeads } = require('./controllers/leadController');
 dotenv.config();
 
 const app = express();
