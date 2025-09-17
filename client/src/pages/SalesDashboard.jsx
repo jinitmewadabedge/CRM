@@ -39,12 +39,11 @@ const SalesDashboard = () => {
     if (!selectedLead || !selectedMember) return;
 
     try {
-      const token = localStorage.getItem("token");
       await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
         { teamMemberId: selectedMember },
         {
           headers: {
-            Authorization: `Bearer ${token}`
+            Authorization: `Bearer ${localStorage.getItem("token")}`
           }
         }
       );

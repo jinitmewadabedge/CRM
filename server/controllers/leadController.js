@@ -1,3 +1,4 @@
+const { default: mongoose } = require('mongoose');
 const Lead = require('../models/Lead');
 
 exports.createLead = async (req, res) => {
@@ -172,7 +173,11 @@ exports.assign = async (req, res) => {
         //     return res.status(401).json({ message: "Unauthorized: User not logged in" });
         // }
 
-        const managerId = req.user._id;
+        const managerId = req.user ? req.user._id : "68cabb17e9b9afbed6a53f04";
+
+        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId, isValid(teamMemberId)) {
+            return res.status(400).json({ message: "Invalid lead or user ID" });
+        }
 
         const lead = await Lead.findByIdAndUpdate(
             leadId,
@@ -199,7 +204,7 @@ exports.assign = async (req, res) => {
     }
     catch (err) {
         console.error("Assign Lead Error:", err);
-        res.status(500).json({ message: "Error assigning lead", error: err });
+        res.status(500).json({ message: "Error assigning lead", error: err.message });
     }
 
 };
