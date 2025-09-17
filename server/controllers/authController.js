@@ -150,7 +150,7 @@ exports.activeUserCount = async (req, res) => {
 
 exports.users = async (req, res) => {
     try {
-        const users = await User.find().select("+plainPassword").populate("role");
+        const users = await User.find().select("+plainPassword").populate("role", "name");
         res.json(users);
     } catch (err) {
         res.status(500).json({ error: err.message });

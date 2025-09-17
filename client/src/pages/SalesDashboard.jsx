@@ -90,9 +90,11 @@ const SalesDashboard = () => {
             onChange={(e) => setSelectedMember(e.target.value)}
           >
             <option value="">Select Team Member</option>
-            {teamMembers.map((member) => (
-              <option key={member._id} value={member._id}>{member.name}</option>
-            ))}
+            {teamMembers
+              .filter((member) => member.role?.name === "Sales")
+              .map((member) => (
+                <option key={member._id} value={member._id}>{member.name}</option>
+              ))}
           </select>
           <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
           <button onClick={() => setSelectedLead(null)}>Cancel</button>
