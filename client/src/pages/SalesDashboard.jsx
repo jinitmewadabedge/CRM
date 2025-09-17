@@ -38,6 +38,8 @@ const SalesDashboard = () => {
 
     if (!selectedLead || !selectedMember) return;
 
+    console.log("Selected Lead ID:", selectedLead, "Selected Member ID:", selectedMember);
+
     try {
       await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
         { teamMemberId: selectedMember },
