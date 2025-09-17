@@ -175,7 +175,7 @@ exports.assign = async (req, res) => {
 
         const managerId = req.user ? req.user._id : "68cabb17e9b9afbed6a53f04";
 
-        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId, isValid(teamMemberId)) {
+        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
             return res.status(400).json({ message: "Invalid lead or user ID" });
         }
 
