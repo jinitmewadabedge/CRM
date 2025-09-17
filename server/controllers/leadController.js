@@ -196,7 +196,7 @@ exports.assign = async (req, res) => {
             message: "Lead assigned successfully",
             lead,
         });
-    } catch (error) {
+    } catch (err) {
         console.error(error);
         res.status(500).json({ message: "Error assigning lead", error: err });
     }
