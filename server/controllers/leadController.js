@@ -168,9 +168,9 @@ exports.assign = async (req, res) => {
         const { teamMemberId } = req.body;
         const { leadId } = req.params;
 
-        if (!req.user || !req.user._id) {
-            return res.status(401).json({ message: "Unauthorized: User not logged in" });
-        }
+        // if (!req.user || !req.user._id) {
+        //     return res.status(401).json({ message: "Unauthorized: User not logged in" });
+        // }
 
         const managerId = req.user._id;
 
