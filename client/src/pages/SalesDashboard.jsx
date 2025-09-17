@@ -11,7 +11,7 @@ const SalesDashboard = () => {
 
   const fetchUnassignedLeads = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/leads/unassigned`);
+      const res = await axios.get(`${BASE_URL}/api/leads/unassigned`);
       console.log("Unassigned leads response:", res.data);
       setLeads(res.data);
     } catch (error) {
