@@ -34,14 +34,45 @@ const SalesDashboard = () => {
     fetchTeamMember();
   }, []);
 
-  const handleAssign = async () => {
+  // const handleAssign = async () => {
 
+  //   if (!selectedLead || !selectedMember) return;
+
+  //   try {
+  //     await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`, {
+  //       teamMemberId: selectedMember,
+  //     });
+
+  //     alert("Lead assigned successfully!");
+
+  //     setSelectedLead(null);
+  //     setSelectedMember("");
+  //     fetchUnassignedLeads();
+  //   } catch (error) {
+  //     console.error("Error assigning lead:", error);
+  //     alert("Failed to assign lead. Check console for more details")
+  //   }
+  // };
+
+  const handleAssign = async () => {
     if (!selectedLead || !selectedMember) return;
 
     try {
-      await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`, {
-        teamMemberId: selectedMember,
-      });
+      console.log("Assigning lead:", selectedLead, "to:", selectedMember);
+
+      const res = await axios.post(
+        `${BASE_URL}/api/leads/assign/${selectedLead}`,
+        {
+          teamMemberId: selectedMember,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
+
+      console.log("Assigned lead response:", res.data);
 
       alert("Lead assigned successfully!");
 
@@ -49,10 +80,11 @@ const SalesDashboard = () => {
       setSelectedMember("");
       fetchUnassignedLeads();
     } catch (error) {
-      console.error("Error assigning lead:", error);
-      alert("Failed to assign lead. Check console for more details")
+      console.error("Error assigning lead:", error.response || error);
+      alert("Failed to assign lead. Check console for more details");
     }
   };
+
 
   return (
     <div>

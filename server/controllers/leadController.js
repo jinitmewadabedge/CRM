@@ -136,32 +136,72 @@ exports.unassigned = async (req, res) => {
 //     res.status(200).json({ message: "Success" })
 // }
 
+// exports.assign = async (req, res) => {
+//     try {
+//         const { teamMemberId } = req.body;
+//         const { leadId } = req.params;
+//         const managerId = req.user ? req.user._id : null;
+
+//         const lead = await Lead.findByIdAndUpdate(
+//             leadId,
+//             {
+//                 assignedTo: teamMemberId,
+//                 assignedBy: managerId,
+//                 status: "Assigned"
+//             },
+//             { new: true }
+//         )
+//             .populate("assignedTo", "name email")
+//             .populate("assignedBy", "name email");
+
+//         res.status(200).json({
+//             message: "Lead assigend Successfully",
+//             lead
+//         })
+//     } catch (error) {
+//         res.status(500).json({ message: "Error assigning lead", error });
+//     }
+// }
+
 exports.assign = async (req, res) => {
     try {
         const { teamMemberId } = req.body;
         const { leadId } = req.params;
-        const managerId = req.user ? req.user._id : null;
+
+        if (!req.user || !req.user._id) {
+            return res.status(401).json({ message: "Unauthorized: User not logged in" });
+        }
+
+        const managerId = req.user._id;
 
         const lead = await Lead.findByIdAndUpdate(
             leadId,
             {
                 assignedTo: teamMemberId,
                 assignedBy: managerId,
-                status: "Assigned"
+                status: "Assigned",
             },
             { new: true }
         )
             .populate("assignedTo", "name email")
             .populate("assignedBy", "name email");
 
+        if (!lead) {
+            return res.status(404).json({ message: "Lead not found" });
+        }
+
+        console.log("Lead assigned successfully:", lead);
+
         res.status(200).json({
-            message: "Lead assigend Successfully",
-            lead
-        })
+            message: "Lead assigned successfully",
+            lead,
+        });
     } catch (error) {
-        res.status(500).json({ message: "Error assigning lead", error: err });
+        console.error("Error assigning lead:", error);
+        res.status(500).json({ message: "Error assigning lead", error });
     }
-}
+};
+
 
 exports.myleads = async (req, res) => {
     try {
