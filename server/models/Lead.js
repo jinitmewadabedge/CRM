@@ -74,6 +74,19 @@ const leadSchema = new mongoose.Schema({
     assignToSales: {
         type: Boolean,
         default: false
+    },
+    assignedBy:{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+    assignedTo: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+    },
+    priority: {
+        type: String,
+        enum: ["High","Medium","Low"],
+        default: "Medium"
     }
 
 }, {

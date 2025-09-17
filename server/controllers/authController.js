@@ -161,7 +161,7 @@ exports.addUser = async (req, res) => {
     try {
         console.log("AddUser req.body:", req.body);
 
-        let { email, role, password } = req.body;
+        let { name, email, role, password } = req.body;
 
         // if (!password && plainPassword) {
         //     password = plainPassword;
@@ -177,6 +177,7 @@ exports.addUser = async (req, res) => {
         // if (!roleDoc) return res.status(400).json({ message: "Role is not found" })
 
         const newUser = new User({
+            name,
             email: email.toLowerCase(),
             role,
             password,
@@ -185,7 +186,7 @@ exports.addUser = async (req, res) => {
 
         const savedUser = await newUser.save();
         await savedUser.populate("role");
-        res.status(201).json(newUser);
+        res.status(201).json(savedUser);
 
     } catch (error) {
         console.error("AddUser Error:", error.message);

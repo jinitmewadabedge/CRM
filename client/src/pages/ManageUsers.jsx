@@ -11,7 +11,7 @@ const AdminDashboard = () => {
   const [selectedRole, setSelectedRole] = useState("All");
   const [selectedEmail, setSelectedEmail] = useState("");
   const [editUser, setEditUser] = useState({ _id: "", email: "", plainPassword: "", role: "" });
-  const [newUser, setNewUser] = useState({ email: "", password: "", role: "Admin" });
+  const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "Admin" });
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(5);
   const [loading, setLoading] = useState(false);
@@ -55,7 +55,7 @@ const AdminDashboard = () => {
   };
 
   const handleAddClick = () => {
-    setNewUser({ email: "", password: "", role: "Admin" });
+    setNewUser({ name: "", email: "", password: "", role: "Admin" });
   };
 
   // const handleRefresh = async () => {
@@ -88,10 +88,12 @@ const AdminDashboard = () => {
     e.preventDefault();
     try {
       const payload = {
+        name: newUser.name,
         email: newUser.email,
         password: newUser.password,
         role: newUser.role
       };
+      console.log("Payload sending:", payload);
       const res = await axios.post(`${BASE_URL}/api/auth/users`, payload);
       setUsers([...users, res.data]);
       Modal.getInstance(document.getElementById("addUserModal")).hide();
@@ -458,11 +460,15 @@ const AdminDashboard = () => {
               <div className="card card-plain">
                 <h3 className="modal-title editUserTitle mt-5">Add User</h3>
                 <div className="card-body">
+                  <label htmlFor="" className="form-check-label">Name</label>
+                  <div className="input-group mb-3">
+                    <input name="name" type="text" value={newUser.name} onChange={handleNewUserChange} className="form-control form-control-sm" placeholder="Name" />
+                  </div>
+                  <label htmlFor="" className="form-check-label">Email</label>
+                  <div className="input-group mb-3">
+                    <input name="email" type="email" value={newUser.email} onChange={handleNewUserChange} className="form-control form-control-sm" placeholder="Email" />
+                  </div>
                   <form role="form text-left">
-                    <label htmlFor="" className="form-check-label">Email</label>
-                    <div className="input-group mb-3">
-                      <input name="email" type="email" value={newUser.email} onChange={handleNewUserChange} className="form-control form-control-sm" placeholder="Email" />
-                    </div>
                     <label htmlFor="" className="form-check-label">Password</label>
                     <div className="input-group mb-3">
                       <input name="password" type="text" value={newUser.password} onChange={handleNewUserChange} className="form-control form-control-sm" placeholder="Password" />

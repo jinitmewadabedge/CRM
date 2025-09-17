@@ -115,3 +115,64 @@ exports.importLeads = async (req, res) => {
         return res.status(500).json({ message: "Server error while importing users", error: err.message });
     }
 };
+
+exports.unassigned = async (req, res) => {
+
+    try {
+        const leads = await Lead.find({ assignedTo: null })
+            .populate("createdBy", "name email")
+            .populate("departmentId", "name")
+            .populate("teamId", "name")
+
+        res.status(200).json(leads);
+    } catch (err) {
+        console.log("Unassigned Error:", err);
+        res.status(500).json({ message: "Error fetching unassigned leads", error: err })
+    }
+}
+
+// exports.unassigned = async (req, res) => {
+//     console.log("Controller Hit!");
+//     res.status(200).json({ message: "Success" })
+// }
+
+exports.assign = async (req, res) => {
+    try {
+        const { teamMemberId } = req.body;
+        const { leadId } = req.params;
+        const managerId = req.user ? req.user._id : null;
+
+        const lead = await Lead.findByIdAndUpdate(
+            leadId,
+            {
+                assignedTo: teamMemberId,
+                assignedBy: managerId,
+                status: "Assigned"
+            },
+            { new: true }
+        )
+            .populate("assignedTo", "name email")
+            .populate("assignedBy", "name email");
+
+        res.status(200).json({
+            message: "Lead assigend Successfully",
+            lead
+        })
+    } catch (error) {
+        res.status(500).json({ message: "Error assigning lead", error: err });
+    }
+}
+
+exports.myleads = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const leads = await Lead.find({ assignedTo: userId })
+            .populate("assignedBy", "candidate_name candidate_email")
+            .populate("createdBy", "candidate_name candidate_email");
+
+        res.status(200).json(leads);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching user leads", error: err })
+    }
+}
