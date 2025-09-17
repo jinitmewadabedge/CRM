@@ -74,17 +74,19 @@ const leadSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
-    assignedBy:{
+    assignedBy: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null
     },
     assignedTo: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null
     },
     priority: {
         type: String,
-        enum: ["High","Medium","Low"],
+        enum: ["High", "Medium", "Low"],
         default: "Medium"
     }
 
