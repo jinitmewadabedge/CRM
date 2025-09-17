@@ -18,7 +18,6 @@ const allowedOrigins = [
     "https://bedge-crm.vercel.app"
 ];
 
-// ✅ Single CORS middleware
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || allowedOrigins.includes(origin)) {
@@ -35,19 +34,16 @@ app.use(cors({
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
-// ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/", testRoute);
 app.use("/api/leads", leadRoute);
 app.use("/api/roles", roleRoutes);
 app.use("/users/import", importUsers);
 
-// ✅ Simple CORS test route
 app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working 🚀" });
 });
 
-// ✅ Connect Mongo + Start server
 (async () => {
     try {
         console.log("Connecting to MongoDB...");

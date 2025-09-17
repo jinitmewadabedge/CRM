@@ -11,7 +11,7 @@ const SalesDashboard = () => {
 
   const fetchUnassignedLeads = async () => {
     try {
-      const res = await axios.get(`${BASE_URL}/api/leads/unassigned`);
+      const res = await axios.get(`http://localhost:5000/api/leads/unassigned`);
       console.log("Unassigned leads response:", res.data);
       setLeads(res.data);
     } catch (error) {
@@ -34,45 +34,14 @@ const SalesDashboard = () => {
     fetchTeamMember();
   }, []);
 
-  // const handleAssign = async () => {
-
-  //   if (!selectedLead || !selectedMember) return;
-
-  //   try {
-  //     await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`, {
-  //       teamMemberId: selectedMember,
-  //     });
-
-  //     alert("Lead assigned successfully!");
-
-  //     setSelectedLead(null);
-  //     setSelectedMember("");
-  //     fetchUnassignedLeads();
-  //   } catch (error) {
-  //     console.error("Error assigning lead:", error);
-  //     alert("Failed to assign lead. Check console for more details")
-  //   }
-  // };
-
   const handleAssign = async () => {
+
     if (!selectedLead || !selectedMember) return;
 
     try {
-      console.log("Assigning lead:", selectedLead, "to:", selectedMember);
-
-      const res = await axios.post(
-        `${BASE_URL}/api/leads/assign/${selectedLead}`,
-        {
-          teamMemberId: selectedMember,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`,
-          },
-        }
-      );
-
-      console.log("Assigned lead response:", res.data);
+      await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`, {
+        teamMemberId: selectedMember,
+      });
 
       alert("Lead assigned successfully!");
 
@@ -80,11 +49,10 @@ const SalesDashboard = () => {
       setSelectedMember("");
       fetchUnassignedLeads();
     } catch (error) {
-      console.error("Error assigning lead:", error.response || error);
-      alert("Failed to assign lead. Check console for more details");
+      console.error("Error assigning lead:", error);
+      alert("Failed to assign lead. Check console for more details")
     }
   };
-
 
   return (
     <div>
@@ -123,7 +91,7 @@ const SalesDashboard = () => {
           >
             <option value="">Select Team Member</option>
             {teamMembers
-              .filter((member) => member.role?.name === "Sales")
+              .filter((member) => member.role === "Sales")
               .map((member) => (
                 <option key={member._id} value={member._id}>{member.name}</option>
               ))}
