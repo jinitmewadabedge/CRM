@@ -91,7 +91,7 @@ const SalesDashboard = () => {
           >
             <option value="">Select Team Member</option>
             {teamMembers
-              .filter((member) => member.role === "Sales")
+              .filter((member) => member.role?.name === "Sales")
               .map((member) => (
                 <option key={member._id} value={member._id}>{member.name}</option>
               ))}
