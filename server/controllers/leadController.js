@@ -178,7 +178,7 @@ exports.assign = async (req, res) => {
         // }
 
 
-        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
+        if (!mongoose.Types.ObjectId.isValid(leadId)) {
             console.log("One of the IDs is invalid format");
             return res.status(400).json({ message: "Invalid lead or user ID" });
         }
