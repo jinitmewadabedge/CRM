@@ -71,8 +71,8 @@ const leadSchema = new mongoose.Schema({
         ref: "Team"
     },
     assignToSales: {
-        type: Boolean,
-        default: false
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
     },
     assignedBy: {
         type: mongoose.Schema.Types.ObjectId,

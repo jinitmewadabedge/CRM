@@ -236,12 +236,15 @@ exports.assign = async (req, res) => {
             return res.status(400).json({ message: "Invalid lead or user ID" });
         }
 
+        const managerId = req.user ? req.user._id : null;
+
         const lead = await Lead.findByIdAndUpdate(
             leadId,
             {
                 assignedTo: teamMemberId,
-                assigedBy: req.user?._id || null,
-                status: "Assigned"
+                assignedBy: managerId,
+                status: "Assigned",
+                updatedAt: new Date(),
             },
             { new: true }
         )
@@ -267,8 +270,8 @@ exports.myleads = async (req, res) => {
         const userId = req.user._id;
 
         const leads = await Lead.find({ assignedTo: userId })
-            .populate("assignedBy", "candidate_name candidate_email")
-            .populate("createdBy", "candidate_name candidate_email");
+            .populate("assignedBy", "name email")
+            .populate("createdBy", "name email");
 
         res.status(200).json(leads);
     } catch (err) {
