@@ -164,67 +164,103 @@ exports.unassigned = async (req, res) => {
 //     }
 // }
 
+// exports.assign = async (req, res) => {
+//     try {
+//         const { teamMemberId } = req.body;
+//         const { leadId } = req.params;
+
+//         console.log("Assign API Hit");
+//         console.log("Lead ID from params:", leadId);
+//         console.log("Team Member ID from body:", teamMemberId);
+
+//         // if (!req.user || !req.user._id) {
+//         //     return res.status(401).json({ message: "Unauthorized: User not logged in" });
+//         // }
+
+
+//         if (!mongoose.Types.ObjectId.isValid(leadId)) {
+//             console.log("One of the IDs is invalid format");
+//             return res.status(400).json({ message: "Invalid lead or user ID" });
+//         }
+
+//         const leadExists = await Lead.findById(leadId);
+//         const userExists = await User.findById(teamMemberId);
+
+//         console.log("Lead Exists?", leadExists ? "Yes" : "No");
+//         console.log("User Exists?", leadExists ? "Yes" : "No");
+
+//         if (!leadExists || !userExists) {
+//             return res.status(400).json({ message: "Invalid lead or user ID" });
+//         }
+
+//         const managerId = req.user ? req.user._id : "68cabb17e9b9afbed6a53f04";
+
+//         const lead = await Lead.findByIdAndUpdate(
+//             leadId,
+//             {
+//                 assignedTo: teamMemberId,
+//                 assignedBy: managerId,
+//                 status: "Assigned",
+//             },
+//             { new: true }
+//         )
+//             .populate("assignedTo", "name email")
+//             .populate("assignedBy", "name email");
+
+//         // if (!lead) {
+//         //     return res.status(404).json({ message: "Lead not found" });
+//         // }
+
+//         console.log("Lead assigned successfully:", lead);
+
+//         res.status(200).json({
+//             message: "Lead assigned successfully",
+//             lead,
+//         });
+//     }
+//     catch (err) {
+//         console.error("Assign Lead Error:", err);
+//         res.status(500).json({ message: "Error assigning lead", error: err.message });
+//     }
+
+// };
+
 exports.assign = async (req, res) => {
     try {
         const { teamMemberId } = req.body;
         const { leadId } = req.params;
 
-        console.log("Assign API Hit");
-        console.log("Lead ID from params:", leadId);
-        console.log("Team Member ID from body:", teamMemberId);
+        console.log("Assign request:", req.params.id, req.body.teamMemberId);
 
-        // if (!req.user || !req.user._id) {
-        //     return res.status(401).json({ message: "Unauthorized: User not logged in" });
-        // }
-
-
-        if (!mongoose.Types.ObjectId.isValid(leadId)) {
-            console.log("One of the IDs is invalid format");
+        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
             return res.status(400).json({ message: "Invalid lead or user ID" });
         }
-
-        const leadExists = await Lead.findById(leadId);
-        const userExists = await User.findById(teamMemberId);
-
-        console.log("Lead Exists?", leadExists ? "Yes" : "No");
-        console.log("User Exists?", leadExists ? "Yes" : "No");
-
-        if (!leadExists || !userExists) {
-            return res.status(400).json({ message: "Invalid lead or user ID" });
-        }
-
-        const managerId = req.user ? req.user._id : "68cabb17e9b9afbed6a53f04";
 
         const lead = await Lead.findByIdAndUpdate(
             leadId,
             {
                 assignedTo: teamMemberId,
-                assignedBy: managerId,
-                status: "Assigned",
+                assigedBy: req.user?._id || null,
+                status: "Assigned"
             },
             { new: true }
         )
             .populate("assignedTo", "name email")
             .populate("assignedBy", "name email");
 
-        // if (!lead) {
-        //     return res.status(404).json({ message: "Lead not found" });
-        // }
-
-        console.log("Lead assigned successfully:", lead);
+        if (!lead) {
+            return res.status(404).json({ message: "Lead not found" });
+        }
 
         res.status(200).json({
             message: "Lead assigned successfully",
             lead,
         });
+    } catch (error) {
+        console.log("Assign Lead Error:", error);
+        res.status(500).json({ message: "Error assigning lead" });
     }
-    catch (err) {
-        console.error("Assign Lead Error:", err);
-        res.status(500).json({ message: "Error assigning lead", error: err.message });
-    }
-
 };
-
 
 exports.myleads = async (req, res) => {
     try {
