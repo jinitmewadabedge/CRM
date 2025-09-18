@@ -169,15 +169,31 @@ exports.assign = async (req, res) => {
         const { teamMemberId } = req.body;
         const { leadId } = req.params;
 
+        console.log("Assign API Hit");
+        console.log("Lead ID from params:", leadId);
+        console.log("Team Member ID from body:", teamMemberId);
+
         // if (!req.user || !req.user._id) {
         //     return res.status(401).json({ message: "Unauthorized: User not logged in" });
         // }
 
-        const managerId = req.user ? req.user._id : "68cabb17e9b9afbed6a53f04";
 
         if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
+            console.log("One of the IDs is invalid format");
             return res.status(400).json({ message: "Invalid lead or user ID" });
         }
+
+        const leadExists = await Lead.findById(leadId);
+        const userExists = await User.findById(teamMemberId);
+
+        console.log("Lead Exists?", leadExists ? "Yes" : "No");
+        console.log("User Exists?", leadExists ? "Yes" : "No");
+
+        if (!leadExists || !userExists) {
+            return res.status(400).json({ message: "Invalid lead or user ID" });
+        }
+
+        const managerId = req.user ? req.user._id : "68cabb17e9b9afbed6a53f04";
 
         const lead = await Lead.findByIdAndUpdate(
             leadId,
@@ -191,9 +207,9 @@ exports.assign = async (req, res) => {
             .populate("assignedTo", "name email")
             .populate("assignedBy", "name email");
 
-        if (!lead) {
-            return res.status(404).json({ message: "Lead not found" });
-        }
+        // if (!lead) {
+        //     return res.status(404).json({ message: "Lead not found" });
+        // }
 
         console.log("Lead assigned successfully:", lead);
 
