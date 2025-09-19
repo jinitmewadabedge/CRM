@@ -117,8 +117,24 @@ exports.importLeads = async (req, res) => {
     }
 };
 
-exports.unassigned = async (req, res) => {
+exports.getAssignedLeads = async (req, res) => {
+    try {
+        const leads = await Lead.find({ assignedTo: { $ne: null } })
+            .populate("assignedTo", "name email")
+            .populate("assignedBy", "name email")
+            .populate("createdBy", "name email")
+            .populate("departmentId", "name")
+            .populate("teamId", "name");
 
+        res.status(200).json(leads);
+    } catch (err) {
+        console.log("Assigned Error:", err);
+        res.status(500).json({ message: "Error fetching assigned leads", error: err });
+    }
+};
+
+
+exports.getUnassignedLeads = async (req, res) => {
     try {
         const leads = await Lead.find({ assignedTo: null })
             .populate("createdBy", "name email")
@@ -129,6 +145,65 @@ exports.unassigned = async (req, res) => {
     } catch (err) {
         console.log("Unassigned Error:", err);
         res.status(500).json({ message: "Error fetching unassigned leads", error: err })
+    }
+}
+
+exports.assignLeads = async (req, res) => {
+    try {
+        const { teamMemberId } = req.body;
+        const { leadId } = req.params;
+
+        console.log("Assign API Hit");
+        console.log("req.params.leadId:", leadId);
+        console.log("req.body.teamMemberId:", teamMemberId);
+        console.log("req.user in controller:", req.user);
+
+        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
+            return res.status(400).json({ message: "Invalid lead or user ID" });
+        }
+
+        const managerId = req.user.id;
+        console.log("managerId to be saved:", managerId);
+
+        const lead = await Lead.findByIdAndUpdate(
+            leadId,
+            {
+                assignedTo: teamMemberId,
+                assignedBy: managerId,
+                status: "Assigned",
+                updatedAt: new Date(),
+            },
+            { new: true }
+        )
+            .populate("assignedTo", "name email")
+            .populate("assignedBy", "name email");
+
+        if (!lead) {
+            return res.status(404).json({ message: "Lead not found" });
+        }
+
+        console.log("Updated lead:", lead);
+        res.status(200).json({
+            message: "Lead assigned successfully",
+            lead,
+        });
+    } catch (error) {
+        console.log("Assign Lead Error:", error);
+        res.status(500).json({ message: "Error assigning lead" });
+    }
+};
+
+exports.myleads = async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        const leads = await Lead.find({ assignedTo: userId })
+            .populate("assignedBy", "name email")
+            .populate("createdBy", "name email");
+
+        res.status(200).json(leads);
+    } catch (err) {
+        res.status(500).json({ message: "Error fetching user leads", error: err })
     }
 }
 
@@ -224,57 +299,3 @@ exports.unassigned = async (req, res) => {
 //     }
 
 // };
-
-exports.assign = async (req, res) => {
-    try {
-        const { teamMemberId } = req.body;
-        const { leadId } = req.params;
-
-        console.log("Assign request:", req.params.id, req.body.teamMemberId);
-
-        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
-            return res.status(400).json({ message: "Invalid lead or user ID" });
-        }
-
-        const managerId = req.user ? req.user._id : null;
-
-        const lead = await Lead.findByIdAndUpdate(
-            leadId,
-            {
-                assignedTo: teamMemberId,
-                assignedBy: managerId,
-                status: "Assigned",
-                updatedAt: new Date(),
-            },
-            { new: true }
-        )
-            .populate("assignedTo", "name email")
-            .populate("assignedBy", "name email");
-
-        if (!lead) {
-            return res.status(404).json({ message: "Lead not found" });
-        }
-
-        res.status(200).json({
-            message: "Lead assigned successfully",
-            lead,
-        });
-    } catch (error) {
-        console.log("Assign Lead Error:", error);
-        res.status(500).json({ message: "Error assigning lead" });
-    }
-};
-
-exports.myleads = async (req, res) => {
-    try {
-        const userId = req.user._id;
-
-        const leads = await Lead.find({ assignedTo: userId })
-            .populate("assignedBy", "name email")
-            .populate("createdBy", "name email");
-
-        res.status(200).json(leads);
-    } catch (err) {
-        res.status(500).json({ message: "Error fetching user leads", error: err })
-    }
-}

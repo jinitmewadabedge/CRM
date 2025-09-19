@@ -41,13 +41,13 @@ app.use("/api/roles", roleRoutes);
 app.use("/users/import", importUsers);
 
 app.get("/api/ping", (req, res) => {
-    res.json({ message: "Pong! CORS is working 🚀" });
+    res.json({ message: "Pong! CORS is working" });
 });
 
 (async () => {
     try {
         console.log("Connecting to MongoDB...");
-        await mongoose.connect(process.env.MONGO_URL, {
+        await mongoose.connect(process.env.MONGO_URL_DEV, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             serverSelectionTimeoutMS: 10000
@@ -61,7 +61,7 @@ app.get("/api/ping", (req, res) => {
         console.error("MongoDB connection error:", err.message);
     }
 
-    setInterval(() => {
-        console.log("MongoDB connection state:", mongoose.connection.readyState);
-    }, 5000);
+    // setInterval(() => {
+    //     console.log("MongoDB connection state:", mongoose.connection.readyState);
+    // }, 5000);
 })();

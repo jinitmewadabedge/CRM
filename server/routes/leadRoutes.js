@@ -1,17 +1,18 @@
 const express = require('express');
 const router = express.Router();
-const { authMiddleware } = require('../middleware/authMiddleware');
-const { createLead, getLeadById, getLeads, updateLead, deleteLead, activeLeadCount, importLeads, unassigned, assign, myleads } = require('../controllers/leadController');
+const { authMiddleware, protect } = require('../middleware/authMiddleware');
+const { createLead, getLeadById, getLeads, updateLead, deleteLead, activeLeadCount, importLeads, unassigned, assign, myleads, assigned, getAssignedLeads, getUnassignedLeads, assignLeads } = require('../controllers/leadController');
 
 router.post('/', createLead);
 router.get('/', getLeads);
 router.get('/active-lead-count', activeLeadCount);
-router.get("/unassigned", unassigned);
+router.post('/import', importLeads);
+router.get("/myleads", myleads);
+router.get("/unassigned", getUnassignedLeads);
+router.get("/assigned", getAssignedLeads);
+router.post("/assign/:leadId", protect, assignLeads);
 router.get('/:id', getLeadById);
 router.put('/:id', updateLead);
 router.delete('/:id', deleteLead);
-router.post('/import', importLeads);
-router.post("/assign/:leadId", assign);
-router.get("/myleads", myleads);
 
 module.exports = router;
