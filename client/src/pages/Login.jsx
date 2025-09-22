@@ -15,13 +15,14 @@ const Login = () => {
 
   const roleRoutes = {
     Admin: "/admin-dashboard",
-    Sales: "/sales-dashboard",
+    Sales: "/leads",
     Marketing: "/marketing-dashboard",
     Technical: "/technical-dashboard",
     Lead_Gen_Manager: "/leads",
     Sr_Lead_Generator: "/leads",
     Lead_Gen_Team_Lead: "/leads",
-    Lead_Generator: "/leads"
+    Lead_Generator: "/leads",
+    Sales_Manager: "/leads"
   };
 
   const handleSubmit = async (e) => {
@@ -82,6 +83,7 @@ const Login = () => {
                 <option value="Lead_Gen_Team_Lead">Lead Gen Team Lead</option>
                 <option value="Sr_Lead_Generator">Sr Lead Generator</option>
                 <option value="Lead_Generator">Lead Generator</option>
+                <option value="Sales_Manager">Sales Manager</option>
               </select>
               <label htmlFor="role">Role</label>
             </div>

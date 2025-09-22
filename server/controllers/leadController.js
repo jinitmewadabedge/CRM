@@ -1,5 +1,6 @@
 const { default: mongoose } = require('mongoose');
 const Lead = require('../models/Lead');
+const User = require("../models/User");
 
 exports.createLead = async (req, res) => {
 
@@ -117,9 +118,60 @@ exports.importLeads = async (req, res) => {
     }
 };
 
-exports.getAssignedLeads = async (req, res) => {
+exports.getLeadState = async (req, res) => {
     try {
-        const leads = await Lead.find({ assignedTo: { $ne: null } })
+
+        if (!req.user) {
+            return res.status(401).json({ message: "Unauthorized: User not found" })
+        }
+
+        const role = req.user.role?.name;
+        // console.log("User ID For State:", id);
+        console.log("User Role For State:", role);
+
+        const user = req.user;
+        console.log("req.user for state:", req.user);
+        let total = 0, unassigned = 0, assigned = 0;
+
+        if (role === "Lead_Gen_Manager") {
+            total = await Lead.countDocuments();
+            unassigned = await Lead.countDocuments({ assignedTo: null });
+            assigned = await Lead.countDocuments({ assignedTo: { $ne: null } });
+        }
+
+        if (role === "Sr_Lead_Generator") {
+            total = await Lead.countDocuments();
+        }
+
+        if (role === "Sales_Manager") {
+            total = await Lead.countDocuments();
+            unassigned = await Lead.countDocuments({ assignedTo: user._id, assignedBy: { $ne: null } });
+            assigned = await Lead.countDocuments({ assignedBy: user._id });
+        }
+
+        res.status(200).json({ total, unassigned, assigned });
+
+    } catch (error) {
+        console.error("Error fetching lead state:", error);
+        res.status(500).json({ message: "Error fetching stats" });
+    }
+}
+
+exports.getAssignedLeads = async (req, res) => {
+    console.log("req.user in getAssignedLeads:", req.user);
+    try {
+
+        let filter = {}
+
+        if (req.user.role.name === "Lead_Gen_Manager") {
+            filter = { assignedTo: { $ne: null } };
+        } else if (req.user.role.name === "Sales") {
+            filter = { assignedBy: req.user._id }
+        } else {
+            return res.status(403).json({ message: "Access Denied" });
+        }
+
+        const leads = await Lead.find(filter)
             .populate("assignedTo", "name email")
             .populate("assignedBy", "name email")
             .populate("createdBy", "name email")
@@ -136,7 +188,20 @@ exports.getAssignedLeads = async (req, res) => {
 
 exports.getUnassignedLeads = async (req, res) => {
     try {
-        const leads = await Lead.find({ assignedTo: null })
+
+        let filter = { assignedTo: null }
+
+        if (req.user.role.name === "Lead_Gen_Manager") {
+
+        } else if (req.user.role.name === "Sales_Manager") {
+            filter: { assignedTo: req.user._id }
+        } else {
+            return res.status(403).json({ message: "Access denied" });
+        }
+
+        const leads = await Lead.find(filter)
+            .populate("assignedTo", "name email")
+            .populate("assignedBy", "name email")
             .populate("createdBy", "name email")
             .populate("departmentId", "name")
             .populate("teamId", "name")
@@ -150,6 +215,7 @@ exports.getUnassignedLeads = async (req, res) => {
 
 exports.assignLeads = async (req, res) => {
     try {
+
         const { teamMemberId } = req.body;
         const { leadId } = req.params;
 
@@ -163,13 +229,33 @@ exports.assignLeads = async (req, res) => {
         }
 
         const managerId = req.user.id;
+
+        const assignerRole = req.user.role.name;
+        const assignerId = req.user._id;
+
+        const teamMember = await User.findById(teamMemberId).populate("role", "name");
+        if (!teamMember || !teamMember.role)
+            return res.status(404).json({ message: "Team member or role not found" });
+
+        console.log("Assigner role:", assignerRole);
+        console.log("Team member role:", teamMember.role.name);
+        console.log("Team member after populate:", teamMember);
+
+        if (assignerRole === "Lead_Gen_Manager" && teamMember.role.name != "Sales_Manager") {
+            return res.status(403).json({ message: "LGM can assign only to Sales Managers" });
+        }
+        
+        if(assignerRole === "Sales_Manager" && teamMember.role.name != "Sales"){
+            return res.status(403).json({message: "Sales Manager can assign only to Sales team member"});
+        }
+
         console.log("managerId to be saved:", managerId);
 
         const lead = await Lead.findByIdAndUpdate(
             leadId,
             {
                 assignedTo: teamMemberId,
-                assignedBy: managerId,
+                assignedBy: assignerId,
                 status: "Assigned",
                 updatedAt: new Date(),
             },
@@ -195,7 +281,14 @@ exports.assignLeads = async (req, res) => {
 
 exports.myleads = async (req, res) => {
     try {
+
+        console.log("REQ.USER:", req.user);
+        if (!req.user) {
+            return res.status(401).json({ message: "Unauthorized: User not logged in" });
+        }
+
         const userId = req.user._id;
+        console.log("Sales Manager req.user:", req.user);
 
         const leads = await Lead.find({ assignedTo: userId })
             .populate("assignedBy", "name email")
@@ -203,6 +296,7 @@ exports.myleads = async (req, res) => {
 
         res.status(200).json(leads);
     } catch (err) {
+        console.log("Myleads Error:", err);
         res.status(500).json({ message: "Error fetching user leads", error: err })
     }
 }

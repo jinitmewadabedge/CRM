@@ -10,7 +10,7 @@ const AdminDashboard = () => {
   const [roles, setRoles] = useState([]);
   const [selectedRole, setSelectedRole] = useState("All");
   const [selectedEmail, setSelectedEmail] = useState("");
-  const [editUser, setEditUser] = useState({ _id: "", email: "", plainPassword: "", role: "" });
+  const [editUser, setEditUser] = useState({ _id: "", name: "", email: "", plainPassword: "", role: "" });
   const [newUser, setNewUser] = useState({ name: "", email: "", password: "", role: "Admin" });
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(5);
@@ -24,7 +24,7 @@ const AdminDashboard = () => {
       .then(res => setUsers(res.data))
       .catch(err => console.error(err));
 
-    axios.get(`${BASE_URL}/api/roles`)
+    const res = axios.get(`${BASE_URL}/api/roles`)
       .then(res => setRoles(res.data))
       .catch(err => console.error(err));
   }, []);
@@ -48,6 +48,7 @@ const AdminDashboard = () => {
   const handleEditClick = (user) => {
     setEditUser({
       _id: user._id,
+      name: user.name || "",
       email: user.email,
       plainPassword: user.plainPassword,
       role: user.role && typeof user.role === 'object' ? user.role._id : user.role
@@ -114,6 +115,7 @@ const AdminDashboard = () => {
   const handleUpdate = async () => {
     try {
       const payload = {
+        name: editUser.name,
         email: editUser.email,
         plainPassword: editUser.plainPassword,
         role: editUser.role
@@ -131,6 +133,7 @@ const AdminDashboard = () => {
         console.error(err);
       }
     }
+    handleRefresh();
   };
 
   const handleImportExcel = (e) => {
@@ -296,6 +299,7 @@ const AdminDashboard = () => {
                 <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
+                      <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
                       <th className="text-left tableHeader">Password</th>
                       <th className="text-left tableHeader">Role</th>
@@ -305,6 +309,7 @@ const AdminDashboard = () => {
                   <tbody>
                     {currentUsers.length > 0 ? currentUsers.map(user => (
                       <tr key={user._id}>
+                        <td className="mb-0 text-left tableData">{user.name}</td>
                         <td className="mb-0 text-left tableData">{user.email}</td>
                         <td className="mb-0 text-left tableData">
                           {user.showPassword ? user.plainPassword : "••••••••••"}
@@ -352,28 +357,6 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* <div className="modal fade" id="editUserModal" tabIndex="-1">
-        <div className="modal-dialog">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h5 className="modal-title">Edit User</h5>
-              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div className="modal-body">
-              <input name="email" value={editUser.email} onChange={handleChange} className="form-control mb-2" placeholder="Email" />
-              <input name="plainPassword" value={editUser.plainPassword} onChange={handleChange} className="form-control mb-2" placeholder="Password" />
-              <select name="role" value={editUser.role} onChange={handleChange} className="form-select mb-2">
-                {roles.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
-              </select>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-              <button type="button" className="btn btn-success" onClick={handleUpdate}>Update</button>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
       {/* EDIT USER MODAL */}
       <div className="modal fade shadow-lg" id="editUserModal" tabIndex="-1" aria-hidden="true">
         <div className="modal-dialog modal-dialog-centered modal-sm" role="document">
@@ -383,6 +366,18 @@ const AdminDashboard = () => {
                 <h3 className="modal-title editUserTitle mt-5">Edit User</h3>
                 <div className="card-body">
                   <form role="form text-left">
+
+                    <label htmlFor="" className="form-check-label">Name</label>
+                    <div className="input-group mb-3">
+                      <input
+                        type="text"
+                        name="name"
+                        className="form-control form-control-sm"
+                        placeholder="Name"
+                        value={editUser.name || ""}
+                        onChange={handleChange} />
+                    </div>
+
                     <label className="form-check-label">Email</label>
                     <div className="input-group mb-3">
                       <input

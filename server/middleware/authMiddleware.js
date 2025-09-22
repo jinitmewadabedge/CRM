@@ -19,7 +19,7 @@ exports.protect = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         console.log("Decoded JWT payload:", decoded);
 
-        const user = await User.findById(decoded.id);
+        const user = await User.findById(decoded.id).populate("role", "name");
         if (!user) return res.status(401).json({ message: "User not found" });
 
         req.user = user;
@@ -28,7 +28,7 @@ exports.protect = async (req, res, next) => {
         next();
     } catch (error) {
         console.log("Token verification failed:", error.message);
-        
+
         res.status(401).json({ message: 'Token Failed' });
     }
 };

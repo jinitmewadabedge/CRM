@@ -15,6 +15,12 @@ const Leads = () => {
   // const bulkAdd = user?.permission?.lead?.bulkAdd === true
   // const exports = user?.permission?.lead?.export === true
   const [leads, setLeads] = useState([]);
+  const [assign, setAssigns] = useState([]);
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [finalLead, setFinalLead] = useState(null);
+  const [selectedMember, setSelectedMember] = useState("");
+  const [assignedLeads, setAssignedLeads] = useState([]);
+  const [userName, setUserName] = useState("");
   const [viewLead, setViewLead] = useState(null);
   const navigate = useNavigate();
   const [totalLeads, SetTotalLeads] = useState(0);
@@ -24,6 +30,7 @@ const Leads = () => {
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+  const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
   const [formData, setFormData] = useState({
     type: "",
     candidate_name: "",
@@ -66,24 +73,20 @@ const Leads = () => {
     dateSort: ""
   });
 
-  // useEffect(() => {
-  //   async function fetchLead() {
-  //     try {
-  //       const res = await getLeadById(id);
-
-  //       console.log("Visa from DB:", JSON.stringify(res.data.visa));
-  //       console.log("All option values:", ["All Visa", "H1B", "F1", "OPT", "L1", "Green Card", "Citizen"]);
-
-  //       setFormData({
-  //         ...res.data,
-  //         visa: res.data.visa?.trim() || ""
-  //       })
-  //     } catch (error) {
-  //       console.error("Error fetching lead for edit:", error)
-  //     }
-  //   }
-  //   fetchLead()
-  // }, [id]);
+  useEffect(() => {
+    const fetchState = async () => {
+      try {
+        const token = sessionStorage.getItem("token");
+        const res = await axios.get(`${BASE_URL}/api/leads/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        setStats(res.data);
+      } catch (error) {
+        console.error("Error fetching stats:", error);
+      }
+    }
+    fetchState();
+  }, []);
 
   useEffect(() => {
     async function fetchLead() {
@@ -102,13 +105,90 @@ const Leads = () => {
   }, [id]);
 
   useEffect(() => {
+
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+
+    if (loggedInUser?.name) {
+      setUserName(loggedInUser?.name);
+    }
+
+  }, [])
+
+  useEffect(() => {
     console.log("Permissions for user:", permissions);
   }, [permissions]);
 
 
   useEffect(() => {
+    fetchUnassignedLeads();
+    fetchTeamMember();
     fetchPermissions();
-  }, [])
+  }, []);
+
+  const fetchUnassignedLeads = async () => {
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+    console.log("User from session:", loggedInUser);
+    console.log("Role Name:", loggedInUser?.role);
+    const roleName = loggedInUser?.role;
+    const token = sessionStorage.getItem("token");
+
+    try {
+      if (roleName === "Lead_Gen_Manager") {
+
+        const unassignedRes = await axios.get(`${BASE_URL}/api/leads/unassigned`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setAssigns(unassignedRes.data);
+        console.log("Unassigned Leads:", unassignedRes.data);
+      } else if (roleName === "Sales_Manager") {
+        const sales_manager_leads = await axios.get(`${BASE_URL}/api/leads/myleads`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setAssigns(sales_manager_leads.data);
+        console.log("Sales Manager Leads:", sales_manager_leads.data);
+      } else {
+        setAssigns([]);
+      }
+
+      const assignedRes = await axios.get(`${BASE_URL}/api/leads/assigned`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setAssignedLeads(assignedRes.data);
+      console.log("Assigned Leads:", assignedRes.data);
+    } catch (error) {
+      console.error("Error fetching leads:", error.response?.data || error);
+    }
+  }
+
+  const fetchTeamMember = async () => {
+
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+    const assignerRole = loggedInUser?.role?.name;
+
+    try {
+
+      const res = await axios.get(`${BASE_URL}/api/auth/users`);
+      const users = res.data;
+
+      console.log("All Users:", users);
+      users.forEach(u => console.log(u.name, u.role?.name));
+
+      let filteredUsers = [];
+
+      if (assignerRole === "Lead Gen Manager") {
+        filteredUsers = users.filter(user => user.role && user.role?.name === "Sales Manager");
+      } else if (assignerRole === "Sales Manager") {
+        filteredUsers = users.filter(user => user.role && user.role?.name === "Sales");
+      }
+
+      // console.log("Team members response:", res.data);
+      setTeamMembers(filteredUsers);
+      console.log("Filtered Team Member:", filteredUsers);
+
+    } catch (error) {
+      console.error("Error fetching team members:", error);
+    }
+  };
 
   const fetchPermissions = async () => {
     try {
@@ -203,20 +283,7 @@ const Leads = () => {
   const handleViewClick = (lead) => {
     setSelectedLead(lead);
     setShowViewModal(true);
-
-    // const modal = new window.bootstrap.Modal(document.getElementById("viewLeads"));
-    // modal.show();
-
-    // const modal = document.getElementById("viewLeads");
-    // const modalInstance = new Modal(modal);
-    // modalInstance.show();
-
-    // modal.show();
   }
-  // const handleCloseModal = () => {
-  //   setShowViewModal(false);
-  //   setSelectedLead(null);
-  // }
 
   const handleRefresh = async () => {
     try {
@@ -349,6 +416,47 @@ const Leads = () => {
     return new Intl.DateTimeFormat("en-GB", options).format(date);
   };
 
+  const handleAssign = async () => {
+
+    if (!selectedLead || !selectedMember) return;
+
+    const token = sessionStorage.getItem("token");
+
+    console.log("Sending token to backend:", token);
+
+    console.log("Selected Lead ID:", selectedLead, "Selected Member ID:", selectedMember);
+
+    try {
+      const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+      const roleName = loggedInUser?.role?.name;
+
+      const managerId = loggedInUser?._id;
+
+      const res = await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
+        {
+          teamMemberId: selectedMember,
+          assignedBy: managerId
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      console.log("Assign response:", res.data);
+
+      alert("Lead assigned successfully!");
+
+      setFinalLead(null);
+      setSelectedMember("");
+      fetchUnassignedLeads();
+    } catch (error) {
+      console.error("Error assigning lead:", error);
+      alert("Failed to assign lead. Check console for more details")
+    }
+  };
+
   const getPageNumbers = () => {
     const pageNumbers = [];
     if (totalPages <= 5) {
@@ -425,10 +533,6 @@ const Leads = () => {
   const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
 
 
-
-  // console.log("Sample lead:", leads[0]);
-  // console.log("Sample lead after filter:", filteredLeads[0]);
-
   useEffect(() => {
     async function fetchLeads() {
       try {
@@ -441,6 +545,34 @@ const Leads = () => {
     }
     fetchLeads()
   }, []);
+
+  useEffect(() => {
+    async function fetchLeads() {
+      try {
+        const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+        const token = sessionStorage.getItem("token");
+        const roleName = loggedInUser?.role?.name;
+
+        let apiEndpoint = "";
+
+        if (roleName === "Sales_Manager") {
+          apiEndpoint = `${BASE_URL}/api/leads/myleads`;
+        } else {
+          apiEndpoint = `${BASE_URL}/api/leads`;
+        }
+
+        const res = await axios.get(apiEndpoint, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        console.log("Role-based API Response:", res.data);
+        setLeads(Array.isArray(res.data) ? res.data : [res.data]);
+      } catch (error) {
+        console.error("Error fetching leads:", error);
+      }
+    }
+    fetchLeads();
+  }, [])
 
   useEffect(() => {
     const fetchActiveLead = async () => {
@@ -459,14 +591,14 @@ const Leads = () => {
 
     <div className="container-fluid mt-5 px-5">
       <div className="row g-5">
-        <h4 className='mt-4 text-left adminDashboardTitle'>Hello Leads <img src={LeadImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }} /> ,</h4>
+        <h4 className='mt-4 text-left adminDashboardTitle'>Hello, {userName || "User"} {" "} <img src={LeadImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }} /> ,</h4>
         <div className="col-12 col-md-4 m-0 mb-2">
           <div className="rounded-4 bg-white shadow-sm py-4 h-100">
             <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
               <img src={LeadImg} alt="" className="mb-2 img-fluid" />
               <div>
                 <h6 className="mb-1 text-muted">Total Leads</h6>
-                <h4 className="fw-bold">{totalLeads}</h4>
+                <h4 className="fw-bold">{stats.total}</h4>
                 <small className="text-success">16% this month</small>
               </div>
             </div>
@@ -477,8 +609,8 @@ const Leads = () => {
             <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
               <img src={LeadImg} alt="" className="mb-2 img-fluid" />
               <div>
-                <h6 className="mb-1 text-muted">Total Leads</h6>
-                <h4 className="fw-bold">{totalLeads}</h4>
+                <h6 className="mb-1 text-muted">Unassign Leads</h6>
+                <h4 className="fw-bold">{stats.unassigned}</h4>
                 <small className="text-success">16% this month</small>
               </div>
             </div>
@@ -489,8 +621,8 @@ const Leads = () => {
             <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
               <img src={LeadImg} alt="" className="mb-2 img-fluid" />
               <div>
-                <h6 className="mb-1 text-center">Total Leads</h6>
-                <h4 className="fw-bold">{totalLeads}</h4>
+                <h6 className="mb-1 text-center">Assigned Leads</h6>
+                <h4 className="fw-bold">{stats.assigned}</h4>
                 <small className="text-success">16% this month</small>
               </div>
             </div>
@@ -843,6 +975,296 @@ const Leads = () => {
             </div>
           </div>
         </div>
+
+        {/* Unassigned Leads */}
+
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">All Unassigned Leads</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone No</th>
+                    <th className="text-left tableHeader">Actions</th>
+                    {/* <th className="text-left tableHeader">Lead Type</th> */}
+                    {/* <th className="text-left tableHeader">URL</th> */}
+                    {/* <th className="text-left tableHeader">University</th> */}
+                    {/* <th className="text-left tableHeader">Technology</th> */}
+                    {/* <th className="text-left tableHeader">Visa</th> */}
+                    {/* <th className="text-left tableHeader">Preferred Time</th> */}
+                    {/* <th className="text-left tableHeader">Source</th> */}
+                    {/* <th className="text-center tableHeader">Status</th> */}
+                    {/* <th className="text-left tableHeader">Created At</th> */}
+                    {/* <th className="text-left tableHeader">Updated At</th> */}
+                  </tr>
+                </thead>
+                <tbody>
+                  {assign.map((a) => (
+                    <tr key={a._id}>
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                      </td>
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                      </td>
+                      {/* <td>
+                        <p className="mb-0 text-left tableData">{a.type}</p>
+                      </td> */}
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                      </td>
+                      <td>
+                        <button className="btn btn-sm btn-success" onClick={() => setSelectedLead(a._id)}>Assign</button>
+                      </td>
+
+                      {/* <td className="text-left tableData">
+                        <button
+                          type="button"
+                          className="btn btn-outline-primary btn-sm btn-rounded me-2"
+                          onClick={() => navigate(`/leads/${lead._id}`)}
+                        >
+                          View
+                        </button> */}
+
+                      {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
+
+                      {/* <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm btn-rounded me-2"
+                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
+                      >
+                        Edit
+                      </button> */}
+
+                      {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
+
+                        <button type="button"
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={async () => {
+                            if (window.confirm("Are you sure?")) {
+                              await deleteLead(lead._id);
+                              setLeads(leads.filter(l => l._id !== lead._id));
+                            }
+                          }}>
+                          Delete
+                        </button> */}
+                      {/* </td> */}
+                    </tr>
+                  ))}
+                </tbody>
+
+              </table>
+
+              {finalLead && (
+                <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
+                  <h3>Assign Lead</h3>
+                  <select
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                  >
+                    <option value="">Select Team Member</option>
+                    {teamMembers
+                      .filter((member) => {
+
+                        const roleName = JSON.parse(sessionStorage.getItem("user"))?.role?.name;
+
+                        console.log("Member:", member.name, "Role:", member.role?.name);
+
+                        if (!member.role?.name) return false;
+
+                        if (roleName === "Lead_Gen_Manager") {
+                          return member.role?.name === "Sales_Manager";  // LGM → sirf Sales Manager
+                        }
+                        if (roleName === "Sales_Manager") {
+                          return member.role?.name === "Sales";         // Sales Manager → sirf Sales team
+                        }
+                        return false;
+                      })
+                      .map((member) => (
+                        <option key={member._id} value={member._id}>{member.name}</option>
+                      ))}
+
+                  </select>
+                  <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
+                  <button onClick={() => setFinalLead(null)}>Cancel</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Assigned Leads */}
+
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    {/* <th className="text-left tableHeader">Lead Type</th> */}
+                    <th className="text-left tableHeader">Phone No</th>
+                    {/* <th className="text-left tableHeader">URL</th> */}
+                    {/* <th className="text-left tableHeader">University</th> */}
+                    {/* <th className="text-left tableHeader">Technology</th> */}
+                    {/* <th className="text-left tableHeader">Visa</th> */}
+                    {/* <th className="text-left tableHeader">Preferred Time</th> */}
+                    {/* <th className="text-left tableHeader">Source</th> */}
+                    {/* <th className="text-center tableHeader">Status</th> */}
+                    {/* <th className="text-left tableHeader">Created At</th> */}
+                    {/* <th className="text-left tableHeader">Updated At</th> */}
+                    <th className="text-left tableHeader">Assigned To</th>
+                    <th className="text-left tableHeader">Assigned By</th>
+                    {/* <th className="text-left tableHeader">Actions</th> */}
+                  </tr>
+                </thead>
+                <tbody>
+                  {assignedLeads.map((a) => (
+                    <tr key={a._id}>
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                      </td>
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                      </td>
+                      {/* <td>
+                        <p className="mb-0 text-left tableData">{a.type}</p>
+                      </td> */}
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                      </td>
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
+                      </td>
+                      <td>
+                        <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
+                      </td>
+                      {/* <td>
+                        <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
+                      </td> */}
+                      {/* <td>
+                    <p className="mb-0 text-left tableData">{lead.university}</p>
+                  </td> */}
+                      {/* <td className="text-left tableData">
+                        {Array.isArray(a.technology)
+                          ? a.technology.join(", ")
+                          : a.technology}
+                      </td> */}
+                      {/* <td className="text-left tableData">
+                        <p className="mb-0">{a.visa}</p>
+                      </td> */}
+                      {/* <td className="text-left tableData">
+                        <p className="mb-0">{a.preferred_time_to_talk}</p>
+                      </td> */}
+                      {/* <td className="text-left tableData">
+                    <p className="mb-0">{lead.source}</p>
+                  </td> */}
+                      {/* <td className="text-center">
+                        <span
+                          className={`badge status-badge px-2 py-2 d-flex gap-2
+                            ${a.status === "New" ? "bg-new" :
+                              a.status === "Connected" ? "bg-connected" :
+                                a.status === "In Progress" ? "bg-inprogress" :
+                                  a.status === "Shortlisted" ? "bg-shortlisted text-dark" :
+                                    a.status === "Rejected" ? "bg-rejected" :
+                                      a.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
+                        >
+                          {a.status === "New" && <FaLink />}
+                          {a.status === "Connected" && <FaCheckCircle />}
+                          {a.status === "In Progress" && <FaHourglassHalf />}
+                          {a.status === "Shortlisted" && <FaStar />}
+                          {a.status === "Rejected" && <FaTimesCircle />}
+                          {a.status === "Converted" && <FaUserCheck />}
+
+                          {a.status}
+                        </span>
+                      </td> */}
+
+
+                      {/* <td className="text-left tableData">
+                        <p className="mb-0">{formatDateTimeIST(a.createdAt)}</p>
+                      </td> */}
+                      {/* <td className="text-left tableData">
+                        <p className="mb-0">{formatDateTimeIST(a.updatedAt)}</p>
+                      </td> */}
+
+                      <td className="text-left tableData">
+                        {/* <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm btn-rounded me-2"
+                        onClick={() => navigate(`/leads/${lead._id}`)}
+                      >
+                        View
+                      </button> */}
+
+                        {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
+
+                        {/* <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm btn-rounded me-2"
+                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
+                      >
+                        Edit
+                      </button> */}
+
+                        {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
+
+                        <button type="button"
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={async () => {
+                            if (window.confirm("Are you sure?")) {
+                              await deleteLead(lead._id);
+                              setLeads(leads.filter(l => l._id !== lead._id));
+                            }
+                          }}>
+                          Delete
+                        </button> */}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+
+              </table>
+
+              {selectedLead && (
+                <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
+                  <h3>Assign Lead</h3>
+                  <select
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                  >
+                    <option value="">Select Team Member</option>
+                    {teamMembers
+                      .filter((member) => member.role?.name === "Sales_Manager")
+                      .map((member) => (
+                        <option key={member._id} value={member._id}>{member.name}</option>
+                      ))}
+                  </select>
+                  <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
+                  <button onClick={() => setSelectedLead(null)}>Cancel</button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* EDIT LEAD MODAL */}
