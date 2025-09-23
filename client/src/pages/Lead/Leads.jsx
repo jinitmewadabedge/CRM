@@ -128,7 +128,8 @@ const Leads = () => {
   const fetchUnassignedLeads = async () => {
     const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
     console.log("User from session:", loggedInUser);
-    console.log("Role Name:", loggedInUser?.role);
+    console.log("Role From Object:", loggedInUser?.role);
+    console.log("Role Name:", loggedInUser?.role?.name);
     const roleName = loggedInUser?.role;
     const token = sessionStorage.getItem("token");
 
@@ -161,34 +162,42 @@ const Leads = () => {
   }
 
   const fetchTeamMember = async () => {
-
     const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
-    const assignerRole = loggedInUser?.role?.name;
+
+    const assignerRole =
+      typeof loggedInUser.role === "string"
+        ? loggedInUser.role
+        : loggedInUser.role?.name;
 
     try {
-
       const res = await axios.get(`${BASE_URL}/api/auth/users`);
       const users = res.data;
 
-      console.log("All Users:", users);
-      users.forEach(u => console.log(u.name, u.role?.name));
+      console.log("Assigner Role (Normalized):", assignerRole);
+      users.forEach((u) =>
+        console.log(u.name, "| role?.name:", u.role?.name)
+      );
 
       let filteredUsers = [];
 
-      if (assignerRole === "Lead Gen Manager") {
-        filteredUsers = users.filter(user => user.role && user.role?.name === "Sales Manager");
-      } else if (assignerRole === "Sales Manager") {
-        filteredUsers = users.filter(user => user.role && user.role?.name === "Sales");
+      if (assignerRole === "Lead_Gen_Manager") {
+        filteredUsers = users.filter(
+          (u) => u.role?.name === "Sales_Manager"
+        );
+      } else if (assignerRole === "Sales_Manager") {
+        filteredUsers = users.filter(
+          (u) => u.role?.name === "Sales"
+        );
       }
 
-      // console.log("Team members response:", res.data);
       setTeamMembers(filteredUsers);
-      console.log("Filtered Team Member:", filteredUsers);
-
+      console.log("Final Filtered Users:", filteredUsers);
     } catch (error) {
       console.error("Error fetching team members:", error);
     }
   };
+
+
 
   const fetchPermissions = async () => {
     try {
@@ -451,6 +460,9 @@ const Leads = () => {
       setFinalLead(null);
       setSelectedMember("");
       fetchUnassignedLeads();
+
+      document.getElementById("closeAssignModalBtn").click();
+
     } catch (error) {
       console.error("Error assigning lead:", error);
       alert("Failed to assign lead. Check console for more details")
@@ -554,7 +566,9 @@ const Leads = () => {
         const roleName = loggedInUser?.role?.name;
 
         let apiEndpoint = "";
-
+        if (roleName === "Sales") {
+          apiEndpoint = `${BASE_URL}/api/leads/myleads`
+        }
         if (roleName === "Sales_Manager") {
           apiEndpoint = `${BASE_URL}/api/leads/myleads`;
         } else {
@@ -1023,7 +1037,7 @@ const Leads = () => {
                         <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
                       </td>
                       <td>
-                        <button className="btn btn-sm btn-success" onClick={() => setSelectedLead(a._id)}>Assign</button>
+                        <button className="btn btn-sm btn-success" onClick={() => setSelectedLead(a._id)} data-bs-toggle="modal" data-bs-target="#assignLeadModal">Assign</button>
                       </td>
 
                       {/* <td className="text-left tableData">
@@ -1243,24 +1257,75 @@ const Leads = () => {
 
               </table>
 
-              {selectedLead && (
-                <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
-                  <h3>Assign Lead</h3>
-                  <select
-                    value={selectedMember}
-                    onChange={(e) => setSelectedMember(e.target.value)}
-                  >
-                    <option value="">Select Team Member</option>
-                    {teamMembers
-                      .filter((member) => member.role?.name === "Sales_Manager")
-                      .map((member) => (
-                        <option key={member._id} value={member._id}>{member.name}</option>
-                      ))}
-                  </select>
-                  <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
-                  <button onClick={() => setSelectedLead(null)}>Cancel</button>
+              <div
+                className="modal fade"
+                id="assignLeadModal"
+                tabIndex="-1"
+                aria-hidden="true"
+              >
+                <div className="modal-dialog modal-dialog-centered modal-md" role="document">
+                  <div className="modal-content">
+                    <div className="modal-body p-0">
+                      <div className="card card-plain">
+                        <h3 className="modal-title mt-3 mb-2 text-center">Assign Lead</h3>
+
+                        <div className="card-body">
+                          {selectedLead ? (
+                            <form className="card p-3 shadow-sm border-0">
+                              {/* Dropdown */}
+                              <label className="form-label form-label-sm fw-bold">Select Team Member</label>
+                              <div className="input-group mb-3">
+                                <select
+                                  className="form-select form-select-sm"
+                                  value={selectedMember}
+                                  onChange={(e) => setSelectedMember(e.target.value)}
+                                >
+                                  <option value="">-- Choose Team Member --</option>
+                                  {teamMembers.map((member) => (
+                                    <option key={member._id} value={member._id}>
+                                      {member.name} ({member.role?.name})
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
+                              <div className="d-flex gap-2">
+                                <button
+                                  type="button"
+                                  id="closeAssignModalBtn"
+                                  className="d-none"
+                                  data-bs-dismiss="modal"
+                                ></button>
+                                <button
+                                  type="button"
+                                  className="btn btn-primary w-50 btn-sm"
+                                  onClick={handleAssign}
+                                  disabled={!selectedMember}
+                                >
+                                  <i className="bi bi-check-circle me-2"></i>
+                                  Confirm
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn btn-outline-secondary w-50 btn-sm"
+                                  data-bs-dismiss="modal"
+                                  onClick={() => setSelectedLead(null)}
+                                >
+                                  <i className="bi bi-x-circle me-2"></i>
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : (
+                            <h5 className="text-center my-4">Loading...</h5>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
+              </div>
+
             </div>
           </div>
         </div>

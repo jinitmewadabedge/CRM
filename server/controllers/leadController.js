@@ -149,6 +149,11 @@ exports.getLeadState = async (req, res) => {
             assigned = await Lead.countDocuments({ assignedBy: user._id });
         }
 
+        if (role === "Sales") {
+            total = await Lead.countDocuments({ assignedTo: user._id });
+            assigned = await Lead.countDocuments({ assignedTo: user._id });
+        }
+
         res.status(200).json({ total, unassigned, assigned });
 
     } catch (error) {
@@ -165,9 +170,12 @@ exports.getAssignedLeads = async (req, res) => {
 
         if (req.user.role.name === "Lead_Gen_Manager") {
             filter = { assignedTo: { $ne: null } };
+        } else if (req.user.role.name === "Sales_Manager") {
+            filter = { assignedTo: req.user._id }
         } else if (req.user.role.name === "Sales") {
-            filter = { assignedBy: req.user._id }
-        } else {
+            filter = { assignedTo: req.user._id }
+        }
+        else {
             return res.status(403).json({ message: "Access Denied" });
         }
 
@@ -213,44 +221,120 @@ exports.getUnassignedLeads = async (req, res) => {
     }
 }
 
+// exports.assignLeads = async (req, res) => {
+//     try {
+
+//         const { teamMemberId } = req.body;
+//         const { leadId } = req.params;
+
+//         console.log("Assign API Hit");
+//         console.log("req.params.leadId:", leadId);
+//         console.log("req.body.teamMemberId:", teamMemberId);
+//         console.log("req.user in controller:", req.user);
+
+//         if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
+//             return res.status(400).json({ message: "Invalid lead or user ID" });
+//         }
+
+//         const managerId = req.user.id;
+
+//         const assignerRole = req.user.role.name;
+//         const assignerId = req.user._id;
+
+//         const teamMember = await User.findById(teamMemberId).populate("role", "name");
+//         if (!teamMember || !teamMember.role)
+//             return res.status(404).json({ message: "Team member or role not found" });
+
+//         console.log("Assigner role:", assignerRole);
+//         console.log("Team member role:", teamMember.role.name);
+//         console.log("Team member after populate:", teamMember);
+
+//         if (assignerRole === "Lead_Gen_Manager" && teamMember.role.name != "Sales_Manager") {
+//             return res.status(403).json({ message: "LGM can assign only to Sales Managers" });
+//         }
+
+//         if(assignerRole === "Sales_Manager" && teamMember.role.name != "Sales"){
+//             return res.status(403).json({message: "Sales Manager can assign only to Sales team member"});
+//         }
+
+//         console.log("managerId to be saved:", managerId);
+
+//         const lead = await Lead.findByIdAndUpdate(
+//             leadId,
+//             {
+//                 assignedTo: teamMemberId,
+//                 assignedBy: assignerId,
+//                 status: "Assigned",
+//                 updatedAt: new Date(),
+//             },
+//             { new: true }
+//         )
+//             .populate("assignedTo", "name email")
+//             .populate("assignedBy", "name email");
+
+//         if (!lead) {
+//             return res.status(404).json({ message: "Lead not found" });
+//         }
+
+//         console.log("Updated lead:", lead);
+//         res.status(200).json({
+//             message: "Lead assigned successfully",
+//             lead,
+//         });
+//     } catch (error) {
+//         console.log("Assign Lead Error:", error);
+//         res.status(500).json({ message: "Error assigning lead" });
+//     }
+// };
+
 exports.assignLeads = async (req, res) => {
     try {
-
         const { teamMemberId } = req.body;
         const { leadId } = req.params;
 
-        console.log("Assign API Hit");
-        console.log("req.params.leadId:", leadId);
-        console.log("req.body.teamMemberId:", teamMemberId);
-        console.log("req.user in controller:", req.user);
+        console.log("===== ASSIGN API HIT =====");
+        console.log("leadId (req.params):", leadId);
+        console.log("teamMemberId (req.body):", teamMemberId);
+        console.log("req.user (from token):", req.user);
 
-        if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
+        if (
+            !mongoose.Types.ObjectId.isValid(leadId) ||
+            !mongoose.Types.ObjectId.isValid(teamMemberId)
+        ) {
             return res.status(400).json({ message: "Invalid lead or user ID" });
         }
 
-        const managerId = req.user.id;
-
+        const managerId = req.user.id; // string id
+        const assignerId = req.user._id; // ObjectId
         const assignerRole = req.user.role.name;
-        const assignerId = req.user._id;
 
+        console.log("managerId (string):", managerId);
+        console.log("assignerId (ObjectId):", assignerId);
+        console.log("assignerRole:", assignerRole);
+
+        // fetch team member
         const teamMember = await User.findById(teamMemberId).populate("role", "name");
-        if (!teamMember || !teamMember.role)
+        console.log("Fetched Team Member:", teamMember);
+        console.log("Team Member role:", teamMember?.role?.name);
+
+        if (!teamMember || !teamMember.role) {
             return res.status(404).json({ message: "Team member or role not found" });
-
-        console.log("Assigner role:", assignerRole);
-        console.log("Team member role:", teamMember.role.name);
-        console.log("Team member after populate:", teamMember);
-
-        if (assignerRole === "Lead_Gen_Manager" && teamMember.role.name != "Sales_Manager") {
-            return res.status(403).json({ message: "LGM can assign only to Sales Managers" });
-        }
-        
-        if(assignerRole === "Sales_Manager" && teamMember.role.name != "Sales"){
-            return res.status(403).json({message: "Sales Manager can assign only to Sales team member"});
         }
 
-        console.log("managerId to be saved:", managerId);
+        // role validation
+        if (assignerRole === "Lead_Gen_Manager" && teamMember.role.name !== "Sales_Manager") {
+            return res
+                .status(403)
+                .json({ message: "LGM can assign only to Sales Managers" });
+        }
 
+        if (assignerRole === "Sales_Manager" && teamMember.role.name !== "Sales") {
+            return res
+                .status(403)
+                .json({ message: "Sales Manager can assign only to Sales team member" });
+        }
+
+        // update lead
         const lead = await Lead.findByIdAndUpdate(
             leadId,
             {
@@ -264,20 +348,22 @@ exports.assignLeads = async (req, res) => {
             .populate("assignedTo", "name email")
             .populate("assignedBy", "name email");
 
+        console.log("Updated lead after assignment:", lead);
+
         if (!lead) {
             return res.status(404).json({ message: "Lead not found" });
         }
 
-        console.log("Updated lead:", lead);
         res.status(200).json({
             message: "Lead assigned successfully",
             lead,
         });
     } catch (error) {
-        console.log("Assign Lead Error:", error);
-        res.status(500).json({ message: "Error assigning lead" });
+        console.log("❌ Assign Lead Error:", error);
+        res.status(500).json({ message: "Error assigning lead", error });
     }
 };
+
 
 exports.myleads = async (req, res) => {
     try {
