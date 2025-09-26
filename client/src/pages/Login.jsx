@@ -33,7 +33,7 @@ const Login = () => {
         email,
         password,
         role,
-      });
+      }, { withCredentials: true });
 
       const data = res.data;
 
