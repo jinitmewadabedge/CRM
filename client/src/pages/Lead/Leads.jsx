@@ -15,11 +15,12 @@ const Leads = () => {
   // const bulkAdd = user?.permission?.lead?.bulkAdd === true
   // const exports = user?.permission?.lead?.export === true
   const [leads, setLeads] = useState([]);
-  const [assign, setAssigns] = useState([]);
+  // const [assign, setAssigns] = useState([]);
+  const [unassignedLeads, setUnassignedLeads] = useState([]);
+  const [assignedLeads, setAssignedLeads] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [finalLead, setFinalLead] = useState(null);
   const [selectedMember, setSelectedMember] = useState("");
-  const [assignedLeads, setAssignedLeads] = useState([]);
   const [userName, setUserName] = useState("");
   const [viewLead, setViewLead] = useState(null);
   const navigate = useNavigate();
@@ -30,7 +31,12 @@ const Leads = () => {
   const [loading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-  const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
+  // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
+  const [counts, setCounts] = useState({
+    total: 0,
+    unassigned: 0,
+    assigned: 0
+  });
   const [formData, setFormData] = useState({
     type: "",
     candidate_name: "",
@@ -80,7 +86,8 @@ const Leads = () => {
         const res = await axios.get(`${BASE_URL}/api/leads/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         })
-        setStats(res.data);
+        // setStats(res.data);
+        setCounts(res.data);
       } catch (error) {
         console.error("Error fetching stats:", error);
       }
@@ -120,43 +127,77 @@ const Leads = () => {
 
 
   useEffect(() => {
-    fetchUnassignedLeads();
+    fetchBackendLeads();
     fetchTeamMember();
     fetchPermissions();
   }, []);
 
-  const fetchUnassignedLeads = async () => {
-    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
-    console.log("User from session:", loggedInUser);
-    console.log("Role From Object:", loggedInUser?.role);
-    console.log("Role Name:", loggedInUser?.role?.name);
-    const roleName = loggedInUser?.role;
+  // const fetchUnassignedLeads = async () => {
+  //   const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+  //   console.log("User from session:", loggedInUser);
+  //   console.log("Role From Object:", loggedInUser?.role);
+  //   console.log("Role Name:", loggedInUser?.role?.name);
+  //   const roleName = loggedInUser?.role;
+  //   console.log("Logged In User In FetchAssign Function:", loggedInUser?.role);
+  //   const token = sessionStorage.getItem("token");
+
+  //   try {
+  //     if (roleName === "Lead_Gen_Manager") {
+
+  //       const unassignedRes = await axios.get(`${BASE_URL}/api/leads/unassigned`, {
+  //         headers: { Authorization: `Bearer ${token}` }
+  //       });
+  //       setAssigns(unassignedRes.data);
+  //       console.log("Unassigned Leads:", unassignedRes.data);
+  //     }
+  //     else if (roleName === "Sales_Manager") {
+  //       const unassignedRes = await axios.get(`${BASE_URL}/api/leads/myleads`, {
+  //         headers: { Authorization: `Bearer ${token}` },
+  //       });
+  //       setAssigns(unassignedRes.data);
+  //       console.log("Sales Manager Unassigned Leads:", unassignedRes.data);
+  //     }
+  //     else {
+  //       setAssigns([]);
+  //     }
+
+  //     const assignedRes = await axios.get(`${BASE_URL}/api/leads/assigned`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     setAssignedLeads(assignedRes.data);
+  //     console.log("Assigned Leads:", assignedRes.data);
+  //   } catch (error) {
+  //     console.error("Error fetching leads:", error.response?.data || error);
+  //   }
+  // }
+
+  const fetchBackendLeads = async () => {
     const token = sessionStorage.getItem("token");
+    console.log("Token:", token);
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+    console.log("LoggedInUser Details:", loggedInUser);
+    const roleName = loggedInUser?.role?.name;
 
     try {
-      if (roleName === "Lead_Gen_Manager") {
-
-        const unassignedRes = await axios.get(`${BASE_URL}/api/leads/unassigned`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setAssigns(unassignedRes.data);
-        console.log("Unassigned Leads:", unassignedRes.data);
-      } else if (roleName === "Sales_Manager") {
-        const sales_manager_leads = await axios.get(`${BASE_URL}/api/leads/myleads`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        setAssigns(sales_manager_leads.data);
-        console.log("Sales Manager Leads:", sales_manager_leads.data);
-      } else {
-        setAssigns([]);
-      }
-
-      const assignedRes = await axios.get(`${BASE_URL}/api/leads/assigned`, {
+      const res = await axios.get(`${BASE_URL}/api/leads/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setAssignedLeads(assignedRes.data);
-      console.log("Assigned Leads:", assignedRes.data);
-    } catch (error) {
+
+      setUnassignedLeads(res.data.unassignedLeads || []);
+      setAssignedLeads(res.data.assignedLeads || []);
+
+      console.log("Unassigned state (after API):", res.data.unassignedLeads);
+      console.log("Assigned state (after API):", res.data.assignedLeads);
+
+      setCounts({
+        total: res.data.total,
+        unassigned: res.data.unassigned,
+        assigned: res.data.assigned
+      });
+
+      console.log(`${roleName} Lead State:`, res.data);
+    }
+    catch (error) {
       console.error("Error fetching leads:", error.response?.data || error);
     }
   }
@@ -264,7 +305,8 @@ const Leads = () => {
         source: "",
         status: ""
       })
-
+      // fetchUnassignedLeads();
+      fetchBackendLeads();
     } catch (error) {
       console.error("Error adding lead:", error.response?.data || error.message);
       alert("Failed to add lead");
@@ -436,10 +478,14 @@ const Leads = () => {
     console.log("Selected Lead ID:", selectedLead, "Selected Member ID:", selectedMember);
 
     try {
+
       const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+      console.log("LoggedIn User:", loggedInUser);
+
       const roleName = loggedInUser?.role?.name;
 
-      const managerId = loggedInUser?._id;
+      const managerId = loggedInUser?._id || loggedInUser.id;
+      console.log("Manager ID:", managerId);
 
       const res = await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
         {
@@ -459,12 +505,13 @@ const Leads = () => {
 
       setFinalLead(null);
       setSelectedMember("");
-      fetchUnassignedLeads();
+      // fetchUnassignedLeads();
+      fetchBackendLeads();
 
       document.getElementById("closeAssignModalBtn").click();
 
     } catch (error) {
-      console.error("Error assigning lead:", error);
+      console.error("Error assigning lead:", error.message);
       alert("Failed to assign lead. Check console for more details")
     }
   };
@@ -601,6 +648,9 @@ const Leads = () => {
     fetchActiveLead();
   }, []);
 
+  console.log("Unassigned state(render):", unassignedLeads);
+  console.log("Assigned state(render):", assignedLeads);
+
   return (
 
     <div className="container-fluid mt-5 px-5">
@@ -612,7 +662,8 @@ const Leads = () => {
               <img src={LeadImg} alt="" className="mb-2 img-fluid" />
               <div>
                 <h6 className="mb-1 text-muted">Total Leads</h6>
-                <h4 className="fw-bold">{stats.total}</h4>
+                {/* <h4 className="fw-bold">{stats.total}</h4> */}
+                <h4 className="fw-bold">{counts.total}</h4>
                 <small className="text-success">16% this month</small>
               </div>
             </div>
@@ -624,7 +675,7 @@ const Leads = () => {
               <img src={LeadImg} alt="" className="mb-2 img-fluid" />
               <div>
                 <h6 className="mb-1 text-muted">Unassign Leads</h6>
-                <h4 className="fw-bold">{stats.unassigned}</h4>
+                <h4 className="fw-bold">{counts.unassigned}</h4>
                 <small className="text-success">16% this month</small>
               </div>
             </div>
@@ -636,7 +687,7 @@ const Leads = () => {
               <img src={LeadImg} alt="" className="mb-2 img-fluid" />
               <div>
                 <h6 className="mb-1 text-center">Assigned Leads</h6>
-                <h4 className="fw-bold">{stats.assigned}</h4>
+                <h4 className="fw-bold">{counts.assigned}</h4>
                 <small className="text-success">16% this month</small>
               </div>
             </div>
@@ -996,7 +1047,7 @@ const Leads = () => {
           <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
             <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
               <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Unassigned Leads</h5>
+                <h5 className="text-left leadManagementTitle mt-4">All Unassigned Leads({counts.unassigned})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
             </div>
@@ -1022,7 +1073,7 @@ const Leads = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {assign.map((a) => (
+                  {unassignedLeads.map((a) => (
                     <tr key={a._id}>
                       <td>
                         <p className="mb-0 text-left tableData">{a.candidate_name}</p>
@@ -1122,7 +1173,7 @@ const Leads = () => {
           <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
             <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
               <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads</h5>
+                <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads({counts.assigned})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
             </div>
