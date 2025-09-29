@@ -132,45 +132,6 @@ const Leads = () => {
     fetchPermissions();
   }, []);
 
-  // const fetchUnassignedLeads = async () => {
-  //   const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
-  //   console.log("User from session:", loggedInUser);
-  //   console.log("Role From Object:", loggedInUser?.role);
-  //   console.log("Role Name:", loggedInUser?.role?.name);
-  //   const roleName = loggedInUser?.role;
-  //   console.log("Logged In User In FetchAssign Function:", loggedInUser?.role);
-  //   const token = sessionStorage.getItem("token");
-
-  //   try {
-  //     if (roleName === "Lead_Gen_Manager") {
-
-  //       const unassignedRes = await axios.get(`${BASE_URL}/api/leads/unassigned`, {
-  //         headers: { Authorization: `Bearer ${token}` }
-  //       });
-  //       setAssigns(unassignedRes.data);
-  //       console.log("Unassigned Leads:", unassignedRes.data);
-  //     }
-  //     else if (roleName === "Sales_Manager") {
-  //       const unassignedRes = await axios.get(`${BASE_URL}/api/leads/myleads`, {
-  //         headers: { Authorization: `Bearer ${token}` },
-  //       });
-  //       setAssigns(unassignedRes.data);
-  //       console.log("Sales Manager Unassigned Leads:", unassignedRes.data);
-  //     }
-  //     else {
-  //       setAssigns([]);
-  //     }
-
-  //     const assignedRes = await axios.get(`${BASE_URL}/api/leads/assigned`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     setAssignedLeads(assignedRes.data);
-  //     console.log("Assigned Leads:", assignedRes.data);
-  //   } catch (error) {
-  //     console.error("Error fetching leads:", error.response?.data || error);
-  //   }
-  // }
-
   const fetchBackendLeads = async () => {
     const token = sessionStorage.getItem("token");
     console.log("Token:", token);
@@ -997,6 +958,7 @@ const Leads = () => {
                               if (window.confirm("Are you sure?")) {
                                 await deleteLead(lead._id);
                                 setLeads(leads.filter(l => l._id !== lead._id));
+                                fetchBackendLeads();
                               }
                             }}>
                             Delete
