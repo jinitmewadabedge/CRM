@@ -3,10 +3,16 @@ import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
 import { FaPlus, FaDownload, FaFileCsv, FaFileExcel } from "react-icons/fa";
 import "bootstrap-icons/font/bootstrap-icons.css";
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
 import * as XLSX from 'xlsx';
 import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, FaArrowUp } from "react-icons/fa";
+// import LinuxCard from "../../components/LinuxCard";
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+import MyLoader from '../../components/Lead/MyLoader'
 
 const Leads = () => {
   const { id } = useParams();
@@ -26,9 +32,12 @@ const Leads = () => {
   const navigate = useNavigate();
   const [totalLeads, SetTotalLeads] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentUnassignedPage, setCurrentUnassignedPage] = useState(1);
+  const [currentAssignedPage, setCurrentAssignedPage] = useState(1);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [sqaureLoading, setSquareLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
@@ -82,12 +91,14 @@ const Leads = () => {
   useEffect(() => {
     const fetchState = async () => {
       try {
+        setSquareLoading(false);
         const token = sessionStorage.getItem("token");
         const res = await axios.get(`${BASE_URL}/api/leads/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         // setStats(res.data);
         setCounts(res.data);
+        setSquareLoading(true);
       } catch (error) {
         console.error("Error fetching stats:", error);
       }
@@ -140,6 +151,9 @@ const Leads = () => {
     const roleName = loggedInUser?.role?.name;
 
     try {
+
+      setSquareLoading(true);
+
       const res = await axios.get(`${BASE_URL}/api/leads/stats`, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -160,6 +174,9 @@ const Leads = () => {
     }
     catch (error) {
       console.error("Error fetching leads:", error.response?.data || error);
+    }
+    finally {
+      setSquareLoading(false);
     }
   }
 
@@ -198,8 +215,6 @@ const Leads = () => {
       console.error("Error fetching team members:", error);
     }
   };
-
-
 
   const fetchPermissions = async () => {
     try {
@@ -299,6 +314,7 @@ const Leads = () => {
 
   const handleRefresh = async () => {
     try {
+      setSquareLoading(true);
       setLoading(true);
       const res = await axios.get(`${BASE_URL}/api/leads`);
       console.log("Lead fetched:", res.data);
@@ -310,6 +326,7 @@ const Leads = () => {
     } catch (err) {
       console.error("Error refreshing users:", err);
     } finally {
+      setSquareLoading(true);
       setLoading(false);
     }
   };
@@ -550,7 +567,19 @@ const Leads = () => {
   const indexOfFirstLead = indexOfLastLead - leadsPerPage;
   const currentLeads = filteredLeads.slice(indexOfFirstLead, indexOfLastLead);
 
+  const indexOfLastUnassignedLeads = currentUnassignedPage * leadsPerPage;
+  const indexOfFirstUnassignedLeads = indexOfLastUnassignedLeads - leadsPerPage;
+  const currentUnassignedLeads = unassignedLeads.slice(indexOfFirstUnassignedLeads, indexOfLastUnassignedLeads);
+  console.log("Unassigned Leads:", unassignedLeads);
+  console.log("Current Unassigned Leads:", currentUnassignedLeads);
+
+  const indexOfLastAssignedLeads = currentAssignedPage * leadsPerPage;
+  const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
+  const currentAssignedLeads = assignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
+
   const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
+  const totalUnassignedPages = Math.ceil(unassignedLeads.length / leadsPerPage);
+  const totalAssignedPages = Math.ceil(assignedLeads.length / leadsPerPage);
 
 
   useEffect(() => {
@@ -619,39 +648,50 @@ const Leads = () => {
         <h4 className='mt-4 text-left adminDashboardTitle'>Hello, {userName || "User"} {" "} <img src={LeadImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }} /> ,</h4>
         <div className="col-12 col-md-4 m-0 mb-2">
           <div className="rounded-4 bg-white shadow-sm py-4 h-100">
-            <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-              <img src={LeadImg} alt="" className="mb-2 img-fluid" />
-              <div>
-                <h6 className="mb-1 text-muted">Total Leads</h6>
-                {/* <h4 className="fw-bold">{stats.total}</h4> */}
-                <h4 className="fw-bold">{counts.total}</h4>
-                <small className="text-success">16% this month</small>
+            {loading ? (
+              <span className="squareLoader"></span>
+            ) : (
+              <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                <div>
+                  <h6 className="mb-1 text-muted">Total Leads</h6>
+                  <h4 className="fw-bold">{counts.total} </h4>
+                  < small className="text-success">16% this month</small>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
         <div className="col-12 col-md-4 m-0 mb-2">
           <div className="rounded-4 bg-white shadow-sm py-4 h-100">
-            <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-              <img src={LeadImg} alt="" className="mb-2 img-fluid" />
-              <div>
-                <h6 className="mb-1 text-muted">Unassign Leads</h6>
-                <h4 className="fw-bold">{counts.unassigned}</h4>
-                <small className="text-success">16% this month</small>
+            {loading ? (
+              <span className="squareLoader"></span>
+            ) : (
+              <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                <div>
+                  <h6 className="mb-1 text-muted">Unassign Leads</h6>
+                  <h4 className="fw-bold">{counts.unassigned}</h4>
+                  <small className="text-success">16% this month</small>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
         <div className="col-12 col-md-4 m-0 mb-2">
           <div className="rounded-4 bg-white shadow-sm py-4 h-100">
-            <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-              <img src={LeadImg} alt="" className="mb-2 img-fluid" />
-              <div>
-                <h6 className="mb-1 text-center">Assigned Leads</h6>
-                <h4 className="fw-bold">{counts.assigned}</h4>
-                <small className="text-success">16% this month</small>
+            {loading ? (
+              <span className="squareLoader"></span>
+            ) : (
+              <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                <div>
+                  <h6 className="mb-1 text-center">Assigned Leads</h6>
+                  <h4 className="fw-bold">{counts.assigned}</h4>
+                  <small className="text-success">16% this month</small>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -824,7 +864,6 @@ const Leads = () => {
                   </label>
                 )}
 
-
                 {permissions?.lead?.export && (
                   <button className="btn btn-outline-primary btn-sm csvFont exportLead me-1" onClick={exportToCSV}>
                     <FaArrowUp />  Export Leads to CSV
@@ -840,12 +879,10 @@ const Leads = () => {
             </div>
 
             {loading ? (
-              <div className="text-center mt-3">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden"></span>
-                </div>
-                <p>Loading Leads....</p>
-              </div>
+              <MyLoader
+                rowHeight={40}
+                rowCount={5}
+                columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
             ) : (
               <div className="table-container">
                 <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
@@ -1014,46 +1051,52 @@ const Leads = () => {
               </div>
             </div>
 
-            <div className="table-container">
-              <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    <th className="text-left tableHeader">Phone No</th>
-                    <th className="text-left tableHeader">Actions</th>
-                    {/* <th className="text-left tableHeader">Lead Type</th> */}
-                    {/* <th className="text-left tableHeader">URL</th> */}
-                    {/* <th className="text-left tableHeader">University</th> */}
-                    {/* <th className="text-left tableHeader">Technology</th> */}
-                    {/* <th className="text-left tableHeader">Visa</th> */}
-                    {/* <th className="text-left tableHeader">Preferred Time</th> */}
-                    {/* <th className="text-left tableHeader">Source</th> */}
-                    {/* <th className="text-center tableHeader">Status</th> */}
-                    {/* <th className="text-left tableHeader">Created At</th> */}
-                    {/* <th className="text-left tableHeader">Updated At</th> */}
-                  </tr>
-                </thead>
-                <tbody>
-                  {unassignedLeads.map((a) => (
-                    <tr key={a._id}>
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.candidate_name}</p>
-                      </td>
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.candidate_email}</p>
-                      </td>
-                      {/* <td>
+            {loading ? (
+              <MyLoader
+                rowHeight={40}
+                rowCount={5}
+                columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
+            ) : (
+              <div className="table-container">
+                <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="text-left tableHeader">Name</th>
+                      <th className="text-left tableHeader">Email</th>
+                      <th className="text-left tableHeader">Phone No</th>
+                      <th className="text-left tableHeader">Actions</th>
+                      {/* <th className="text-left tableHeader">Lead Type</th> */}
+                      {/* <th className="text-left tableHeader">URL</th> */}
+                      {/* <th className="text-left tableHeader">University</th> */}
+                      {/* <th className="text-left tableHeader">Technology</th> */}
+                      {/* <th className="text-left tableHeader">Visa</th> */}
+                      {/* <th className="text-left tableHeader">Preferred Time</th> */}
+                      {/* <th className="text-left tableHeader">Source</th> */}
+                      {/* <th className="text-center tableHeader">Status</th> */}
+                      {/* <th className="text-left tableHeader">Created At</th> */}
+                      {/* <th className="text-left tableHeader">Updated At</th> */}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentUnassignedLeads.map((a) => (
+                      <tr key={a._id}>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                        </td>
+                        {/* <td>
                         <p className="mb-0 text-left tableData">{a.type}</p>
                       </td> */}
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
-                      </td>
-                      <td>
-                        <button className="btn btn-sm btn-success" onClick={() => setSelectedLead(a._id)} data-bs-toggle="modal" data-bs-target="#assignLeadModal">Assign</button>
-                      </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                        </td>
+                        <td>
+                          <button className="btn btn-sm btn-success" onClick={() => setSelectedLead(a._id)} data-bs-toggle="modal" data-bs-target="#assignLeadModal">Assign</button>
+                        </td>
 
-                      {/* <td className="text-left tableData">
+                        {/* <td className="text-left tableData">
                         <button
                           type="button"
                           className="btn btn-outline-primary btn-sm btn-rounded me-2"
@@ -1061,185 +1104,6 @@ const Leads = () => {
                         >
                           View
                         </button> */}
-
-                      {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
-
-                      {/* <button
-                        type="button"
-                        className="btn btn-outline-success btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
-                      >
-                        Edit
-                      </button> */}
-
-                      {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
-
-                        <button type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={async () => {
-                            if (window.confirm("Are you sure?")) {
-                              await deleteLead(lead._id);
-                              setLeads(leads.filter(l => l._id !== lead._id));
-                            }
-                          }}>
-                          Delete
-                        </button> */}
-                      {/* </td> */}
-                    </tr>
-                  ))}
-                </tbody>
-
-              </table>
-
-              {finalLead && (
-                <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
-                  <h3>Assign Lead</h3>
-                  <select
-                    value={selectedMember}
-                    onChange={(e) => setSelectedMember(e.target.value)}
-                  >
-                    <option value="">Select Team Member</option>
-                    {teamMembers
-                      .filter((member) => {
-
-                        const roleName = JSON.parse(sessionStorage.getItem("user"))?.role?.name;
-
-                        console.log("Member:", member.name, "Role:", member.role?.name);
-
-                        if (!member.role?.name) return false;
-
-                        if (roleName === "Lead_Gen_Manager") {
-                          return member.role?.name === "Sales_Manager";  // LGM → sirf Sales Manager
-                        }
-                        if (roleName === "Sales_Manager") {
-                          return member.role?.name === "Sales";         // Sales Manager → sirf Sales team
-                        }
-                        return false;
-                      })
-                      .map((member) => (
-                        <option key={member._id} value={member._id}>{member.name}</option>
-                      ))}
-
-                  </select>
-                  <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
-                  <button onClick={() => setFinalLead(null)}>Cancel</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Assigned Leads */}
-
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads({counts.assigned})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
-              </div>
-            </div>
-
-            <div className="table-container">
-              <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    {/* <th className="text-left tableHeader">Lead Type</th> */}
-                    <th className="text-left tableHeader">Phone No</th>
-                    {/* <th className="text-left tableHeader">URL</th> */}
-                    {/* <th className="text-left tableHeader">University</th> */}
-                    {/* <th className="text-left tableHeader">Technology</th> */}
-                    {/* <th className="text-left tableHeader">Visa</th> */}
-                    {/* <th className="text-left tableHeader">Preferred Time</th> */}
-                    {/* <th className="text-left tableHeader">Source</th> */}
-                    {/* <th className="text-center tableHeader">Status</th> */}
-                    {/* <th className="text-left tableHeader">Created At</th> */}
-                    {/* <th className="text-left tableHeader">Updated At</th> */}
-                    <th className="text-left tableHeader">Assigned To</th>
-                    <th className="text-left tableHeader">Assigned By</th>
-                    {/* <th className="text-left tableHeader">Actions</th> */}
-                  </tr>
-                </thead>
-                <tbody>
-                  {assignedLeads.map((a) => (
-                    <tr key={a._id}>
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.candidate_name}</p>
-                      </td>
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.candidate_email}</p>
-                      </td>
-                      {/* <td>
-                        <p className="mb-0 text-left tableData">{a.type}</p>
-                      </td> */}
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
-                      </td>
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
-                      </td>
-                      <td>
-                        <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
-                      </td>
-                      {/* <td>
-                        <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
-                      </td> */}
-                      {/* <td>
-                    <p className="mb-0 text-left tableData">{lead.university}</p>
-                  </td> */}
-                      {/* <td className="text-left tableData">
-                        {Array.isArray(a.technology)
-                          ? a.technology.join(", ")
-                          : a.technology}
-                      </td> */}
-                      {/* <td className="text-left tableData">
-                        <p className="mb-0">{a.visa}</p>
-                      </td> */}
-                      {/* <td className="text-left tableData">
-                        <p className="mb-0">{a.preferred_time_to_talk}</p>
-                      </td> */}
-                      {/* <td className="text-left tableData">
-                    <p className="mb-0">{lead.source}</p>
-                  </td> */}
-                      {/* <td className="text-center">
-                        <span
-                          className={`badge status-badge px-2 py-2 d-flex gap-2
-                            ${a.status === "New" ? "bg-new" :
-                              a.status === "Connected" ? "bg-connected" :
-                                a.status === "In Progress" ? "bg-inprogress" :
-                                  a.status === "Shortlisted" ? "bg-shortlisted text-dark" :
-                                    a.status === "Rejected" ? "bg-rejected" :
-                                      a.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
-                        >
-                          {a.status === "New" && <FaLink />}
-                          {a.status === "Connected" && <FaCheckCircle />}
-                          {a.status === "In Progress" && <FaHourglassHalf />}
-                          {a.status === "Shortlisted" && <FaStar />}
-                          {a.status === "Rejected" && <FaTimesCircle />}
-                          {a.status === "Converted" && <FaUserCheck />}
-
-                          {a.status}
-                        </span>
-                      </td> */}
-
-
-                      {/* <td className="text-left tableData">
-                        <p className="mb-0">{formatDateTimeIST(a.createdAt)}</p>
-                      </td> */}
-                      {/* <td className="text-left tableData">
-                        <p className="mb-0">{formatDateTimeIST(a.updatedAt)}</p>
-                      </td> */}
-
-                      <td className="text-left tableData">
-                        {/* <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/${lead._id}`)}
-                      >
-                        View
-                      </button> */}
 
                         {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
 
@@ -1263,90 +1127,331 @@ const Leads = () => {
                           }}>
                           Delete
                         </button> */}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
+                        {/* </td> */}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
 
-              </table>
+                {
+                  finalLead && (
+                    <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
+                      <h3>Assign Lead</h3>
+                      <select
+                        value={selectedMember}
+                        onChange={(e) => setSelectedMember(e.target.value)}
+                      >
+                        <option value="">Select Team Member</option>
+                        {teamMembers
+                          .filter((member) => {
 
-              <div
-                className="modal fade"
-                id="assignLeadModal"
-                tabIndex="-1"
-                aria-hidden="true"
+                            const roleName = JSON.parse(sessionStorage.getItem("user"))?.role?.name;
+
+                            console.log("Member:", member.name, "Role:", member.role?.name);
+
+                            if (!member.role?.name) return false;
+
+                            if (roleName === "Lead_Gen_Manager") {
+                              return member.role?.name === "Sales_Manager";  // LGM → sirf Sales Manager
+                            }
+                            if (roleName === "Sales_Manager") {
+                              return member.role?.name === "Sales";         // Sales Manager → sirf Sales team
+                            }
+                            return false;
+                          })
+                          .map((member) => (
+                            <option key={member._id} value={member._id}>{member.name}</option>
+                          ))}
+
+                      </select>
+                      <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
+                      <button onClick={() => setFinalLead(null)}>Cancel</button>
+                    </div>
+                  )
+                }
+              </div >
+            )}
+            <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
+              <button
+                className="btn btn-sm btn-outline-primary me-2"
+                disabled={currentUnassignedPage === 1}
+                onClick={() => setCurrentUnassignedPage(currentUnassignedPage - 1)}
               >
-                <div className="modal-dialog modal-dialog-centered modal-md" role="document">
-                  <div className="modal-content">
-                    <div className="modal-body p-0">
-                      <div className="card card-plain">
-                        <h3 className="modal-title mt-3 mb-2 text-center">Assign Lead</h3>
+                Previous
+              </button>
 
-                        <div className="card-body">
-                          {selectedLead ? (
-                            <form className="card p-3 shadow-sm border-0">
-                              {/* Dropdown */}
-                              <label className="form-label form-label-sm fw-bold">Select Team Member</label>
-                              <div className="input-group mb-3">
-                                <select
-                                  className="form-select form-select-sm"
-                                  value={selectedMember}
-                                  onChange={(e) => setSelectedMember(e.target.value)}
-                                >
-                                  <option value="">-- Choose Team Member --</option>
-                                  {teamMembers.map((member) => (
-                                    <option key={member._id} value={member._id}>
-                                      {member.name} ({member.role?.name})
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
+              {[...Array(totalUnassignedPages)].map((_, index) => (
+                <button
+                  key={index}
+                  className={`btn btn-sm me-1 ${currentUnassignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                  onClick={() => setCurrentUnassignedPage(index + 1)}
+                >
+                  {index + 1}
+                </button>
+              ))}
 
-                              <div className="d-flex gap-2">
-                                <button
-                                  type="button"
-                                  id="closeAssignModalBtn"
-                                  className="d-none"
-                                  data-bs-dismiss="modal"
-                                ></button>
-                                <button
-                                  type="button"
-                                  className="btn btn-primary w-50 btn-sm"
-                                  onClick={handleAssign}
-                                  disabled={!selectedMember}
-                                >
-                                  <i className="bi bi-check-circle me-2"></i>
-                                  Confirm
-                                </button>
-                                <button
-                                  type="button"
-                                  className="btn btn-outline-secondary w-50 btn-sm"
-                                  data-bs-dismiss="modal"
-                                  onClick={() => setSelectedLead(null)}
-                                >
-                                  <i className="bi bi-x-circle me-2"></i>
-                                  Cancel
-                                </button>
-                              </div>
-                            </form>
-                          ) : (
-                            <h5 className="text-center my-4">Loading...</h5>
-                          )}
+              <button
+                className="btn btn-sm btn-outline-primary ms-2"
+                disabled={currentUnassignedPage === totalUnassignedPages}
+                onClick={() => setCurrentUnassignedPage(currentUnassignedPage + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </div >
+        </div >
+
+        {/* Assigned Leads */}
+
+        <div className="col-12 col-md-8 col-lg-12 mt-2" >
+          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads({counts.assigned})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+            </div>
+
+            {loading ? (
+              <MyLoader
+                rowHeight={40}
+                rowCount={5}
+                columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
+            ) : (
+              <div className="table-container">
+                <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="text-left tableHeader">Name</th>
+                      <th className="text-left tableHeader">Email</th>
+                      {/* <th className="text-left tableHeader">Lead Type</th> */}
+                      <th className="text-left tableHeader">Phone No</th>
+                      {/* <th className="text-left tableHeader">URL</th> */}
+                      {/* <th className="text-left tableHeader">University</th> */}
+                      {/* <th className="text-left tableHeader">Technology</th> */}
+                      {/* <th className="text-left tableHeader">Visa</th> */}
+                      {/* <th className="text-left tableHeader">Preferred Time</th> */}
+                      {/* <th className="text-left tableHeader">Source</th> */}
+                      {/* <th className="text-center tableHeader">Status</th> */}
+                      {/* <th className="text-left tableHeader">Created At</th> */}
+                      {/* <th className="text-left tableHeader">Updated At</th> */}
+                      <th className="text-left tableHeader">Assigned To</th>
+                      <th className="text-left tableHeader">Assigned By</th>
+                      {/* <th className="text-left tableHeader">Actions</th> */}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {currentAssignedLeads.map((a) => (
+                      <tr key={a._id}>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                        </td>
+                        {/* <td>
+                        <p className="mb-0 text-left tableData">{a.type}</p>
+                      </td> */}
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
+                        </td>
+                        {/* <td>
+                        <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
+                      </td> */}
+                        {/* <td>
+                    <p className="mb-0 text-left tableData">{lead.university}</p>
+                  </td> */}
+                        {/* <td className="text-left tableData">
+                        {Array.isArray(a.technology)
+                          ? a.technology.join(", ")
+                          : a.technology}
+                      </td> */}
+                        {/* <td className="text-left tableData">
+                        <p className="mb-0">{a.visa}</p>
+                      </td> */}
+                        {/* <td className="text-left tableData">
+                        <p className="mb-0">{a.preferred_time_to_talk}</p>
+                      </td> */}
+                        {/* <td className="text-left tableData">
+                    <p className="mb-0">{lead.source}</p>
+                  </td> */}
+                        {/* <td className="text-center">
+                        <span
+                          className={`badge status-badge px-2 py-2 d-flex gap-2
+                            ${a.status === "New" ? "bg-new" :
+                              a.status === "Connected" ? "bg-connected" :
+                                a.status === "In Progress" ? "bg-inprogress" :
+                                  a.status === "Shortlisted" ? "bg-shortlisted text-dark" :
+                                    a.status === "Rejected" ? "bg-rejected" :
+                                      a.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
+                        >
+                          {a.status === "New" && <FaLink />}
+                          {a.status === "Connected" && <FaCheckCircle />}
+                          {a.status === "In Progress" && <FaHourglassHalf />}
+                          {a.status === "Shortlisted" && <FaStar />}
+                          {a.status === "Rejected" && <FaTimesCircle />}
+                          {a.status === "Converted" && <FaUserCheck />}
+
+                          {a.status}
+                        </span>
+                      </td> */}
+
+
+                        {/* <td className="text-left tableData">
+                        <p className="mb-0">{formatDateTimeIST(a.createdAt)}</p>
+                      </td> */}
+                        {/* <td className="text-left tableData">
+                        <p className="mb-0">{formatDateTimeIST(a.updatedAt)}</p>
+                      </td> */}
+
+                        <td className="text-left tableData">
+                          {/* <button
+                        type="button"
+                        className="btn btn-outline-primary btn-sm btn-rounded me-2"
+                        onClick={() => navigate(`/leads/${lead._id}`)}
+                      >
+                        View
+                      </button> */}
+
+                          {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
+
+                          {/* <button
+                        type="button"
+                        className="btn btn-outline-success btn-sm btn-rounded me-2"
+                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
+                      >
+                        Edit
+                      </button> */}
+
+                          {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
+
+                        <button type="button"
+                          className="btn btn-outline-danger btn-sm"
+                          onClick={async () => {
+                            if (window.confirm("Are you sure?")) {
+                              await deleteLead(lead._id);
+                              setLeads(leads.filter(l => l._id !== lead._id));
+                            }
+                          }}>
+                          Delete
+                        </button> */}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+
+                </table>
+
+                <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
+                  <button
+                    className="btn btn-sm btn-outline-primary me-2"
+                    disabled={currentAssignedPage === 1}
+                    onClick={() => setCurrentAssignedPage(currentAssignedPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalAssignedPages)].map((_, index) => (
+                    <button
+                      key={index}
+                      className={`btn btn-sm me-1 ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setCurrentAssignedPage(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary ms-2"
+                    disabled={currentAssignedPage === totalAssignedPages}
+                    onClick={() => setCurrentAssignedPage(currentAssignedPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+
+                <div
+                  className="modal fade"
+                  id="assignLeadModal"
+                  tabIndex="-1"
+                  aria-hidden="true"
+                >
+                  <div className="modal-dialog modal-dialog-centered modal-md" role="document">
+                    <div className="modal-content">
+                      <div className="modal-body p-0">
+                        <div className="card card-plain">
+                          <h3 className="modal-title mt-3 mb-2 text-center">Assign Lead</h3>
+
+                          <div className="card-body">
+                            {selectedLead ? (
+                              <form className="card p-3 shadow-sm border-0">
+                                {/* Dropdown */}
+                                <label className="form-label form-label-sm fw-bold">Select Team Member</label>
+                                <div className="input-group mb-3">
+                                  <select
+                                    className="form-select form-select-sm"
+                                    value={selectedMember}
+                                    onChange={(e) => setSelectedMember(e.target.value)}
+                                  >
+                                    <option value="">-- Choose Team Member --</option>
+                                    {teamMembers.map((member) => (
+                                      <option key={member._id} value={member._id}>
+                                        {member.name} ({member.role?.name})
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+
+                                <div className="d-flex gap-2">
+                                  <button
+                                    type="button"
+                                    id="closeAssignModalBtn"
+                                    className="d-none"
+                                    data-bs-dismiss="modal"
+                                  ></button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-primary w-50 btn-sm"
+                                    onClick={handleAssign}
+                                    disabled={!selectedMember}
+                                  >
+                                    <i className="bi bi-check-circle me-2"></i>
+                                    Confirm
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="btn btn-outline-secondary w-50 btn-sm"
+                                    data-bs-dismiss="modal"
+                                    onClick={() => setSelectedLead(null)}
+                                  >
+                                    <i className="bi bi-x-circle me-2"></i>
+                                    Cancel
+                                  </button>
+                                </div>
+                              </form>
+                            ) : (
+                              <h5 className="text-center my-4">Loading...</h5>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-      </div>
+              </div >
+            )}
+          </div >
+        </div >
+      </div >
 
       {/* EDIT LEAD MODAL */}
-      <div className="modal fade" id="editLead" tabIndex="-1">
+      < div className="modal fade" id="editLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-md" role="document">
           <div className="modal-content">
             <div className="modal-body p-0">
@@ -1542,10 +1647,10 @@ const Leads = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* ADD LEAD MODAL */}
-      <div className="modal fade" id="addNewLead" tabIndex="-1">
+      < div className="modal fade" id="addNewLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-md" role="document">
           <div className="modal-content">
             <div className="modal-body p-0">
@@ -1711,10 +1816,10 @@ const Leads = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div >
 
       {/* View Lead Modal */}
-      <div className="modal fade" id="viewLead" tabIndex="-1" aria-hidden="true">
+      < div className="modal fade" id="viewLead" tabIndex="-1" hidden="true" >
         <div className="modal-dialog modal-dialog-centered modal-md" role="document">
           <div className="modal-content">
             <div className="modal-body p-0">
@@ -1826,8 +1931,7 @@ const Leads = () => {
             </div>
           </div>
         </div>
-      </div>
-
+      </div >
 
     </div >
   )
