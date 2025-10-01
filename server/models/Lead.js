@@ -42,18 +42,48 @@ const leadSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["New", "Connected", "In Progress", "Shortlisted", "Rejected", "Converted","Assigned"],
+        enum: ["New", "Connected", "In Discussion", "Interested", "Not Interested", "Enrolled", "Plan Selected", "Upfront Paid", "Rejected", "Converted", "Assigned"],
         default: "New"
     },
-    notes: [
+    callHistory: [
         {
-            body: String,
+            outcome: {
+                type: String,
+                enum: ["Not Interested", "Interested", "In Discussion", "Follow-up"],
+                required: true
+            },
             date: {
                 type: Date,
                 default: Date.now
+            },
+            time: String,
+            duration: String,
+            notes: String,
+            salesPerson: {
+                type: mongoose.Schema.ObjectId,
+                ref: "User"
             }
         }
     ],
+    enrollment: {
+        enrolledAt: Date,
+        plan: {
+            type: String
+        },
+        upfrontPaid: {
+            type: Boolean,
+            default: false
+        }
+    },
+    // notes: [
+    //     {
+    //         body: String,
+    //         date: {
+    //             type: Date,
+    //             default: Date.now
+    //         }
+    //     }
+    // ],
     owner: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User"
@@ -70,10 +100,10 @@ const leadSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Team"
     },
-    assignToSales: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    },
+    // assignToSales: {
+    //     type: mongoose.Schema.Types.ObjectId,
+    //     ref: "User"
+    // },
     assignedBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",

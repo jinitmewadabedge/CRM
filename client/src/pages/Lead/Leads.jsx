@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
-import { FaPlus, FaDownload, FaFileCsv, FaFileExcel } from "react-icons/fa";
+import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaArrowRight } from "react-icons/fa";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
@@ -39,6 +39,11 @@ const Leads = () => {
   const [loading, setLoading] = useState(false);
   const [sqaureLoading, setSquareLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
+  const [outcome, setOutcome] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
+  const [duration, setDuration] = useState("");
+  const [notes, setNotes] = useState("");
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
   const [counts, setCounts] = useState({
@@ -723,7 +728,7 @@ const Leads = () => {
             </div>
             <div className="d-flex flex-wrap gap-2 mx-3 my-2 filterContainer">
               <select
-                className="form-select form-select-sm w-auto leadType"
+                className="form-select form-select-sm w-auto leadType selectFont"
                 value={filters.type}
                 onChange={(e) => setFilters({ ...filters, type: e.target.value })}
               >
@@ -734,12 +739,13 @@ const Leads = () => {
               </select>
 
               <select
-                className="form-select form-select-sm w-auto status"
+                className="form-select form-select-sm w-auto status selectFont"
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
               >
                 <option value="">Status</option>
                 <option value="New">New</option>
+                <option value="Assigned">Assigned</option>
                 <option value="Connected">Connected</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Shortlisted">Shortlisted</option>
@@ -748,7 +754,7 @@ const Leads = () => {
               </select>
 
               <select
-                className="form-select form-select-sm w-auto allVisa"
+                className="form-select form-select-sm w-auto allVisa selectFont"
                 value={filters.visa}
                 onChange={(e) => setFilters({ ...filters, visa: e.target.value })}
               >
@@ -763,31 +769,31 @@ const Leads = () => {
 
               <input
                 type="date"
-                className="form-control form-control-sm w-auto startDate"
+                className="form-control form-control-sm w-auto startDate selectFont"
                 value={filters.startDate}
                 onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
               />
 
               <input type="date"
-                className="form-control form-control-sm w-auto endDate"
+                className="form-control form-control-sm w-auto endDate selectFont"
                 value={filters.endDate}
                 onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
               />
 
               <input type="time"
-                className="form-control form-control-sm w-auto startTime"
+                className="form-control form-control-sm w-auto startTime selectFont"
                 value={filters.startTime}
                 onChange={(e) => setFilters({ ...filters, startTime: e.target.value })}
               />
 
               <input type="time"
-                className="form-control form-control-sm w-auto endTime"
+                className="form-control form-control-sm w-auto endTime selectFont"
                 value={filters.endTime}
                 onChange={(e) => setFilters({ ...filters, endTime: e.target.value })}
               />
 
               <select
-                className="form-select form-select-sm w-auto dateSort"
+                className="form-select form-select-sm w-auto dateSort selectFont"
                 value={filters.dateSort}
                 onChange={(e) => setFilters({ ...filters, dateSort: e.target.value })}
               >
@@ -798,7 +804,7 @@ const Leads = () => {
 
 
               <select
-                className="form-select form-select-sm w-auto sortByOrder"
+                className="form-select form-select-sm w-auto sortByOrder selectFont"
                 value={filters.sortOrder}
                 onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
               >
@@ -807,7 +813,7 @@ const Leads = () => {
                 <option value="desc">Desc</option>
               </select>
 
-              <select className="form-select form-select-sm w-auto sortField"
+              <select className="form-select form-select-sm w-auto sortField selectFont"
                 value={filters.sortField}
                 onChange={(e) => setFilters({ ...filters, sortField: e.target.value })}
               >
@@ -893,11 +899,11 @@ const Leads = () => {
                       <th className="text-left tableHeader">Lead Type</th>
                       <th className="text-left tableHeader">Phone No</th>
                       <th className="text-left tableHeader">URL</th>
-                      {/* <th className="text-left tableHeader">University</th> */}
+                      <th className="text-left tableHeader">University</th>
                       <th className="text-left tableHeader">Technology</th>
                       <th className="text-left tableHeader">Visa</th>
                       <th className="text-left tableHeader">Preferred Time</th>
-                      {/* <th className="text-left tableHeader">Source</th> */}
+                      <th className="text-left tableHeader">Source</th>
                       <th className="text-center tableHeader">Status</th>
                       <th className="text-left tableHeader">Created At</th>
                       <th className="text-left tableHeader">Updated At</th>
@@ -922,9 +928,9 @@ const Leads = () => {
                         <td>
                           <p className="mb-0 text-left tableData">{lead.linked_in_url}</p>
                         </td>
-                        {/* <td>
-                    <p className="mb-0 text-left tableData">{lead.university}</p>
-                  </td> */}
+                        <td>
+                          <p className="mb-0 text-left tableData">{lead.university}</p>
+                        </td>
                         <td className="text-left tableData">
                           {Array.isArray(lead.technology)
                             ? lead.technology.join(", ")
@@ -936,9 +942,9 @@ const Leads = () => {
                         <td className="text-left tableData">
                           <p className="mb-0">{lead.preferred_time_to_talk}</p>
                         </td>
-                        {/* <td className="text-left tableData">
-                    <p className="mb-0">{lead.source}</p>
-                  </td> */}
+                        <td className="text-left tableData">
+                          <p className="mb-0">{lead.source}</p>
+                        </td>
                         <td className="text-center">
                           <span
                             className={`badge status-badge px-2 py-2 d-flex gap-2
@@ -947,7 +953,8 @@ const Leads = () => {
                                   lead.status === "In Progress" ? "bg-inprogress" :
                                     lead.status === "Shortlisted" ? "bg-shortlisted text-dark" :
                                       lead.status === "Rejected" ? "bg-rejected" :
-                                        lead.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
+                                        lead.status === "Assigned" ? "bg-success" :
+                                          lead.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
                           >
                             {lead.status === "New" && <FaLink />}
                             {lead.status === "Connected" && <FaCheckCircle />}
@@ -955,6 +962,7 @@ const Leads = () => {
                             {lead.status === "Shortlisted" && <FaStar />}
                             {lead.status === "Rejected" && <FaTimesCircle />}
                             {lead.status === "Converted" && <FaUserCheck />}
+                            {lead.status === "Assigned" && <FaCheckCircle />}
 
                             {lead.status}
                           </span>
@@ -1152,10 +1160,10 @@ const Leads = () => {
                             if (!member.role?.name) return false;
 
                             if (roleName === "Lead_Gen_Manager") {
-                              return member.role?.name === "Sales_Manager";  // LGM → sirf Sales Manager
+                              return member.role?.name === "Sales_Manager";
                             }
                             if (roleName === "Sales_Manager") {
-                              return member.role?.name === "Sales";         // Sales Manager → sirf Sales team
+                              return member.role?.name === "Sales";
                             }
                             return false;
                           })
@@ -1464,12 +1472,12 @@ const Leads = () => {
 
                         <label htmlFor="" className="form-check-label">Candidate Name</label>
                         <div className="input-group mb-3">
-                          <input name="candidate_name" type="text" value={selectedLead?.candidate_name} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_name: e.target.value })} className="form-control form-control-sm" placeholder="Email" required />
+                          <input name="candidate_name" type="text" value={selectedLead?.candidate_name} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_name: e.target.value })} className="form-control form-control-sm selectFont" placeholder="Email" required />
                         </div>
 
                         <label htmlFor="" className="form-check-label">Email</label>
                         <div className="input-group mb-3">
-                          <input name="candidate_email" type="email" value={selectedLead?.candidate_email} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_email: e.target.value })} className="form-control form-control-sm" placeholder="Password" />
+                          <input name="candidate_email" type="email" value={selectedLead?.candidate_email} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_email: e.target.value })} className="form-control form-control-sm selectFont" placeholder="Password" />
                         </div>
 
                         <label htmlFor="" className="form-check-label">Phone</label>
@@ -1479,7 +1487,7 @@ const Leads = () => {
                             name="candidate_phone_no"
                             maxLength="10"
                             placeholder="Phone No"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             value={selectedLead?.candidate_phone_no}
                             onChange={(e) => setSelectedLead({ ...selectedLead, candidate_phone_no: e.target.value })}
                             required
@@ -1491,7 +1499,7 @@ const Leads = () => {
                           <input
                             type="url"
                             name="linked_in_url"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             placeholder="LinkedIn URL"
                             value={selectedLead?.linked_in_url}
                             onChange={(e) => setSelectedLead({ ...selectedLead, linked_in_url: e.target.value })}
@@ -1503,7 +1511,7 @@ const Leads = () => {
                           <input
                             type="text"
                             name="university"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             placeholder="University"
                             value={selectedLead?.university}
                             onChange={(e) => setSelectedLead({ ...selectedLead, university: e.target.value })}
@@ -1515,7 +1523,7 @@ const Leads = () => {
                           <input
                             type="text"
                             name="technology"
-                            className="form-control form-control-sm w-100"
+                            className="form-control form-control-sm w-100 selectFont"
                             value={selectedLead?.technology}
                             onChange={(e) => setSelectedLead({ ...selectedLead, technology: e.target.value })}
                             placeholder="e.g React, Node, Angular"
@@ -1527,21 +1535,21 @@ const Leads = () => {
                         <div className="input-group mb-3">
                           <select
                             name="visa"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             value={selectedLead?.visa}
                             onChange={(e) => setSelectedLead({ ...selectedLead, visa: e.target.value })}
                             required
                           >
-                            <option value="">----Select Type----</option>
-                            <option value="All Visa">All Visa</option>
-                            <option value="H1B">H1B</option>
-                            <option value="F1">F1</option>
-                            <option value="OCI">OCI</option>
-                            <option value="Tier 2">Tier 2</option>
-                            <option value="OPT">OPT</option>
-                            <option value="L1">L1</option>
-                            <option value="Green Card">Green Card</option>
-                            <option value="Citizen">Citizen</option>
+                            <option value="" className="selectFont">----Select Type----</option>
+                            <option value="All Visa" className="selectFont">All Visa</option>
+                            <option value="H1B" className="selectFont">H1B</option>
+                            <option value="F1" className="selectFont">F1</option>
+                            <option value="OCI" className="selectFont">OCI</option>
+                            <option value="Tier 2" className="selectFont">Tier 2</option>
+                            <option value="OPT" className="selectFont">OPT</option>
+                            <option value="L1" className="selectFont">L1</option>
+                            <option value="Green Card" className="selectFont">Green Card</option>
+                            <option value="Citizen" className="selectFont">Citizen</option>
                           </select>
                         </div>
 
@@ -1549,7 +1557,7 @@ const Leads = () => {
                         <div className="input-group mb-3">
                           <select
                             name="preferred_time_to_talk"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             value={selectedLead?.preferred_time_to_talk}
                             onChange={(e) => setSelectedLead({ ...selectedLead, preferred_time_to_talk: e.target.value })}
                             required
@@ -1566,7 +1574,7 @@ const Leads = () => {
                           <input
                             type="text"
                             name="source"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             placeholder="Source"
                             value={selectedLead?.source}
                             onChange={(e) => setSelectedLead({ ...selectedLead, source: e.target.value })}
@@ -1585,7 +1593,7 @@ const Leads = () => {
                           /> */}
                           <select
                             name="status"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             value={selectedLead?.status}
                             onChange={(e) => setSelectedLead({ ...selectedLead, status: e.target.value })}
                             required
@@ -1604,7 +1612,7 @@ const Leads = () => {
                         <div className="input-group mb-3">
                           <select
                             name="type"
-                            className="form-control form-control-sm"
+                            className="form-control form-control-sm selectFont"
                             value={selectedLead?.type}
                             onChange={(e) => setSelectedLead({ ...selectedLead, type: e.target.value })}
                             required
@@ -1661,12 +1669,12 @@ const Leads = () => {
 
                     <label htmlFor="" className="form-check-label">Candidate Name</label>
                     <div className="input-group mb-3">
-                      <input name="candidate_name" type="text" value={newLead.candidate_name} onChange={handleChange} className="form-control form-control-sm" placeholder="Candidate Name" required />
+                      <input name="candidate_name" type="text" value={newLead.candidate_name} onChange={handleChange} className="form-control form-control-sm selectFont" placeholder="Candidate Name" required />
                     </div>
 
                     <label htmlFor="" className="form-check-label">Email</label>
                     <div className="input-group mb-3">
-                      <input name="candidate_email" type="text" value={newLead.candidate_email} onChange={handleChange} className="form-control form-control-sm" placeholder="Email" />
+                      <input name="candidate_email" type="text" value={newLead.candidate_email} onChange={handleChange} className="form-control form-control-sm selectFont" placeholder="Email" />
                     </div>
 
                     <label htmlFor="" className="form-check-label">Phone</label>
@@ -1676,7 +1684,7 @@ const Leads = () => {
                         name="candidate_phone_no"
                         maxLength="10"
                         placeholder="Phone No"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         value={newLead.candidate_phone_no}
                         onChange={handleChange}
                         required
@@ -1688,7 +1696,7 @@ const Leads = () => {
                       <input
                         type="url"
                         name="linked_in_url"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         placeholder="LinkedIn URL"
                         value={newLead.linked_in_url}
                         onChange={handleChange}
@@ -1700,7 +1708,7 @@ const Leads = () => {
                       <input
                         type="text"
                         name="university"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         placeholder="University"
                         value={newLead.university}
                         onChange={handleChange}
@@ -1712,7 +1720,7 @@ const Leads = () => {
                       <input
                         type="text"
                         name="technology"
-                        className="form-control form-control-sm w-100"
+                        className="form-control form-control-sm w-100 selectFont"
                         value={newLead.technology}
                         onChange={handleChange}
                         placeholder="e.g React, Node, Angular"
@@ -1724,7 +1732,7 @@ const Leads = () => {
                     <div className="input-group mb-3">
                       <select
                         name="visa"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         value={newLead.visa}
                         onChange={handleChange}
                         required
@@ -1744,7 +1752,7 @@ const Leads = () => {
                     <div className="input-group mb-3">
                       <select
                         name="preferred_time_to_talk"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         value={newLead.preferred_time_to_talk}
                         onChange={handleChange}
                         required
@@ -1761,7 +1769,7 @@ const Leads = () => {
                       <input
                         type="text"
                         name="source"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         placeholder="Source"
                         value={newLead.source}
                         onChange={handleChange}
@@ -1774,7 +1782,7 @@ const Leads = () => {
                         type="text"
                         name="status"
                         placeholder="Status"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         value={newLead.status}
                         onChange={handleChange}
                       />
@@ -1784,7 +1792,7 @@ const Leads = () => {
                     <div className="input-group mb-3">
                       <select
                         name="type"
-                        className="form-control form-control-sm"
+                        className="form-control form-control-sm selectFont"
                         value={newLead.type}
                         onChange={handleChange}
                         required
@@ -1819,35 +1827,31 @@ const Leads = () => {
       </div >
 
       {/* View Lead Modal */}
-      < div className="modal fade" id="viewLead" tabIndex="-1" hidden="true" >
-        <div className="modal-dialog modal-dialog-centered modal-md" role="document">
+      < div className="modal fade" id="viewLead" tabIndex="-1" >
+        <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
           <div className="modal-content">
             <div className="modal-body p-0">
               <div className="card card-plain">
                 <h3 className="modal-title editUserTitle mt-2 text-center">Lead Details</h3>
-
                 <div className="card-body">
-                  {selectedLead ? (
-                    <form className="card p-3 shadow-sm">
+                  {/* {selectedLead ? (
 
+                    <form className="card p-3 shadow-sm">
 
                       <label className="form-check-label">Name</label>
                       <div className="input-group mb-3">
                         <h4 className="form-control form-control-sm">{selectedLead.candidate_name}</h4>
                       </div>
 
-
                       <label className="form-check-label">Email</label>
                       <div className="input-group mb-3">
                         <h4 className="form-control form-control-sm">{selectedLead.candidate_email}</h4>
                       </div>
 
-
                       <label className="form-check-label">Lead Type</label>
                       <div className="input-group mb-3">
                         <h4 className="form-control form-control-sm">{selectedLead.type}</h4>
                       </div>
-
 
                       <label className="form-check-label">Phone</label>
                       <div className="input-group mb-3">
@@ -1910,29 +1914,327 @@ const Leads = () => {
                         </h4>
                       </div>
 
+                      {user.role === "Sales" && selectedLead && (
+                        <form className="card p-3 shadow-sm mt-4"
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+
+                            console.log("Submitting call for Lead ID:", selectedLead?._id);
+                            console.log("Payload:", { outcome, date, time, duration, notes });
+                            console.log("Token:", sessionStorage.getItem("token"));
+
+                            setLoading(true);
+
+                            try {
+                              const token = sessionStorage.getItem("token");
+                              const res = await axios.post(`${BASE_URL}/api/leads/${selectedLead._id}/call`,
+                                { outcome, date, time, duration, notes },
+                                { headers: { Authorization: `Bearer ${token}` } }
+                              );
+                              alert("Call Outcomes Successfully");
+                              fetchBackendLeads();
+                              setSelectedLead(res.data.lead);
+                              setOutcome("");
+                              setDate("");
+                              setTime("");
+                              setDuration("");
+                              setNotes("");
+                            } catch (err) {
+                              console.error("Error in saving the call outcome:", err.response?.data || err);
+                              alert(err.response?.data?.message || "Failed to save call outcome!");
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}>
+                          <h5 className="font-semibold mb-3">Call Log Outcomes</h5>
+
+                          <select name="" value={outcome} id="" onChange={(e) => setOutcome(e.target.value)} className="form-select-sm" required>
+                            <option value="">Select Outcomes -----</option>
+                            <option value="Not Interested">Not Interested</option>
+                            <option value="Interested">Interested</option>
+                            <option value="In Discussion">In Discussion</option>
+                            <option value="Follow-up">Follow-Up</option>
+                          </select>
+
+                          <input type="date"
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                            required
+                            className="form-control-sm mb-2" />
+
+                          <input type="time"
+                            value={time}
+                            onChange={(e) => setTime(e.target.value)}
+                            required
+                            className="form-control-sm mb-2" />
+
+                          <input type="text"
+                            value={duration}
+                            onChange={(e) => setDuration(e.target.value)}
+                            className="form-control-sm mb-2"
+                            required />
+
+                          <textarea value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            required
+                            className="form-control-sm mb-2"
+                            placeholder="Enter Notes.....">
+                          </textarea>
+
+                          <button
+                            type="submit"
+                            className={`btn w-100 ${loading ? "btn-secondary" : "btn-primary"}`}
+                            disabled={loading}>
+                            {loading ? "Saving" : "Save Outcome"}
+                          </button>
+
+                        </form>
+                      )}
+
+                    </form>
+                  ) : (
+                    <h2 className="text-center my-3">Loading...</h2>
+                  )} */}
+                  {selectedLead ? (
+                    <form
+                      className="card p-3 shadow-sm"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        console.log("Submitting call for Lead ID:", selectedLead?._id);
+                        console.log("Payload:", { outcome, date, time, duration, notes });
+                        console.log("Token:", sessionStorage.getItem("token"));
+
+                        setLoading(true);
+                        try {
+                          const token = sessionStorage.getItem("token");
+                          const res = await axios.post(
+                            `${BASE_URL}/api/leads/${selectedLead._id}/call`,
+                            { outcome, date, time, duration, notes },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                          alert("Call outcome saved successfully!");
+                          fetchBackendLeads();
+                          setSelectedLead(res.data.lead);
+                          setOutcome(""); setDate(""); setTime(""); setDuration(""); setNotes("");
+                        } catch (err) {
+                          console.error("Error saving call outcome:", err.response?.data || err);
+                          alert(err.response?.data?.message || "Failed to save call outcome!");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}
+                    >
+
+                      <div className="mb-0">
+                        <table className="table table-bordered table-sm">
+                          <tbody>
+                            <tr>
+                              <th className="tableHeader">Name</th>
+                              <td className="tableData">{selectedLead.candidate_name}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Email</th>
+                              <td className="tableData">{selectedLead.candidate_email}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Phone</th>
+                              <td className="tableData">{selectedLead.candidate_phone_no}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Technology</th>
+                              <td className="tableData">
+                                {Array.isArray(selectedLead.technology)
+                                  ? selectedLead.technology.join(", ")
+                                  : selectedLead.technology}
+                              </td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">LinkedIn</th>
+                              <td className="tableData">{selectedLead.linked_in_url}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Visa</th>
+                              <td className="tableData">{selectedLead.visa}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Lead Type</th>
+                              <td className="tableData">{selectedLead.type}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">University</th>
+                              <td className="tableData">{selectedLead.university}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Preferred Time to Talk</th>
+                              <td className="tableData">{selectedLead.preferred_time_to_talk}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Source</th>
+                              <td className="tableData">{selectedLead.source}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Created At</th>
+                              <td className="tableData">{formatDateTimeIST(selectedLead.createdAt)}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Updated At</th>
+                              <td className="tableData">{formatDateTimeIST(selectedLead.updatedAt)}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Status</th>
+                              <td className="tableData">
+                                <span
+                                  className={`badge px-3 py-2 rounded-pill fw-normal 
+                                 ${selectedLead.status === "New"
+                                      ? "bg-primary"
+                                      : selectedLead.status === "Connected"
+                                        ? "bg-success"
+                                        : selectedLead.status === "In Progress"
+                                          ? "bg-warning text-dark"
+                                          : selectedLead.status === "Shortlisted"
+                                            ? "bg-info text-dark"
+                                            : selectedLead.status === "Rejected"
+                                              ? "bg-danger"
+                                              : "bg-success"
+                                    }`}
+                                >
+                                  {selectedLead.status}
+                                </span>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {user.role === "Sales" && (
+                        <>
+                          <div className="card p-3 shadow-sm mb-3">
+                            <h6 className="text-center mb-3">Log Call Outcome</h6>
+                            <select
+                              value={outcome}
+                              onChange={(e) => setOutcome(e.target.value)}
+                              required
+                              className="form-select form-select-sm mb-2 selectFont"
+                            >
+                              <option value="">Select Outcome</option>
+                              <option value="Not Interested">Not Interested</option>
+                              <option value="Interested">Interested</option>
+                              <option value="In Discussion">In Discussion</option>
+                              <option value="Follow-up">Follow-Up</option>
+                            </select>
+
+                            <input
+                              type="date"
+                              value={date}
+                              onChange={(e) => setDate(e.target.value)}
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                            />
+                            <input
+                              type="time"
+                              value={time}
+                              onChange={(e) => setTime(e.target.value)}
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                            />
+                            <input
+                              type="text"
+                              value={duration}
+                              onChange={(e) => setDuration(e.target.value)}
+                              placeholder="Enter Duration (Mins)"
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                            />
+                            <textarea
+                              value={notes}
+                              onChange={(e) => setNotes(e.target.value)}
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                              placeholder="Enter notes..."
+                            />
+
+                            <button
+                              type="submit"
+                              className={`btn btn-sm w-100 selectFont text-light ${loading ? "btn-secondary" : "btn-primary"
+                                }`}
+                              disabled={loading}
+                            >
+                              {loading ? "Saving..." : "Save Outcome"}
+                            </button>
+                          </div>
+
+                          <h5 className="mt-3">Call History</h5>
+                          {selectedLead?.callHistory && selectedLead.callHistory.length > 0 ? (
+                            <div className="table-responsive">
+                              <table className="table table-striped table-bordered">
+                                <thead>
+                                  <tr>
+                                    <th className="tableHeader">#</th>
+                                    <th className="tableHeader">Outcome</th>
+                                    <th className="tableHeader">Date</th>
+                                    <th className="tableHeader">Time</th>
+                                    <th className="tableHeader">Duration</th>
+                                    <th className="tableHeader">Notes</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {selectedLead.callHistory.map((call, index) => {
+                                    const date = new Date(call.date);
+                                    const formattedDate = date.toLocaleDateString("en-IN", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                    });
+
+                                    const [hours, minutes] = call.time.split(":");
+                                    const timeDate = new Date();
+                                    timeDate.setHours(hours, minutes);
+                                    const formattedTime = timeDate.toLocaleTimeString("en-IN", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    });
+
+                                    return (
+                                      <tr key={index}>
+                                        <td className="tableData">{index + 1}</td>
+                                        <td className="tableData">{call.outcome}</td>
+                                        <td className="tableData">{formattedDate}</td>
+                                        <td className="tableData">{formattedTime}</td>
+                                        <td className="tableData">{call.duration}</td>
+                                        <td className="tableData">{call.notes}</td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-muted">No call history yet.</p>
+                          )}
+                        </>
+                      )}
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm"
+                          data-bs-dismiss="modal"
+                          onClick={() => setSelectedLead(null)}
+                        >
+                          Close
+                        </button>
+                      </div>
                     </form>
                   ) : (
                     <h2 className="text-center my-3">Loading...</h2>
                   )}
-                </div>
 
-                <div className="text-center mb-4">
-                  <button
-                    type="button"
-                    className="btn btn-danger"
-                    data-bs-dismiss="modal"
-                    onClick={() => setSelectedLead(null)}
-                  >
-                    Close
-                  </button>
                 </div>
-
               </div>
             </div>
           </div>
-        </div>
-      </div >
-
+        </div >
+      </div>
     </div >
   )
 }

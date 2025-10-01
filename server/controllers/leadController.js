@@ -408,3 +408,108 @@ exports.myleads = async (req, res) => {
         res.status(500).json({ message: "Error fetching user leads", error: err })
     }
 }
+
+// exports.addCallOutcome = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { outcome, date, time, duration, notes } = req.body;
+//         const salesPersonId = req.user._id;
+
+//         const validOutcomes = ["Not Interested", "Interested", "In Discussion", "Follow-up"];
+
+//         if (!validOutcomes.includes(outcome)) {
+//             return res.status(400).json({ message: "Invalid outcome value" });
+//         }
+
+//         const lead = await Lead.findById(lead);
+//         if (!lead) {
+//             return res.status(404).json({ message: "Lead not found" });
+//         }
+
+//         lead.callHistory.push({
+//             outcome,
+//             date: date || new Date(),
+//             time,
+//             duration,
+//             notes,
+//             salesPerson: salesPersonId
+//         });
+
+//         if (outcome === "Interested") {
+//             lead.status = "Interested";
+//         }
+//         else if (outcome === "Not Interested") {
+//             lead.status = "Not Interested";
+//         }
+//         else if (outcome === "In Discussion") {
+//             lead.status = "In Discussion";
+//         }
+//         else if (outcome === "Follow-up") {
+//             lead.status = "Connected";
+//         }
+
+//         await lead.save();
+
+//         res.status(200).json({ message: "Call outcome added successfully", lead });
+
+//     } catch (error) {
+//         console.error("Error in CallOutcome:", error);
+//         res.status(500).json({ message: "Server error:", error });
+//     }
+// };
+
+exports.addCallOutcome = async (req, res) => {
+    
+    try {
+        const { id } = req.params; 
+        const { outcome, date, time, duration, notes } = req.body;
+        const salesPersonId = req.user._id;
+
+        const validOutcomes = ["Not Interested", "Interested", "In Discussion", "Follow-up"];
+
+        if (!validOutcomes.includes(outcome)) {
+            return res.status(400).json({ message: "Invalid outcome value" });
+        }
+
+        const lead = await Lead.findById(id);
+
+        if (!lead) {
+            return res.status(404).json({ message: "Lead not found" });
+        }
+
+        lead.callHistory = lead.callHistory || [];
+
+        lead.callHistory.push({
+            outcome,
+            date: date || new Date(),
+            time,
+            duration,
+            notes,
+            salesPerson: salesPersonId
+        });
+
+        switch (outcome) {
+            case "Interested":
+                lead.status = "Interested";
+                break;
+            case "Not Interested":
+                lead.status = "Not Interested";
+                break;
+            case "In Discussion":
+                lead.status = "In Discussion";
+                break;
+            case "Follow-up":
+                lead.status = "Connected";
+                break;
+        }
+
+        await lead.save();
+
+        res.status(200).json({ message: "Call outcome added successfully", lead });
+
+    } catch (error) {
+        console.error("Error in CallOutcome:", error);
+        res.status(500).json({ message: "Server error", error });
+    }
+};
+

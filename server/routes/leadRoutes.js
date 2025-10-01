@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { authMiddleware, protect } = require('../middleware/authMiddleware');
-const { createLead, getAssignedLeads, getLeadState, assignLeads, myleads, getLeadById, getLeads, updateLead, deleteLead, activeLeadCount, importLeads, getUnassignedLeads, assignLead } = require('../controllers/leadController');
+const { createLead, getAssignedLeads, getLeadState, assignLeads, myleads, getLeadById, getLeads, updateLead, deleteLead, activeLeadCount, importLeads, getUnassignedLeads, assignLead, addCallOutcome } = require('../controllers/leadController');
 
 router.post('/', createLead);
 router.get('/', getLeads);
@@ -15,6 +15,6 @@ router.post("/assign/:leadId", protect, assignLeads);
 router.get('/:id', getLeadById); 
 router.put('/:id', updateLead);
 router.delete('/:id', deleteLead);
-
+router.post("/:id/call", protect, addCallOutcome);
 
 module.exports = router;

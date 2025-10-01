@@ -42,7 +42,7 @@ app.get("/api/ping", (req, res) => {
 (async () => {
     try {
         console.log("Connecting to MongoDB...");
-        await mongoose.connect(process.env.MONGO_URL_PROD, {
+        await mongoose.connect(process.env.MONGO_URL_DEV, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             serverSelectionTimeoutMS: 10000

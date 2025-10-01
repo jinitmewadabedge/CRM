@@ -271,7 +271,7 @@ td {
 }
 
 .tableData {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 400;
   color: #292D32 !important;
 }
@@ -366,6 +366,11 @@ td {
 
 .csvFont {
   font-size: 13px;
+}
+
+.selectFont{
+  font-size: 13px !important;
+  color: #353434 !important;
 }
 
 .leadDetailsBG {
