@@ -491,8 +491,11 @@ const Leads = () => {
 
       setFinalLead(null);
       setSelectedMember("");
+      setSelectedLead();
       // fetchUnassignedLeads();
-      fetchBackendLeads();
+      setTimeout(()=>{
+        fetchBackendLeads();
+      },300)
 
       document.getElementById("closeAssignModalBtn").click();
 
