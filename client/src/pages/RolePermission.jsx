@@ -29,7 +29,7 @@ const RolePermission = () => {
       console.log("Sending permission update:", updatedPermissions);
 
       const res = await axios.put(`${BASE_URL}/api/roles/${roleId}`, updatedPermissions);
-      console.log("Backend response:", res.data); 
+      console.log("Backend response:", res.data);
 
       fetchRoles();
     } catch (err) {
@@ -100,6 +100,7 @@ const RolePermission = () => {
                                 )
                               }
                             >
+                              <option value="none">None</option>
                               <option value="own">Own</option>
                               <option value="dept">Dept</option>
                               <option value="team+dept">Team+Dept</option>
@@ -121,6 +122,7 @@ const RolePermission = () => {
                                 )
                               }
                             >
+                              <option value="none">None</option>
                               <option value="own">Own</option>
                               <option value="dept">Dept</option>
                               <option value="team+dept">Team+Dept</option>

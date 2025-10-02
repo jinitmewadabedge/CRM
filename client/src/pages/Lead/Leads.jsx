@@ -32,8 +32,11 @@ const Leads = () => {
   const navigate = useNavigate();
   const [totalLeads, SetTotalLeads] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [checkSelectLead, setCheckSelectLead] = useState();
   const [currentUnassignedPage, setCurrentUnassignedPage] = useState(1);
   const [currentAssignedPage, setCurrentAssignedPage] = useState(1);
+  const [modalSource, setModalSource] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -725,135 +728,149 @@ const Leads = () => {
                   />
                 </div>
               </div>
+              <div>
+                <button className="btn btn-primary btn-sm"
+                  onClick={() => setShowFilters(!showFilters)}
+                >
+                  <i className="bi bi-funnel-fill me-2"></i>
+                  {showFilters ? "Hide Filters" : "Show Filters"}
+                </button>
+              </div>
             </div>
-            <div className="d-flex flex-wrap gap-2 mx-3 my-2 filterContainer">
-              <select
-                className="form-select form-select-sm w-auto leadType selectFont"
-                value={filters.type}
-                onChange={(e) => setFilters({ ...filters, type: e.target.value })}
-              >
-                <option value="">Lead Types</option>
-                <option value="Resume Lead">Resume</option>
-                <option value="Manual Lead">Manual</option>
-
-              </select>
-
-              <select
-                className="form-select form-select-sm w-auto status selectFont"
-                value={filters.status}
-                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              >
-                <option value="">Status</option>
-                <option value="New">New</option>
-                <option value="Assigned">Assigned</option>
-                <option value="Connected">Connected</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Shortlisted">Shortlisted</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Converted">Converted</option>
-              </select>
-
-              <select
-                className="form-select form-select-sm w-auto allVisa selectFont"
-                value={filters.visa}
-                onChange={(e) => setFilters({ ...filters, visa: e.target.value })}
-              >
-                <option value="">All Visa</option>
-                <option value="H1B">H1B</option>
-                <option value="F1">F1</option>
-                <option value="OPT">OPT</option>
-                <option value="L1">L1</option>
-                <option value="Green Card">Green Card</option>
-                <option value="Citizen">Citizen</option>
-              </select>
-
-              <input
-                type="date"
-                className="form-control form-control-sm w-auto startDate selectFont"
-                value={filters.startDate}
-                onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-              />
-
-              <input type="date"
-                className="form-control form-control-sm w-auto endDate selectFont"
-                value={filters.endDate}
-                onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-              />
-
-              <input type="time"
-                className="form-control form-control-sm w-auto startTime selectFont"
-                value={filters.startTime}
-                onChange={(e) => setFilters({ ...filters, startTime: e.target.value })}
-              />
-
-              <input type="time"
-                className="form-control form-control-sm w-auto endTime selectFont"
-                value={filters.endTime}
-                onChange={(e) => setFilters({ ...filters, endTime: e.target.value })}
-              />
-
-              <select
-                className="form-select form-select-sm w-auto dateSort selectFont"
-                value={filters.dateSort}
-                onChange={(e) => setFilters({ ...filters, dateSort: e.target.value })}
-              >
-                <option value="">Sort by Date</option>
-                <option value="newest">Newest</option>
-                <option value="oldest">Oldest</option>
-              </select>
 
 
-              <select
-                className="form-select form-select-sm w-auto sortByOrder selectFont"
-                value={filters.sortOrder}
-                onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
-              >
-                <option value="">Sort by Order</option>
-                <option value="asc">Asc</option>
-                <option value="desc">Desc</option>
-              </select>
 
-              <select className="form-select form-select-sm w-auto sortField selectFont"
-                value={filters.sortField}
-                onChange={(e) => setFilters({ ...filters, sortField: e.target.value })}
-              >
-                <option value="">Sort By</option>
-                <option value="candidate_name">Name</option>
-                <option value="candidate_email">Email</option>
-                <option value="candidate_phone_no">Phone</option>
-                <option value="type">Lead Type</option>
-                <option value="visa">Visa</option>
-                <option value="status">Status</option>
-                <option value="createdAt">Created Date</option>
-              </select>
+            {showFilters && (
+              <div className="d-flex flex-wrap gap-2 mx-3 my-2 filterContainer">
+                <select
+                  className="form-select form-select-sm w-auto leadType selectFont"
+                  value={filters.type}
+                  onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                >
+                  <option value="">Lead Types</option>
+                  <option value="Resume Lead">Resume</option>
+                  <option value="Manual Lead">Manual</option>
+                </select>
 
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={() =>
-                  setFilters({
-                    search: "",
-                    type: "",
-                    status: "",
-                    visa: "",
-                    technology: "",
-                    startDate: "",
-                    endDate: "",
-                    startTime: "",
-                    endTime: "",
-                    sortField: "",
-                    sortOrder: "asc",
-                  })
-                }
-              >
-                Reset
-              </button>
-            </div>
+                <select
+                  className="form-select form-select-sm w-auto status selectFont"
+                  value={filters.status}
+                  onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                >
+                  <option value="">Status</option>
+                  <option value="New">New</option>
+                  <option value="Assigned">Assigned</option>
+                  <option value="Connected">Connected</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Shortlisted">Shortlisted</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Converted">Converted</option>
+                </select>
+
+                <select
+                  className="form-select form-select-sm w-auto allVisa selectFont"
+                  value={filters.visa}
+                  onChange={(e) => setFilters({ ...filters, visa: e.target.value })}
+                >
+                  <option value="">All Visa</option>
+                  <option value="H1B">H1B</option>
+                  <option value="F1">F1</option>
+                  <option value="OPT">OPT</option>
+                  <option value="L1">L1</option>
+                  <option value="Green Card">Green Card</option>
+                  <option value="Citizen">Citizen</option>
+                </select>
+
+                <input
+                  type="date"
+                  className="form-control form-control-sm w-auto startDate selectFont"
+                  value={filters.startDate}
+                  onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+                />
+
+                <input type="date"
+                  className="form-control form-control-sm w-auto endDate selectFont"
+                  value={filters.endDate}
+                  onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+                />
+
+                <input type="time"
+                  className="form-control form-control-sm w-auto startTime selectFont"
+                  value={filters.startTime}
+                  onChange={(e) => setFilters({ ...filters, startTime: e.target.value })}
+                />
+
+                <input type="time"
+                  className="form-control form-control-sm w-auto endTime selectFont"
+                  value={filters.endTime}
+                  onChange={(e) => setFilters({ ...filters, endTime: e.target.value })}
+                />
+
+                <select
+                  className="form-select form-select-sm w-auto dateSort selectFont"
+                  value={filters.dateSort}
+                  onChange={(e) => setFilters({ ...filters, dateSort: e.target.value })}
+                >
+                  <option value="">Sort by Date</option>
+                  <option value="newest">Newest</option>
+                  <option value="oldest">Oldest</option>
+                </select>
+
+
+                <select
+                  className="form-select form-select-sm w-auto sortByOrder selectFont"
+                  value={filters.sortOrder}
+                  onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value })}
+                >
+                  <option value="">Sort by Order</option>
+                  <option value="asc">Asc</option>
+                  <option value="desc">Desc</option>
+                </select>
+
+                <select className="form-select form-select-sm w-auto sortField selectFont"
+                  value={filters.sortField}
+                  onChange={(e) => setFilters({ ...filters, sortField: e.target.value })}
+                >
+                  <option value="">Sort By</option>
+                  <option value="candidate_name">Name</option>
+                  <option value="candidate_email">Email</option>
+                  <option value="candidate_phone_no">Phone</option>
+                  <option value="type">Lead Type</option>
+                  <option value="visa">Visa</option>
+                  <option value="status">Status</option>
+                  <option value="createdAt">Created Date</option>
+                </select>
+
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() =>
+                    setFilters({
+                      search: "",
+                      type: "",
+                      status: "",
+                      visa: "",
+                      technology: "",
+                      startDate: "",
+                      endDate: "",
+                      startTime: "",
+                      endTime: "",
+                      sortField: "",
+                      sortOrder: "asc",
+                    })
+                  }
+                >
+                  Reset
+                </button>
+              </div>
+            )}
 
             <div className="d-flex justify-content-between align-items-center mt-4 mx-3 mb-3 buttonContainer">
 
-              <button className="btn btn-primary btn-sm me-2 addUserBtn" data-bs-toggle="modal" data-bs-target="#addNewLead" onClick={handleAddLeadClick}>
-                <FaPlus className="me-2" /> Add New Lead
-              </button>
+              {permissions?.lead?.createScope !== "none" && (
+                <button className="btn btn-primary btn-sm me-2 addUserBtn" data-bs-toggle="modal" data-bs-target="#addNewLead" onClick={handleAddLeadClick}>
+                  <FaPlus className="me-2" /> Add New Lead
+                </button>
+              )}
 
               <div className="d-flex justify-content-center align-items-center innerButtons">
                 <input
@@ -891,7 +908,7 @@ const Leads = () => {
                 columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
             ) : (
               <div className="table-container">
-                <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
                       <th className="text-left tableHeader">Name</th>
@@ -968,7 +985,6 @@ const Leads = () => {
                           </span>
                         </td>
 
-
                         <td className="text-left tableData">
                           <p className="mb-0">{formatDateTimeIST(lead.createdAt)}</p>
                         </td>
@@ -977,37 +993,41 @@ const Leads = () => {
                         </td>
 
                         <td className="text-left tableData">
-                          {/* <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/${lead._id}`)}
-                      >
-                        View
-                      </button> */}
-
-                          <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button>
-
-                          {/* <button
-                        type="button"
-                        className="btn btn-outline-success btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
-                      >
-                        Edit
-                      </button> */}
-
-                          <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
-
-                          <button type="button"
-                            className="btn btn-outline-danger btn-sm"
-                            onClick={async () => {
-                              if (window.confirm("Are you sure?")) {
-                                await deleteLead(lead._id);
-                                setLeads(leads.filter(l => l._id !== lead._id));
-                                fetchBackendLeads();
-                              }
+                          <button
+                            className="btn btn-outline-warning btn-sm btn-rounded me-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(lead);
+                              setModalSource("all");
                             }}>
-                            Delete
+                            View
                           </button>
+
+                          {permissions?.lead?.updateScope !== "none" && (
+                            <button
+                              className="btn btn-outline-success btn-sm btn-rounded me-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#editLead"
+                              onClick={() => handleEditClick(lead)}>
+                              Edit
+                            </button>
+                          )}
+
+                          {permissions?.lead?.deleteScope !== "none" && (
+                            <button type="button"
+                              className="btn btn-outline-danger btn-sm"
+                              onClick={async () => {
+                                if (window.confirm("Are you sure?")) {
+                                  await deleteLead(lead._id);
+                                  setLeads(leads.filter(l => l._id !== lead._id));
+                                  fetchBackendLeads();
+                                }
+                              }}>
+                              Delete
+                            </button>
+                          )}
+
                         </td>
                       </tr>
                     ))}
@@ -1059,6 +1079,16 @@ const Leads = () => {
               </div>
             </div>
 
+            {/* <div>
+              <button className="btn btn-primary btn-sm"
+                onClick={() => setShowFilters(!showFilters)}
+              >
+                <i className="bi bi-funnel-fill me-2"></i>
+                {showFilters ? "Hide Filters" : "Show Filters"}
+              </button>
+            </div> */}
+            
+
             {loading ? (
               <MyLoader
                 rowHeight={40}
@@ -1066,7 +1096,7 @@ const Leads = () => {
                 columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
             ) : (
               <div className="table-container">
-                <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
                       <th className="text-left tableHeader">Name</th>
@@ -1101,7 +1131,15 @@ const Leads = () => {
                           <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
                         </td>
                         <td>
-                          <button className="btn btn-sm btn-success" onClick={() => setSelectedLead(a._id)} data-bs-toggle="modal" data-bs-target="#assignLeadModal">Assign</button>
+                          {permissions?.lead?.assignToSales && (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => setSelectedLead(a._id)}
+                              data-bs-toggle="modal"
+                              data-bs-target="#assignLeadModal">
+                              Assign
+                            </button>
+                          )}
                         </td>
 
                         {/* <td className="text-left tableData">
@@ -1227,7 +1265,7 @@ const Leads = () => {
                 columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
             ) : (
               <div className="table-container">
-                <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
+                <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
                       <th className="text-left tableHeader">Name</th>
@@ -1245,6 +1283,7 @@ const Leads = () => {
                       {/* <th className="text-left tableHeader">Updated At</th> */}
                       <th className="text-left tableHeader">Assigned To</th>
                       <th className="text-left tableHeader">Assigned By</th>
+                      <th className="text-left tableHeader">Actions</th>
                       {/* <th className="text-left tableHeader">Actions</th> */}
                     </tr>
                   </thead>
@@ -1257,9 +1296,6 @@ const Leads = () => {
                         <td>
                           <p className="mb-0 text-left tableData">{a.candidate_email}</p>
                         </td>
-                        {/* <td>
-                        <p className="mb-0 text-left tableData">{a.type}</p>
-                      </td> */}
                         <td>
                           <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
                         </td>
@@ -1269,86 +1305,17 @@ const Leads = () => {
                         <td>
                           <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
                         </td>
-                        {/* <td>
-                        <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
-                      </td> */}
-                        {/* <td>
-                    <p className="mb-0 text-left tableData">{lead.university}</p>
-                  </td> */}
-                        {/* <td className="text-left tableData">
-                        {Array.isArray(a.technology)
-                          ? a.technology.join(", ")
-                          : a.technology}
-                      </td> */}
-                        {/* <td className="text-left tableData">
-                        <p className="mb-0">{a.visa}</p>
-                      </td> */}
-                        {/* <td className="text-left tableData">
-                        <p className="mb-0">{a.preferred_time_to_talk}</p>
-                      </td> */}
-                        {/* <td className="text-left tableData">
-                    <p className="mb-0">{lead.source}</p>
-                  </td> */}
-                        {/* <td className="text-center">
-                        <span
-                          className={`badge status-badge px-2 py-2 d-flex gap-2
-                            ${a.status === "New" ? "bg-new" :
-                              a.status === "Connected" ? "bg-connected" :
-                                a.status === "In Progress" ? "bg-inprogress" :
-                                  a.status === "Shortlisted" ? "bg-shortlisted text-dark" :
-                                    a.status === "Rejected" ? "bg-rejected" :
-                                      a.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
-                        >
-                          {a.status === "New" && <FaLink />}
-                          {a.status === "Connected" && <FaCheckCircle />}
-                          {a.status === "In Progress" && <FaHourglassHalf />}
-                          {a.status === "Shortlisted" && <FaStar />}
-                          {a.status === "Rejected" && <FaTimesCircle />}
-                          {a.status === "Converted" && <FaUserCheck />}
-
-                          {a.status}
-                        </span>
-                      </td> */}
-
-
-                        {/* <td className="text-left tableData">
-                        <p className="mb-0">{formatDateTimeIST(a.createdAt)}</p>
-                      </td> */}
-                        {/* <td className="text-left tableData">
-                        <p className="mb-0">{formatDateTimeIST(a.updatedAt)}</p>
-                      </td> */}
-
-                        <td className="text-left tableData">
-                          {/* <button
-                        type="button"
-                        className="btn btn-outline-primary btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/${lead._id}`)}
-                      >
-                        View
-                      </button> */}
-
-                          {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
-
-                          {/* <button
-                        type="button"
-                        className="btn btn-outline-success btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
-                      >
-                        Edit
-                      </button> */}
-
-                          {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
-
-                        <button type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={async () => {
-                            if (window.confirm("Are you sure?")) {
-                              await deleteLead(lead._id);
-                              setLeads(leads.filter(l => l._id !== lead._id));
-                            }
-                          }}>
-                          Delete
-                        </button> */}
+                        <td>
+                          <button
+                            className="btn btn-outline-warning btn-sm btn-rounded me-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(a);
+                              setModalSource("assigned")
+                            }}>
+                            View
+                          </button>
                         </td>
                       </tr>
                     ))}
@@ -1655,10 +1622,10 @@ const Leads = () => {
             </div>
           </div>
         </div>
-      </div >
+      </div>
 
-      {/* ADD LEAD MODAL */}
-      < div className="modal fade" id="addNewLead" tabIndex="-1" >
+      {/* ADD NEW LEAD */}
+      <div className="modal fade" id="addNewLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-md" role="document">
           <div className="modal-content">
             <div className="modal-body p-0">
@@ -1778,14 +1745,14 @@ const Leads = () => {
 
                     <label htmlFor="" className="form-check-label">Status</label>
                     <div className="input-group mb-3">
-                      <input
-                        type="text"
-                        name="status"
-                        placeholder="Status"
-                        className="form-control form-control-sm selectFont"
+                      <select name="status"
+                        className="form-control form-cnotrol-sm selectFont"
                         value={newLead.status}
                         onChange={handleChange}
-                      />
+                        required>
+                        <option value="">Select Status</option>
+                        <option value="New">New</option>
+                      </select>
                     </div>
 
                     <label htmlFor="" className="form-check-label">Interview Type</label>
@@ -1827,174 +1794,13 @@ const Leads = () => {
       </div >
 
       {/* View Lead Modal */}
-      < div className="modal fade" id="viewLead" tabIndex="-1" >
+      <div className="modal fade" id="viewLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
           <div className="modal-content">
             <div className="modal-body p-0">
               <div className="card card-plain">
                 <h3 className="modal-title editUserTitle mt-2 text-center">Lead Details</h3>
                 <div className="card-body">
-                  {/* {selectedLead ? (
-
-                    <form className="card p-3 shadow-sm">
-
-                      <label className="form-check-label">Name</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.candidate_name}</h4>
-                      </div>
-
-                      <label className="form-check-label">Email</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.candidate_email}</h4>
-                      </div>
-
-                      <label className="form-check-label">Lead Type</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.type}</h4>
-                      </div>
-
-                      <label className="form-check-label">Phone</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.candidate_phone_no}</h4>
-                      </div>
-
-                      <label className="form-check-label">LinkedIn</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.linked_in_url}</h4>
-                      </div>
-
-                      <label className="form-check-label">University</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.university}</h4>
-                      </div>
-
-                      <label className="form-check-label">Technology</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">
-                          {Array.isArray(selectedLead.technology)
-                            ? selectedLead.technology.join(", ")
-                            : selectedLead.technology}
-                        </h4>
-                      </div>
-
-
-                      <label className="form-check-label">Visa</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.visa}</h4>
-                      </div>
-
-                      <label className="form-check-label">Preferred Time</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.preferred_time_to_talk}</h4>
-                      </div>
-
-
-                      <label className="form-check-label">Source</label>
-                      <div className="input-group mb-3">
-                        <h4 className="form-control form-control-sm">{selectedLead.source}</h4>
-                      </div>
-
-                      <label className="form-check-label">Status</label>
-                      <div className="input-group mb-3">
-                        <h4
-                          className={`badge px-3 py-2 rounded-pill ${selectedLead.status === "New"
-                            ? "bg-primary"
-                            : selectedLead.status === "Connected"
-                              ? "bg-success"
-                              : selectedLead.status === "In Progress"
-                                ? "bg-warning text-dark"
-                                : selectedLead.status === "Shortlisted"
-                                  ? "bg-info text-dark"
-                                  : selectedLead.status === "Rejected"
-                                    ? "bg-danger"
-                                    : "bg-secondary"
-                            }`}
-                        >
-                          {selectedLead.status}
-                        </h4>
-                      </div>
-
-                      {user.role === "Sales" && selectedLead && (
-                        <form className="card p-3 shadow-sm mt-4"
-                          onSubmit={async (e) => {
-                            e.preventDefault();
-
-                            console.log("Submitting call for Lead ID:", selectedLead?._id);
-                            console.log("Payload:", { outcome, date, time, duration, notes });
-                            console.log("Token:", sessionStorage.getItem("token"));
-
-                            setLoading(true);
-
-                            try {
-                              const token = sessionStorage.getItem("token");
-                              const res = await axios.post(`${BASE_URL}/api/leads/${selectedLead._id}/call`,
-                                { outcome, date, time, duration, notes },
-                                { headers: { Authorization: `Bearer ${token}` } }
-                              );
-                              alert("Call Outcomes Successfully");
-                              fetchBackendLeads();
-                              setSelectedLead(res.data.lead);
-                              setOutcome("");
-                              setDate("");
-                              setTime("");
-                              setDuration("");
-                              setNotes("");
-                            } catch (err) {
-                              console.error("Error in saving the call outcome:", err.response?.data || err);
-                              alert(err.response?.data?.message || "Failed to save call outcome!");
-                            } finally {
-                              setLoading(false);
-                            }
-                          }}>
-                          <h5 className="font-semibold mb-3">Call Log Outcomes</h5>
-
-                          <select name="" value={outcome} id="" onChange={(e) => setOutcome(e.target.value)} className="form-select-sm" required>
-                            <option value="">Select Outcomes -----</option>
-                            <option value="Not Interested">Not Interested</option>
-                            <option value="Interested">Interested</option>
-                            <option value="In Discussion">In Discussion</option>
-                            <option value="Follow-up">Follow-Up</option>
-                          </select>
-
-                          <input type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            required
-                            className="form-control-sm mb-2" />
-
-                          <input type="time"
-                            value={time}
-                            onChange={(e) => setTime(e.target.value)}
-                            required
-                            className="form-control-sm mb-2" />
-
-                          <input type="text"
-                            value={duration}
-                            onChange={(e) => setDuration(e.target.value)}
-                            className="form-control-sm mb-2"
-                            required />
-
-                          <textarea value={notes}
-                            onChange={(e) => setNotes(e.target.value)}
-                            required
-                            className="form-control-sm mb-2"
-                            placeholder="Enter Notes.....">
-                          </textarea>
-
-                          <button
-                            type="submit"
-                            className={`btn w-100 ${loading ? "btn-secondary" : "btn-primary"}`}
-                            disabled={loading}>
-                            {loading ? "Saving" : "Save Outcome"}
-                          </button>
-
-                        </form>
-                      )}
-
-                    </form>
-                  ) : (
-                    <h2 className="text-center my-3">Loading...</h2>
-                  )} */}
                   {selectedLead ? (
                     <form
                       className="card p-3 shadow-sm"
@@ -2072,6 +1878,18 @@ const Leads = () => {
                               <th className="tableHeader">Source</th>
                               <td className="tableData">{selectedLead.source}</td>
                             </tr>
+                            {modalSource === "assigned" && selectedLead.assignedTo && (
+                              <tr>
+                                <th className="tableHeader">Assigned To</th>
+                                <td className="tableData">{selectedLead.assignedTo.name}</td>
+                              </tr>
+                            )}
+                            {modalSource === "assigned" && selectedLead.assignedBy && (
+                              <tr>
+                                <th className="tableHeader">Assigned By</th>
+                                <td className="tableData">{selectedLead.assignedBy.name}</td>
+                              </tr>
+                            )}
                             <tr>
                               <th className="tableHeader">Created At</th>
                               <td className="tableData">{formatDateTimeIST(selectedLead.createdAt)}</td>
@@ -2228,7 +2046,6 @@ const Leads = () => {
                   ) : (
                     <h2 className="text-center my-3">Loading...</h2>
                   )}
-
                 </div>
               </div>
             </div>

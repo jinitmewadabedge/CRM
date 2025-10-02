@@ -194,6 +194,10 @@
   cursor: pointer;
 }
 
+/* .dateSort {
+  background-color: #d9dadb !important;
+} */
+
 .userTableFont table {
   border-radius: 8px;
   font-size: 0.95rem;
@@ -260,14 +264,19 @@
 }
 
 .tableHeader {
-  font-size: 14px;
-  font-weight: 400;
-  color: #B5B7C0 !important;
+  font-size: 13px;
+  font-weight: 500;
+  color: #383838 !important;
+  background-color: #F3F5F7 !important;
 }
 
-th,
-td {
+th {
   padding: 10px !important;
+}
+
+td {
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
 }
 
 .tableData {
@@ -368,7 +377,7 @@ td {
   font-size: 13px;
 }
 
-.selectFont{
+.selectFont {
   font-size: 13px !important;
   color: #353434 !important;
 }
@@ -393,7 +402,7 @@ td {
   border-collapse: collapse;
 }
 
-.roles-form-select{
+.roles-form-select {
   font-size: 12.5px !important;
 }
 
@@ -407,8 +416,9 @@ td {
   background: #FFF;
   box-sizing: border-box;
 }
+
 .squareLoader::after {
-  content: '';  
+  content: '';
   width: calc(100% - 0px);
   height: calc(100% - 0px);
   /* top: 15px; */
@@ -426,6 +436,7 @@ td {
   0% {
     background-position: 0% 0, 0 0, 70px 5px, 70px 38px, 0px 66px;
   }
+
   100% {
     background-position: 150% 0, 0 0, 70px 5px, 70px 38px, 0px 66px;
   }
