@@ -32,7 +32,6 @@ const Leads = () => {
   const navigate = useNavigate();
   const [totalLeads, SetTotalLeads] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
-  const [checkSelectLead, setCheckSelectLead] = useState();
   const [currentUnassignedPage, setCurrentUnassignedPage] = useState(1);
   const [currentAssignedPage, setCurrentAssignedPage] = useState(1);
   const [modalSource, setModalSource] = useState("");
@@ -491,9 +490,8 @@ const Leads = () => {
 
       setFinalLead(null);
       setSelectedMember("");
-      setSelectedLead(null);
       // fetchUnassignedLeads();
-      await fetchBackendLeads();
+      fetchBackendLeads();
 
       document.getElementById("closeAssignModalBtn").click();
 
@@ -1088,7 +1086,7 @@ const Leads = () => {
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </button>
             </div> */}
-
+            
 
             {loading ? (
               <MyLoader
