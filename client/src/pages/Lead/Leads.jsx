@@ -491,11 +491,9 @@ const Leads = () => {
 
       setFinalLead(null);
       setSelectedMember("");
-      setSelectedLead();
+      setSelectedLead(null);
       // fetchUnassignedLeads();
-      setTimeout(()=>{
-        fetchBackendLeads();
-      },300)
+      await fetchBackendLeads();
 
       document.getElementById("closeAssignModalBtn").click();
 
@@ -1090,7 +1088,7 @@ const Leads = () => {
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </button>
             </div> */}
-            
+
 
             {loading ? (
               <MyLoader
