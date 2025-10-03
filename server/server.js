@@ -1,5 +1,5 @@
-const express = require("express");
 const dotenv = require("dotenv");
+const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
@@ -55,8 +55,4 @@ app.get("/api/ping", (req, res) => {
     } catch (err) {
         console.error("MongoDB connection error:", err.message);
     }
-
-    // setInterval(() => {
-    //     console.log("MongoDB connection state:", mongoose.connection.readyState);
-    // }, 5000);
 })();
