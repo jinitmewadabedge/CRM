@@ -328,6 +328,7 @@ const Leads = () => {
       setLeads(res.data);
       console.log("Current permission:", permissions);
 
+      await fetchBackendLeads();
       await fetchPermissions();
 
     } catch (err) {
