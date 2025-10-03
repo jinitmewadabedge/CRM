@@ -13,8 +13,8 @@
     ],
     "rewrites": [
         {
-            "src": "/(.*)",
-            "dest": "server.js"
+            "src": "/api/(.*)",
+            "destination": "/server.js"
         }
     ]
 }
