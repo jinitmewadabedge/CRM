@@ -39,10 +39,13 @@ app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });
 });
 
+const uri = process.env.MONGO_URI;
+console.log("MONGO_URI:", uri);
+
 (async () => {
     try {
         console.log("Connecting to MongoDB...");
-        await mongoose.connect(process.env.MONGO_URL_DEV, {
+        await mongoose.connect(uri, {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             serverSelectionTimeoutMS: 10000
