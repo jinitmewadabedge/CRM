@@ -184,6 +184,48 @@ exports.getLeadState = async (req, res) => {
     }
 }
 
+exports.LeadIdOnly = async (req, res) => {
+    try {
+        const leads = await Lead.find({}, "_id");
+        const ids = leads.map((lead) => lead._id.toString());
+        res.json(ids);
+    } catch (error) {
+        res.status(500).json({ message: "Error fetching lead IDs" });
+    }
+}
+
+exports.getUnassignedLeadIds = async (req, res) => {
+    try {
+        const unassignedLeads = await Lead.find(
+            { status: { $ne: "Assigned" } },
+            { _id: 1 }
+        );
+
+        const ids = unassignedLeads.map(lead => lead._id);
+
+        return res.status(200).json(ids);
+    } catch (error) {
+        console.error("Error fetching unassigned leads IDs:", error);
+        return res.status(500).json({ message: "Server error fetching unassigned leads" });
+    }
+};
+
+exports.getAssignedLeadIds = async (req, res) => {
+    try {
+        const assignedLeads = await Lead.find(
+            { status: "Assigned" },
+            { _id: 1 }
+        );
+
+        const ids = assignedLeads.map(lead => lead._id);
+
+        return res.status(200).json(ids);
+    } catch (error) {
+        console.error("Error fetching assigned leads IDs:", error);
+        return res.status(500).json({ message: "Server error fetching assigned leads" });
+    }
+};
+
 exports.getAssignedLeads = async (req, res) => {
     console.log("req.user in getAssignedLeads:", req.user);
     try {
@@ -224,7 +266,6 @@ exports.getUnassignedLeads = async (req, res) => {
         if (req.user.role.name === "Lead_Gen_Manager") {
 
         } else if (req.user.role.name === "Sales_Manager") {
-            // filter = { assignedTo: req.user._id }
             filter = { assignedTo: null }
         } else {
             return res.status(403).json({ message: "Access denied" });
@@ -384,6 +425,87 @@ exports.assignLeads = async (req, res) => {
     }
 };
 
+exports.bulkAssignLeads = async (req, res) => {
+    try {
+        const { leadIds, teamMemberId } = req.body;
+
+        console.log("===== BULK ASSIGN API HIT =====");
+        console.log("leadIds:", leadIds);
+        console.log("teamMemberId:", teamMemberId);
+        console.log("req.user (assigner):", req.user);
+
+        if (!leadIds || !Array.isArray(leadIds) || leadIds.length === 0) {
+            return res.status(400).json({ message: "leadIds array is required" });
+        }
+        if (!mongoose.Types.ObjectId.isValid(teamMemberId)) {
+            return res.status(400).json({ message: "Invalid team member ID" });
+        }
+        const assignerRole = req.user.role.name;
+        const assignerId = req.user._id;
+
+        const teamMember = await User.findById(teamMemberId).populate("role", "name");
+        if (!teamMember || !teamMember.role) {
+            return res.status(404).json({ message: "Team member or role not found" });
+        }
+
+        if (assignerRole === "Lead_Gen_Manager" && teamMember.role.name !== "Sales_Manager") {
+            return res.status(403).json({ message: "LGM can assign only to Sales Managers" });
+        }
+
+        if (assignerRole === "Sales_Manager" && teamMember.role.name !== "Sales") {
+            return res.status(403).json({ message: "Sales Manager can assign only to Sales team member" });
+        }
+
+        const result = await Lead.updateMany(
+            { _id: { $in: leadIds } },
+            {
+                $set: {
+                    assignedTo: teamMemberId,
+                    assignedBy: assignerId,
+                    status: "Assigned",
+                    updatedAt: new Date(),
+                },
+            }
+        );
+        console.log(`Bulk assigned ${result.modifiedCount} leads successfully`);
+
+        return res.status(200).json({
+            message: `${result.modifiedCount} leads assigned successfully.`,
+        });
+    } catch (error) {
+        console.error("Bulk Assign Error:", error);
+        res.status(500).json({ message: "Error during bulk asssignment", error });
+    }
+};
+
+exports.bulkDeleteLeads = async (req, res) => {
+    try {
+        const { leadIds } = req.body;
+
+        console.log("===== BULK DELETE API HIT =====");
+        console.log("leadIds:", leadIds);
+
+        if (!Array.isArray(leadIds) || leadIds.length === 0) {
+            return res.status(400).json({ message: "leadIds array is required" });
+        }
+
+        const invalidIds = leadIds.filter(id => !mongoose.Types.ObjectId.isValid(id));
+        if (invalidIds.length > 0) {
+            return res.status(400).json({ message: `Invalid lead IDs: ${invalidIds.join(", ")}` });
+        }
+
+        const result = await Lead.deleteMany({ _id: { $in: leadIds } });
+
+        console.log(`Deleted ${result.deletedCount} leads successfully`);
+
+        return res.status(200).json({
+            message: `${result.deletedCount} leads deleted successfully.`,
+        });
+    } catch (error) {
+        console.error("Bulk Delete Error:", error);
+        res.status(500).json({ message: "Error during bulk deletion", error });
+    }
+};
 
 exports.myleads = async (req, res) => {
     try {
@@ -459,9 +581,9 @@ exports.myleads = async (req, res) => {
 // };
 
 exports.addCallOutcome = async (req, res) => {
-    
+
     try {
-        const { id } = req.params; 
+        const { id } = req.params;
         const { outcome, date, time, duration, notes } = req.body;
         const salesPersonId = req.user._id;
 

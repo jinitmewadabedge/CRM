@@ -12,7 +12,8 @@ import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, 
 // import LinuxCard from "../../components/LinuxCard";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
-import MyLoader from '../../components/Lead/MyLoader'
+import MyLoader from '../../components/Lead/MyLoader';
+import { FiLogOut } from 'react-icons/fi'
 
 const Leads = () => {
   const { id } = useParams();
@@ -37,7 +38,18 @@ const Leads = () => {
   const [modalSource, setModalSource] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
-  const [selectedLead, setSelectedLead] = useState(null);
+  const [selectedLead, setSelectedLead] = useState([]);
+
+  const [selectedAllLeads, setSelectedAllLeads] = useState([]);
+  const [selectAllAll, setSelectAllAll] = useState(false);
+
+  const [selectedUnassignedLeads, setSelectedUnassignedLeads] = useState([]);
+  const [selectAllUnassigned, setSelectAllUnassigned] = useState(false);
+
+  const [selectedAssignedLeads, setSelectedAssignedLeads] = useState([]);
+  const [selectAllAssigned, setSelectAllAssigned] = useState(false);
+
+  const [selectAll, setSelectAll] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sqaureLoading, setSquareLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
@@ -46,6 +58,7 @@ const Leads = () => {
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
+  const [allLeadIds, setAllLeadIds] = useState([]);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
   const [counts, setCounts] = useState({
@@ -148,6 +161,7 @@ const Leads = () => {
     fetchBackendLeads();
     fetchTeamMember();
     fetchPermissions();
+    fetchAllLeadIds();
   }, []);
 
   const fetchBackendLeads = async () => {
@@ -155,7 +169,7 @@ const Leads = () => {
     console.log("Token:", token);
     const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
     console.log("LoggedInUser Details:", loggedInUser);
-    const roleName = loggedInUser?.role?.name;
+    const roleName = loggedInUser?.role;
 
     try {
 
@@ -184,6 +198,221 @@ const Leads = () => {
     }
     finally {
       setSquareLoading(false);
+    }
+  }
+
+  const handleLogout = () => {
+
+    localStorage.removeItem("role");
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+
+    sessionStorage.removeItem("role");
+    sessionStorage.removeItem("token");
+    sessionStorage.removeItem("user");
+
+    navigate("/");
+  }
+
+  const fetchAllLeadIds = async () => {
+    const token = sessionStorage.getItem("token");
+    try {
+      const res = await axios.get(`${BASE_URL}/api/leads/idsOnly`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setAllLeadIds(res.data);
+    } catch (error) {
+      console.error("Error fetching all lead IDs:", error);
+    }
+  };
+
+  const handleSelectAllAll = () => {
+    if (selectAllAll) {
+      setSelectedAllLeads([]);
+      setSelectedLead([]);
+      setSelectAllAll(false);
+      console.log("Deselected all 'All Leads'");
+    } else {
+      const ids = leads.map(l => l._id);
+      setSelectedAllLeads(ids);
+      setSelectedLead(ids);
+      setSelectAllAll(true);
+      console.log(`Selected all 'All Leads': ${ids.length}`);
+    }
+  };
+
+  const handleSelectAllUnassigned = () => {
+    if (selectAllUnassigned) {
+      setSelectedUnassignedLeads([]);
+      setSelectedLead([]);
+      setSelectAllUnassigned(false);
+      console.log("Deselected all 'Unassigned Leads'")
+    } else {
+      const ids = unassignedLeads.map(l => l._id);
+      setSelectedUnassignedLeads(ids);
+      setSelectedLead(ids);
+      setSelectAllUnassigned(true);
+      console.log(`Selected all 'Unassigned Leads': ${ids.length}`);
+    }
+  };
+
+  const handleSelectAllAssigned = () => {
+    if (selectAllAssigned) {
+      setSelectedAssignedLeads([]);
+      setSelectedLead([]);
+      setSelectAllAssigned(false);
+      console.log("Deselected all 'Assigned Leads'");
+    } else {
+      const ids = assignedLeads.map(l => l._id);
+      setSelectedAssignedLeads(ids);
+      setSelectedLead(ids);
+      setSelectAllAssigned(true);
+      console.log(`Selected all 'Assigned Leads': ${ids.length}`);
+    }
+  };
+
+  // const toggleLeadSelection = (id, type) => {
+  //   switch (type) {
+  //     case "all":
+  //       setSelectedAllLeads(prev =>
+  //         prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
+  //       );
+  //       setSelectAllAll(false);
+  //       break;
+  //     case "unassigned":
+  //       setSelectedUnassignedLeads(prev =>
+  //         prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
+  //       );
+  //       setSelectAllUnassigned(false);
+  //       break;
+  //     case "assigned":
+  //       setSelectedAssignedLeads(prev =>
+  //         prev.includes(id) ? prev.filter(l => l !== id) : [...prev, id]
+  //       );
+  //       setSelectAllAssigned(false);
+  //       break;
+  //   }
+  // };
+
+  const toggleLeadSelection = (id, type) => {
+    switch (type) {
+      case "all":
+        setSelectedAllLeads(prev => {
+          let updated;
+          if (prev.includes(id)) {
+            updated = prev.filter(l => l !== id);
+            setSelectAllAll(false);
+          } else {
+            updated = [...prev, id];
+            if (updated.length === leads.length) setSelectAllAll(true);
+          }
+          return updated;
+        });
+        break;
+
+      case "unassigned":
+        setSelectedUnassignedLeads(prev => {
+          let updated;
+          if (prev.includes(id)) {
+            updated = prev.filter(l => l !== id);
+            setSelectAllUnassigned(false);
+          } else {
+            updated = [...prev, id];
+            if (updated.length === unassignedLeads.length) setSelectAllUnassigned(true);
+          }
+          return updated;
+        });
+        break;
+
+      case "assigned":
+        setSelectedAssignedLeads(prev => {
+          let updated;
+          if (prev.includes(id)) {
+            updated = prev.filter(l => l !== id);
+            setSelectAllAssigned(false);
+          } else {
+            updated = [...prev, id];
+            if (updated.length === assignedLeads.length) setSelectAllAssigned(true);
+          }
+          return updated;
+        });
+        break;
+    }
+  };
+
+  const handleSelectAll = (e, type = "all") => {
+    const checked = e.target.checked;
+    setSelectAll(checked);
+
+    if (!checked) {
+      setSelectedLead([]);
+      console.log("Selection Cleared");
+      return;
+    }
+
+    let ids = [];
+
+    switch (type) {
+      case "unassigned":
+        ids = unassignedLeads.map(lead => lead._id);
+        break;
+      case "assigned":
+        ids = assignedLeads.map(lead => lead._id);
+        break;
+      case "all":
+        ids = leads.map(lead => lead._id);
+        break;
+    }
+
+    setSelectedLead(ids);
+    console.log(`Selected ${ids.length} leads from type: ${type}`);
+  }
+
+
+
+  const handleBulkAssign = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const res = await axios.put(`${BASE_URL}/api/leads/bulk-assign`,
+        {
+          leadIds: selectedLead,
+          teamMemberId: selectedMember
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert(res.data.message);
+      setSelectedLead([]);
+      setSelectAll(false);
+      fetchBackendLeads();
+      handleRefresh();
+    } catch (error) {
+      console.error("Bulk assign error:", error);
+      alert("Error assigning leads");
+    }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedAllLeads.length === 0) return;
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedAllLeads.length} leads?`)) return;
+
+    try {
+      const token = sessionStorage.getItem("token");
+
+      const res = await axios.post(`${BASE_URL}/api/leads/bulk-delete`,
+        { leadIds: selectedAllLeads },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      alert(res.data.message);
+      setSelectedAllLeads([]);
+      setSelectAllAll(false);
+      fetchBackendLeads();
+      handleRefresh();
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      alert("Error deleting leads");
     }
   }
 
@@ -653,7 +882,22 @@ const Leads = () => {
 
     <div className="container-fluid mt-5 px-5">
       <div className="row g-5">
-        <h4 className='mt-4 text-left adminDashboardTitle'>Hello, {userName || "User"} {" "} <img src={LeadImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }} /> ,</h4>
+        <div className="d-flex justify-content-between align-items-center mt-4 mb-4">
+          <h4 className="text-left adminDashboardTitle mb-0">
+            Hello, {userName || "User"}{" "}
+            <img
+              src={LeadImg}
+              alt="Users"
+              className="mb-2"
+              style={{
+                width: "40px",
+                border: "0px solid green",
+                borderRadius: "20px",
+              }}
+            />
+            ,
+          </h4>
+        </div>
         <div className="col-12 col-md-4 m-0 mb-2">
           <div className="rounded-4 bg-white shadow-sm py-4 h-100">
             {loading ? (
@@ -866,8 +1110,20 @@ const Leads = () => {
 
             <div className="d-flex justify-content-between align-items-center mt-4 mx-3 mb-3 buttonContainer">
 
+              {selectedAllLeads.length > 0 && (
+                <h6 className="tableHeader">
+                  Selected Leads : {selectedAllLeads.length}
+                </h6>
+              )}
+
+
+              {selectedAllLeads.length > 0 && permissions?.lead?.deleteScope !== "none" && (
+
+                <button className="btn btn-outline-danger btn-sm" onClick={handleBulkDelete}> <i className="bi bi-trash-fill me-2"></i>Delete All ({selectedAllLeads.length})</button>
+              )}
+
               {permissions?.lead?.createScope !== "none" && (
-                <button className="btn btn-primary btn-sm me-2 addUserBtn" data-bs-toggle="modal" data-bs-target="#addNewLead" onClick={handleAddLeadClick}>
+                <button className="btn btn-primary btn-sm addUserBtn" data-bs-toggle="modal" data-bs-target="#addNewLead" onClick={handleAddLeadClick}>
                   <FaPlus className="me-2" /> Add New Lead
                 </button>
               )}
@@ -901,6 +1157,35 @@ const Leads = () => {
 
             </div>
 
+            {/* {selectedAllLeads.length > 0 && (
+              <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
+
+                <div className="d-flex align-items-center gap-2">
+                  <select
+                    className="form-select"
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                    style={{ width: "200px" }}
+                  >
+                    <option value="">-- Select Team Member --</option>
+                    {teamMembers.map((user) => (
+                      <option key={user._id} value={user._id}>
+                        {user.name} ({user.role.name})
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    className="btn btn-primary"
+                    onClick={handleBulkAssign}
+                    disabled={!selectedMember || selectedLead.length === 0}
+                  >
+                    Assign Selected ({selectedAllLeads.length})
+                  </button>
+                </div>
+              </div>
+            )} */}
+
             {loading ? (
               <MyLoader
                 rowHeight={40}
@@ -911,6 +1196,20 @@ const Leads = () => {
                 <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
+                      <th className="text-center tableHeader">
+                        <div className="d-flex align-items-start flex-column justify-content-center gap-2">
+                          <label htmlFor="selectAllCheckbox" className="form-label">
+                            Select All
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={selectAllAll}
+                            onChange={handleSelectAllAll}
+                            id="selectAllCheckbox"
+                          />
+                        </div>
+                      </th>
+
                       <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
                       <th className="text-left tableHeader">Lead Type</th>
@@ -930,6 +1229,12 @@ const Leads = () => {
                   <tbody>
                     {currentLeads.map((lead) => (
                       <tr key={lead._id}>
+                        <td>
+                          <input type="checkbox"
+                            checked={selectedAllLeads.includes(lead._id)}
+                            onChange={() => toggleLeadSelection(lead._id, "all")}
+                          />
+                        </td>
                         <td>
                           <p className="mb-0 text-left tableData">{lead.candidate_name}</p>
                         </td>
@@ -1032,11 +1337,9 @@ const Leads = () => {
                       </tr>
                     ))}
                   </tbody>
-
                 </table>
               </div>
             )}
-
 
             <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
               <button
@@ -1087,7 +1390,35 @@ const Leads = () => {
                 {showFilters ? "Hide Filters" : "Show Filters"}
               </button>
             </div> */}
-            
+
+
+            {selectedUnassignedLeads.length > 0 && (
+              <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
+                <h6 className="tableHeader">Selected Leads : {selectedUnassignedLeads.length}</h6>
+
+                <div className="d-flex align-items-center gap-2">
+                  <select
+                    className="form-select form-select-sm selectFont"
+                    value={selectedMember}
+                    onChange={(e) => setSelectedMember(e.target.value)}
+                    style={{ width: "200px" }}>
+                    <option value="">Select Team Member</option>
+                    {teamMembers.map((user) => (
+                      <option value={user._id} key={user._id}>
+                        {user.name}
+                      </option>
+                    ))}
+                  </select>
+
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={handleBulkAssign}
+                    disabled={!selectedMember || selectedUnassignedLeads.length === 0}>
+                    Assign Selected ({selectedUnassignedLeads.length})
+                  </button>
+                </div>
+              </div>
+            )}
 
             {loading ? (
               <MyLoader
@@ -1099,6 +1430,18 @@ const Leads = () => {
                 <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
+                      <th className="text-left tableHeader">
+                        <div className="d-flex align-items-start justify-content-center flex-column">
+                          <label htmlFor="selectAllCheckbox" className="form-label">
+                            Select All
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={selectAllUnassigned}
+                            onChange={(e) => handleSelectAllUnassigned(e, "unassigned")}
+                          />
+                        </div>
+                      </th>
                       <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
                       <th className="text-left tableHeader">Phone No</th>
@@ -1118,6 +1461,12 @@ const Leads = () => {
                   <tbody>
                     {currentUnassignedLeads.map((a) => (
                       <tr key={a._id}>
+                        <td>
+                          <input type="checkbox"
+                            checked={selectedUnassignedLeads.includes(a._id)}
+                            onChange={() => toggleLeadSelection(a._id, "unassigned")}
+                          />
+                        </td>
                         <td>
                           <p className="mb-0 text-left tableData">{a.candidate_name}</p>
                         </td>
@@ -1258,6 +1607,41 @@ const Leads = () => {
               </div>
             </div>
 
+            <div>
+              {selectedAssignedLeads.length > 0 && (
+                <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
+                  <h6 className="tableHeader">Selected Leads : {selectedAssignedLeads.length}</h6>
+
+                  {user?.role !== "Sales" && (
+                    <div className="d-flex align-items-center gap-2">
+                      <select
+                        className="form-select form-select-sm selectFont"
+                        value={selectedMember}
+                        onChange={(e) => setSelectedMember(e.target.value)}
+                        style={{ width: "200px" }}
+                      >
+                        <option value="">Select Team Member</option>
+                        {teamMembers.map((user) => (
+                          <option key={user._id} value={user._id}>
+                            {user.name} ({user.role.name})
+                          </option>
+                        ))}
+                      </select>
+
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={handleBulkAssign}
+                        disabled={!selectedMember || selectedAssignedLeads.length === 0}
+                      >
+                        Assign Selected ({selectedAssignedLeads.length})
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              )}
+            </div>
+
             {loading ? (
               <MyLoader
                 rowHeight={40}
@@ -1268,6 +1652,16 @@ const Leads = () => {
                 <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
+                      <th className="text-left tableHeader">
+                        <div className="d-flex justify-content-center align-items-start flex-column">
+                          <label htmlFor="">Select All</label>
+                          <input
+                            type="checkbox"
+                            checked={selectAllAssigned}
+                            onChange={(e) => handleSelectAllAssigned(e, "assigned")}
+                          />
+                        </div>
+                      </th>
                       <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
                       {/* <th className="text-left tableHeader">Lead Type</th> */}
@@ -1290,6 +1684,12 @@ const Leads = () => {
                   <tbody>
                     {currentAssignedLeads.map((a) => (
                       <tr key={a._id}>
+                        <td>
+                          <input type="checkbox"
+                            checked={selectedAssignedLeads.includes(a._id)}
+                            onChange={() => toggleLeadSelection(a._id, "assigned")}
+                          />
+                        </td>
                         <td>
                           <p className="mb-0 text-left tableData">{a.candidate_name}</p>
                         </td>
