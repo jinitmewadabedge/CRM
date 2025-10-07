@@ -13,5 +13,10 @@ export default defineConfig({
         secure: true
       }
     }
+  },
+  build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    sourcemap: true
   }
 })
