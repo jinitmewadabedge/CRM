@@ -406,6 +406,20 @@ td {
   font-size: 12.5px !important;
 }
 
+.loginButton {
+  background-color: #42602E !important;
+  color: white !important;
+}
+
+.btn.p-0:disabled {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  opacity: 0.5;
+  /* Optional: to make it visually dim */
+  cursor: not-allowed;
+}
+
 .squareLoader {
   width: 320px;
   height: 120px;
@@ -429,15 +443,46 @@ td {
   background-size: 75px 130px, 55px 56px, 160px 30px, 260px 20px, 290px 56px;
   background-position: 0% 0, 0 0, 70px 5px, 70px 38px, 0px 66px;
   box-sizing: border-box;
-  animation: animloader 1s linear infinite;
+  animation: squareloader 1s linear infinite;
 }
 
-@keyframes animloader {
+@keyframes squareloader {
   0% {
     background-position: 0% 0, 0 0, 70px 5px, 70px 38px, 0px 66px;
   }
 
   100% {
     background-position: 150% 0, 0 0, 70px 5px, 70px 38px, 0px 66px;
+  }
+}
+
+.loader {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin: 15px auto;
+  position: relative;
+  color: #FFF;
+  box-sizing: border-box;
+  animation: animloader 1s linear infinite alternate;
+}
+
+@keyframes animloader {
+
+  0% {
+    box-shadow: -38px -6px, -14px 6px, 14px -6px;
+  }
+
+  33% {
+    box-shadow: -38px 6px, -14px -6px, 14px 6px;
+  }
+
+  66% {
+    box-shadow: -38px -6px, -14px 6px, 14px -6px;
+  }
+
+  100% {
+    box-shadow: -38px 6px, -14px -6px, 14px 6px;
   }
 }

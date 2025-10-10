@@ -80,6 +80,7 @@ const RolePermission = () => {
                       const isAdmin = role.name === "Admin";
                       return (
                         <tr key={role._id}>
+                          
                           <td>
                             <p className="mb-0 text-left tableData">
                               {role.name}

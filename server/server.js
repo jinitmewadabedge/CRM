@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const testRoute = require("./routes/test");
 const leadRoute = require("./routes/leadRoutes");
 const roleRoutes = require("./routes/roleRoutes");
+const candidateRoutes = require("./routes/CandidateRoutes");
 const { importUsers } = require("./controllers/authController");
 
 dotenv.config();
@@ -34,12 +35,13 @@ app.use("/", testRoute);
 app.use("/api/leads", leadRoute);
 app.use("/api/roles", roleRoutes);
 app.use("/users/import", importUsers);
+app.use("/api/candidates", candidateRoutes);
 
 app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });
 });
 
-const uri = process.env.MONGO_URL_PROD;
+const uri = process.env.MONGO_URL_DEV;
 console.log("MONGO_URI:", uri);
 
 (async () => {

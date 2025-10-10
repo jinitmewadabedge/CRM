@@ -5,6 +5,7 @@ import Logo from "../assets/logo.png";
 import "../App.css";
 
 const Login = () => {
+  const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
@@ -27,6 +28,7 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
     try {
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
@@ -52,6 +54,8 @@ const Login = () => {
     } catch (error) {
       const message = error.response?.data?.message || "Login failed";
       alert(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -131,12 +135,23 @@ const Login = () => {
               </NavLink>
             </div>
 
-            <button
-              type="submit"
-              className="btn btn-dark rounded-5 w-100"
-            >
-              Login
-            </button>
+            <div className="d-flex justify-content-center align-items-center">
+              <button
+                type="submit"
+                className="btn loginButton rounded-5 w-100 d-flex justify-content-center align-items-center"
+                disabled={loading}
+                style={{ height: "45px" }}
+              >
+
+                <div className="d-flex align-items-center">
+                  {loading && <span className="loader"></span>}
+                  {/* <span class="loader">Load&nbsp;ng</span> */}
+                  <h6 className="mb-0">{loading ? "" : "Login"}</h6>
+                </div>
+              </button>
+            </div>
+
+
           </form>
         </div>
 

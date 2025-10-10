@@ -4,6 +4,7 @@ import { Modal } from "bootstrap";
 import UsersImg from "../assets/Lead_Img.png"
 import { FaEye, FaSync, FaEyeSlash, FaPlus, FaDownload, FaUserAlt, FaUserCircle, FaArrowUp } from "react-icons/fa";
 import * as XLSX from 'xlsx';
+import MyLoader from "../components/Lead/MyLoader";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -288,11 +289,14 @@ const AdminDashboard = () => {
             </div>
 
             {loading ? (
-              <div className="text-center mt-3">
-                <div className="spinner-border text-primary" role="status">
-                  <span className="visually-hidden">Loading...</span>
+              <div className="d-flex flex-column justify-content-center align-items-center mt-3">
+                <div className="d-flex align-items-center">
+                  {/* <h6 className="mb-0 text-primary">Loading Users...</h6> */}
+                  <MyLoader
+                    rowHeight={40}
+                    rowCount={5}
+                    columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
                 </div>
-                <p>Loading User....</p>
               </div>
             ) : (
               <div className="table-container">
@@ -306,7 +310,7 @@ const AdminDashboard = () => {
                       <th className="text-left tableHeader">Actions</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  {/* <tbody>
                     {currentUsers.length > 0 ? currentUsers.map(user => (
                       <tr key={user._id}>
                         <td className="mb-0 text-left tableData">{user.name}</td>
@@ -335,7 +339,70 @@ const AdminDashboard = () => {
                         <td colSpan="4" className="text-center py-4">No Users Found...</td>
                       </tr>
                     )}
+                  </tbody> */}
+                  <tbody>
+                    {currentUsers.length > 0 ? (
+                      currentUsers.map((user) => {
+  
+                        const isAdmin = user.role?.name?.toLowerCase() === "admin";
+
+                        return (
+                          <tr key={user._id} className={isAdmin ? "admin-row" : ""}>
+
+                            <td className="mb-0 text-left tableData">{user.name}</td>
+
+                            <td className="mb-0 text-left tableData">{user.email}</td>
+
+                            <td className="mb-0 text-left tableData">
+                              {user.showPassword ? user.plainPassword : "••••••••••"}
+                              <button
+                                className="btn btn-sm ms-2 p-0"
+                                onClick={() =>
+                                  setUsers((prev) =>
+                                    prev.map((u) =>
+                                      u._id === user._id ? { ...u, showPassword: !u.showPassword } : u
+                                    )
+                                  )
+                                }
+                                disabled={isAdmin} 
+                              >
+                                {user.showPassword ? <FaEyeSlash /> : <FaEye />}
+                              </button>
+                            </td>
+
+                            <td className="mb-0 text-left tableData">{user.role?.name || "N/A"}</td>
+
+                            <td>
+                              <button
+                                className="btn btn-outline-success btn-sm me-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editUserModal"
+                                onClick={() => handleEditClick(user)}
+                                disabled={isAdmin}
+                              >
+                                Edit
+                              </button>
+
+                              <button
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={() => handleDelete(user._id)}
+                                disabled={isAdmin}
+                              >
+                                Delete
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan="5" className="text-center py-4">
+                          No Users Found...
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
+
                 </table>
               </div>
             )}

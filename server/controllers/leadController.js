@@ -1,6 +1,7 @@
 const { default: mongoose } = require('mongoose');
 const Lead = require('../models/Lead');
 const User = require("../models/User");
+const Candidate = require('../models/Candidate');
 
 exports.createLead = async (req, res) => {
 
@@ -130,8 +131,8 @@ exports.getLeadState = async (req, res) => {
 
         const user = req.user;
         console.log("req.user for state:", req.user);
-        let total = 0, unassigned = 0, assigned = 0;
-        let unassignedLeads = [], assignedLeads = [];
+        let total = 0, unassigned = 0, assigned = 0, enrolled = 0;
+        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [];
 
         if (role === "Lead_Gen_Manager") {
             total = await Lead.countDocuments();
@@ -168,15 +169,16 @@ exports.getLeadState = async (req, res) => {
                 assignedTo: user._id
             }).populate("assignedTo assignedBy createdBy departmentId teamId");
             assigned = assignedLeads.length;
+
+            enrolledLeads = await Candidate.find().populate();
+            enrolled = enrolledLeads.length;
         }
 
         if (role === "Sr_Lead_Generator") {
             total = await Lead.countDocuments();
         }
 
-
-
-        res.status(200).json({ total, unassigned, assigned, unassignedLeads, assignedLeads });
+        res.status(200).json({ total, unassigned, assigned, enrolled, unassignedLeads, assignedLeads, enrolledLeads });
 
     } catch (error) {
         console.error("Error fetching lead state:", error);

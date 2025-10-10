@@ -25,6 +25,7 @@ const Leads = () => {
   // const [assign, setAssigns] = useState([]);
   const [unassignedLeads, setUnassignedLeads] = useState([]);
   const [assignedLeads, setAssignedLeads] = useState([]);
+  const [enrolledLeads, setEnrolledLeads] = useState([]);
   const [teamMembers, setTeamMembers] = useState([]);
   const [finalLead, setFinalLead] = useState(null);
   const [selectedMember, setSelectedMember] = useState("");
@@ -64,7 +65,7 @@ const Leads = () => {
   const [counts, setCounts] = useState({
     total: 0,
     unassigned: 0,
-    assigned: 0
+    assigned: 0,
   });
   const [formData, setFormData] = useState({
     type: "",
@@ -107,6 +108,28 @@ const Leads = () => {
     sortOrder: "asc",
     dateSort: ""
   });
+  const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [enrollLead, setEnrollLead] = useState(null);
+  const [enrollmentData, setEnrollmentData] = useState({
+    enrollmentDate: new Date().toISOString().slice(0.10),
+    plan: "",
+    upfront: "",
+    contracted: "",
+    percentage: "",
+    paymentGateway: "",
+    salesPerson: "",
+    TL: "",
+    manager: "",
+    enrollmentForm: "",
+    jobGuarantee: false,
+    movedToCV: false,
+    movedToTraining: false,
+    technology: "",
+    paymentType: "",
+    reference: "",
+    paymentStatus: ""
+  });
+  const [candidates, setCandidates] = useState([]);
 
   useEffect(() => {
     const fetchState = async () => {
@@ -125,6 +148,22 @@ const Leads = () => {
     }
     fetchState();
   }, []);
+
+  // useEffect(() => {
+  //   fetchCandidates();
+  // }, [])
+
+  // const fetchCandidates = async () => {
+  //   try {
+  //     const token = sessionStorage.getItem("token");
+  //     const res = await axios.get(`${BASE_URL}/api/candidates`, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     setCandidates(res.data);
+  //   } catch (error) {
+  //     console.error("Error fetching candidates:", error);
+  //   }
+  // };
 
   useEffect(() => {
     async function fetchLead() {
@@ -181,14 +220,17 @@ const Leads = () => {
 
       setUnassignedLeads(res.data.unassignedLeads || []);
       setAssignedLeads(res.data.assignedLeads || []);
+      setEnrolledLeads(res.data.enrolledLeads || []);
 
       console.log("Unassigned state (after API):", res.data.unassignedLeads);
       console.log("Assigned state (after API):", res.data.assignedLeads);
+      console.log("Enrolled state (after API):", res.data.enrolledLeads);
 
       setCounts({
         total: res.data.total,
         unassigned: res.data.unassigned,
-        assigned: res.data.assigned
+        assigned: res.data.assigned,
+        enrolled: res.data.enrolled
       });
 
       console.log(`${roleName} Lead State:`, res.data);
@@ -559,6 +601,7 @@ const Leads = () => {
 
       await fetchBackendLeads();
       await fetchPermissions();
+      await fetchCandidates();
 
     } catch (err) {
       console.error("Error refreshing users:", err);
@@ -626,6 +669,52 @@ const Leads = () => {
     reader.readAsArrayBuffer(file);
   };
 
+  // const handleEnrollCandidate = async (leadId) => {
+  //   try {
+  //     const token = sessionStorage.getItem("token");
+  //     const res = await axios.post(`${BASE_URL}/api/candidates/enroll`,
+  //       { leadId, courseId: selectedCourse },
+  //       { headers: { Authorization: `Bearer ${token}` } }
+  //     );
+  //     alert(res.data.message);
+  //   } catch (error) {
+  //     console.error("Enrollment error:", error);
+  //     alert("Failed to enroll candidate");
+  //   }
+  // }
+
+  const handleEnrollCandidate = (lead) => {
+    setEnrollLead(lead);
+    setEnrollmentData(prev => ({
+      ...prev,
+      candidate_Name: lead.candidate_name,
+      email: lead.candidate_email,
+      number: lead.candidate_phone_no
+    }));
+    setShowEnrollModal(true);
+  }
+
+  const handleSubmitEnrollment = async (e) => {
+
+    e.preventDefault();
+
+    try {
+
+      const token = sessionStorage.getItem("token");
+
+      const res = await axios.post(`${BASE_URL}/api/candidates/enroll`, {
+        leadId: enrollLead,
+        ...enrollmentData
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert(res.data.message);
+      setShowEnrollModal(false);
+      fetchBackendLeads();
+    } catch (error) {
+      console.error("Enrollment error:", error);
+      alert("Error enrolling candidate");
+    }
+  };
 
   const exportToCSV = () => {
     const headers = [
@@ -1008,6 +1097,8 @@ const Leads = () => {
                   <option value="In Progress">In Progress</option>
                   <option value="Shortlisted">Shortlisted</option>
                   <option value="Rejected">Rejected</option>
+                  <option value="Enrolled">Enrolled</option>
+                  <option value="Interested">Interested</option>
                   <option value="Converted">Converted</option>
                 </select>
 
@@ -1209,7 +1300,7 @@ const Leads = () => {
                           />
                         </div>
                       </th>
-
+                      <th className="text-left tableHeader">#</th>
                       <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
                       <th className="text-left tableHeader">Lead Type</th>
@@ -1227,13 +1318,16 @@ const Leads = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {currentLeads.map((lead) => (
+                    {currentLeads.map((lead, index) => (
                       <tr key={lead._id}>
                         <td>
                           <input type="checkbox"
                             checked={selectedAllLeads.includes(lead._id)}
                             onChange={() => toggleLeadSelection(lead._id, "all")}
                           />
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">{index + 1}</p>
                         </td>
                         <td>
                           <p className="mb-0 text-left tableData">{lead.candidate_name}</p>
@@ -1319,6 +1413,14 @@ const Leads = () => {
                             </button>
                           )}
 
+                          {lead.status === "Interested" && (
+                            <button
+                              className="btn btn-success btn-sm me-2"
+                              onClick={() => handleEnrollCandidate(lead)}>
+                              Enroll
+                            </button>
+                          )}
+
                           {permissions?.lead?.deleteScope !== "none" && (
                             <button type="button"
                               className="btn btn-outline-danger btn-sm"
@@ -1372,7 +1474,6 @@ const Leads = () => {
         </div>
 
         {/* Unassigned Leads */}
-
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
             <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -1594,10 +1695,9 @@ const Leads = () => {
               </button>
             </div>
           </div >
-        </div >
+        </div>
 
         {/* Assigned Leads */}
-
         <div className="col-12 col-md-8 col-lg-12 mt-2" >
           <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
             <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -2023,6 +2123,106 @@ const Leads = () => {
           </div>
         </div>
       </div>
+
+      {/* Enrollment Modal */}
+      {showEnrollModal && (
+        <div className="modal show d-block" tabIndex="-1">
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title">Enroll Candidate</h5>
+                <button type="button" className="btn-close" onClick={() => setShowEnrollModal(false)}></button>
+              </div>
+              <div className="modal-body">
+                <div className="row g-2">
+                  <div className="col-md-6">
+                    <label>Enrollment Date</label>
+                    <input type="date" className="form-control form-control-sm"
+                      value={enrollmentData.enrollmentDate}
+                      onChange={e => setEnrollmentData({ ...enrollmentData, enrollmentDate: e.target.value })}
+                    />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Candidate Name</label>
+                    <input type="text" className="form-control form-control-sm" value={enrollLead?.candidate_name} disabled />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Email</label>
+                    <input type="email" className="form-control form-control-sm" value={enrollLead?.candidate_email} disabled />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Number</label>
+                    <input type="text" className="form-control form-control-sm" value={enrollLead?.candidate_phone_no} disabled />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Upfront</label>
+                    <input type="number" className="form-control form-control-sm" value={enrollmentData.upfront} onChange={e => setEnrollmentData({ ...enrollmentData, upfront: e.target.value })} />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Contracted</label>
+                    <input type="number" className="form-control form-control-sm" value={enrollmentData.contracted} onChange={e => setEnrollmentData({ ...enrollmentData, contracted: e.target.value })} />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Percentage</label>
+                    <input type="number" className="form-control form-control-sm" value={enrollmentData.percentage} onChange={e => setEnrollmentData({ ...enrollmentData, percentage: e.target.value })} />
+                  </div>
+                  <div className="col-md-6">
+                    <label>Job Guarantee</label>
+                    {/* <input type="text" className="form-control form-control-sm" value={enrollmentData.jobGuarantee} onChange={e => setEnrollmentData({ ...enrollmentData, jobGuarantee: e.target.value })} /> */}
+                    <select name="" id="" className="form-select form-select-sm" value={enrollmentData.jobGuarantee}
+                      onChange={e => setEnrollmentData({ ...enrollmentData, jobGuarantee: e.target.value })}>
+                      <option value="">-----Select---</option>
+                      <option value="true">Yes</option>
+                      <option value="false">No</option>
+                    </select>
+                  </div>
+                  <div className="col-md-6">
+                    <label>Technology</label>
+                    <input type="text" className="form-control form-control-sm" value={enrollLead?.technology} disabled />
+                  </div>
+
+                  <div className="col-md-6">
+                    <label>Plan</label>
+                    <select className="form-select form-select-sm" value={enrollmentData.plan}
+                      onChange={e => setEnrollmentData({ ...enrollmentData, plan: e.target.value })}>
+                      <option value="">Select Plan</option>
+                      <option value="Basic">Basic</option>
+                      <option value="Standard">Standard</option>
+                      <option value="Premium">Premium</option>
+                    </select>
+                  </div>
+
+                  <div className="col-md-6">
+                    <label>Payment Gateway</label>
+                    <select className="form-select form-select-sm" value={enrollmentData.paymentGateway}
+                      onChange={e => setEnrollmentData({ ...enrollmentData, paymentGateway: e.target.value })}>
+                      <option value="">Select Gateway</option>
+                      <option value="Razorpay">Razorpay</option>
+                      <option value="Cashfree">Cashfree</option>
+                      <option value="Manual">Manual</option>
+                    </select>
+                  </div>
+
+                  <div className="col-md-6">
+                    <label className="form-label form-label-sm">Payment Status</label>
+                    <select className="form-select form-select-sm" value={enrollmentData.paymentStatus}
+                      onChange={e => setEnrollmentData({ ...enrollmentData, paymentStatus: e.target.value })}>
+                      <option value="">Select Payment Status</option>
+                      <option value="pending">Pending</option>
+                      <option value="paid">Paid</option>
+                    </select>
+                  </div>
+
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button className="btn btn-secondary" onClick={() => setShowEnrollModal(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={handleSubmitEnrollment}>Enroll</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ADD NEW LEAD */}
       <div className="modal fade" id="addNewLead" tabIndex="-1" >
@@ -2452,7 +2652,68 @@ const Leads = () => {
           </div>
         </div >
       </div>
-    </div >
+
+      <div className="col-12 col-md-8 col-lg-12 mt-2">
+        <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+          <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+            <div>
+              <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
+              <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+            </div>
+          </div>
+
+          <div className="table-container">
+            <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <thead className="bg-light">
+                <tr>
+                  <th className="text-left tableHeader">#</th>
+                  <th className="text-left tableHeader">Name</th>
+                  <th className="text-left tableHeader">Email</th>
+                  <th className="text-left tableHeader">Phone</th>
+                  <th className="text-left tableHeader">Technology</th>
+                  <th className="text-left tableHeader">Upfront</th>
+                  <th className="text-left tableHeader">Contracted</th>
+                  <th className="text-left tableHeader">Percentage</th>
+                  <th className="text-left tableHeader">Payment Status</th>
+                  <th className="text-left tableHeader">Job Guarantee</th>
+                  <th className="text-left tableHeader">Enrollment Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {enrolledLeads.length > 0 ? (
+                  enrolledLeads.map((c, index) => (
+                    <tr key={c._id}>
+                      <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
+                      <td><p className="mb-0 text-left tableData">{c.name}</p></td>
+                      <td><p className="mb-0 text-left tableData">{c.email}</p></td>
+                      <td><p className="mb-0 text-left tableData">{c.phone}</p></td>
+                      <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                      <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
+                      <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td>
+                      <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
+                      <td>
+                        <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
+                          {c.paymentStatus}
+                        </span>
+                      </td>
+                      <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
+                      {/* <td>{new Date(c.enrollmentDate.toLocaleDateString())}</td> */}
+                      <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="11" className="mb-0 text-left tableData">
+                      No enrolled candidates found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
 
