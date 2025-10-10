@@ -513,6 +513,39 @@ const Leads = () => {
     }
   };
 
+  const handleMoveToTraining = async (id) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.put(`${BASE_URL}/api/candidates/update-stage/${id}`, {
+        movedToTraining: true
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert(res.data.message);
+      // Refresh table after update
+      fetchEnrolledLeads();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to move candidate to training");
+    }
+  };
+
+  const handleMoveToCV = async (id) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.put(`${BASE_URL}/api/candidates/update-stage/${id}`, {
+        movedToCV: true
+      }, { headers: { Authorization: `Bearer ${token}` } });
+
+      alert(res.data.message);
+      // Refresh table after update
+      fetchEnrolledLeads();
+    } catch (error) {
+      console.error(error);
+      alert("Failed to move candidate to CV");
+    }
+  };
+
+
   const handleChange = (e) => {
     setNewLead({
       ...newLead,
@@ -2677,6 +2710,7 @@ const Leads = () => {
                   <th className="text-left tableHeader">Payment Status</th>
                   <th className="text-left tableHeader">Job Guarantee</th>
                   <th className="text-left tableHeader">Enrollment Date</th>
+                  <th className="text-left tableHeader">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2699,11 +2733,15 @@ const Leads = () => {
                       <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
                       {/* <td>{new Date(c.enrollmentDate.toLocaleDateString())}</td> */}
                       <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                      <td>
+                        <button className="btn btn-sm btn-success me-2" onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
+                        <button className="btn btn-sm btn-success me-2" onClick={() => handleMoveToCV(c._id)}>Move to CV</button>
+                      </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="11" className="mb-0 text-left tableData">
+                    <td colSpan="11" className="mb-0 text-center tableData">
                       No enrolled candidates found
                     </td>
                   </tr>

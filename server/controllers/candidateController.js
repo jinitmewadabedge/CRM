@@ -88,3 +88,23 @@ exports.getAllCandidates = async (req, res) => {
         res.status(500).json({ message: "Error fetching candidates" });
     }
 }
+
+exports.updateCandidateStage = async (req, res) => {
+    try {
+
+        const { candidateId } = req.params;
+        const { movedToCV, movedToTraining } = req.body;
+
+        const candidate = await Candidate.findById(candidateId);
+        if (!candidate) return res.status(404).json({ message: "Candidate not found" });
+
+        if (!movedToCV !== undefined) candidate.movedToCV = movedToCV;
+        if (movedToTraining !== undefined) candidate.movedToTraining = movedToTraining;
+
+        await candidate.save();
+
+        res.status(200).json({ message: "Candidate stage updated successfully", candidate });
+    } catch (error) {
+        res.status(500).json({ message: "Error updating candidate stage", error });
+    }
+};
