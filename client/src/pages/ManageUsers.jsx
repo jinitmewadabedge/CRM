@@ -4,6 +4,15 @@ import { Modal } from "bootstrap";
 import UsersImg from "../assets/Lead_Img.png"
 import { FaEye, FaSync, FaEyeSlash, FaPlus, FaDownload, FaUserAlt, FaUserCircle, FaArrowUp } from "react-icons/fa";
 import * as XLSX from 'xlsx';
+import {
+  FaHome,
+  FaUser,
+  FaUserShield,
+  FaChartBar,
+  FaFileAlt,
+  FaBullhorn,
+  FaCog,
+} from "react-icons/fa";
 import MyLoader from "../components/Lead/MyLoader";
 
 const AdminDashboard = () => {
@@ -16,6 +25,7 @@ const AdminDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [usersPerPage] = useState(5);
   const [loading, setLoading] = useState(false);
+  const [newRole, setNewRole] = useState("");
   const [csvData, setCsvData] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -45,6 +55,31 @@ const AdminDashboard = () => {
     const { name, value } = e.target;
     setNewUser(pre => ({ ...pre, [name]: value }));
   }
+
+  const handleDeleteRole = async (id, name) => {
+    if (!window.confirm(`Are you sure you want to delete the role "${name}" ?`)) return;
+
+    try {
+
+      const token = sessionStorage.getItem("token");
+
+      await axios.delete(`${BASE_URL}/api/roles/${id}`, {
+        headers: { Authorization: `Bearer ${token}` }
+
+      });
+
+      alert("Role deleted successfully");
+
+      setRoles(prevRoles => prevRoles.filter(r => r._id !== id));
+
+      if (selectedRole === id)
+        setSelectedRole("");
+
+    } catch (error) {
+      console.error(error);
+      alert(err.response?.data?.message || "Error deleting role");
+    }
+  };
 
   const handleEditClick = (user) => {
     setEditUser({
@@ -112,6 +147,24 @@ const AdminDashboard = () => {
   const handleChange = (e) => {
     setEditUser({ ...editUser, [e.target.name]: e.target.value });
   };
+
+  const handleAddNewRole = async () => {
+
+    if (!newRole.trim()) return alert("Enter a role name");
+
+    try {
+
+      await axios.post(`${BASE_URL}/api/roles/add`, { name: newRole });
+      alert("Role added successfully!");
+
+      const res = await axios.get(`${BASE_URL}/api/roles`);
+      setRoles(res.data);
+      setNewRole("");
+    } catch (error) {
+      console.error(err);
+      alert(err.response?.data?.message || "Error adding role");
+    }
+  }
 
   const handleUpdate = async () => {
     try {
@@ -343,7 +396,7 @@ const AdminDashboard = () => {
                   <tbody>
                     {currentUsers.length > 0 ? (
                       currentUsers.map((user) => {
-  
+
                         const isAdmin = user.role?.name?.toLowerCase() === "admin";
 
                         return (
@@ -364,7 +417,7 @@ const AdminDashboard = () => {
                                     )
                                   )
                                 }
-                                disabled={isAdmin} 
+                                disabled={isAdmin}
                               >
                                 {user.showPassword ? <FaEyeSlash /> : <FaEye />}
                               </button>
@@ -536,14 +589,46 @@ const AdminDashboard = () => {
                       <input name="password" type="text" value={newUser.password} onChange={handleNewUserChange} className="form-control form-control-sm" placeholder="Password" />
                     </div>
                     <label htmlFor="" className="form-check-label">Role</label>
-                    <div className="input-group mb-3">
+                    <div className="input-group mb-1">
                       <select name="role" value={newUser.role} onChange={handleNewUserChange} className="form-select form-select-sm mb-2">
                         {roles.map(r => <option key={r._id} value={r._id}>{r.name}</option>)}
                       </select>
                     </div>
                     <div className="text-center">
-                      <button type="button" className="btn btn-round btn-success btn-sm w-100 mt-2 mb-0 btnColor" onClick={handleAddUser}>Add User</button>
+                      <button type="button" className="btn btn-round btn-success btn-sm w-100 mt-2 mb-3 btnColor" onClick={handleAddUser}><FaUser className="me-2" />Add User</button>
                     </div>
+                    <label htmlFor="" className="form-check-label">Add New Role</label>
+                    <div className="input-group mb-1">
+                      <input type="text" value={newRole} className="form-control form-control-sm" placeholder="Add New Role" onChange={(e) => setNewRole(e.target.value)} />
+                    </div>
+                    <div className="text-center">
+                      <button type="button" onClick={handleAddNewRole} className="btn btn-round btn-success btn-sm w-100 mt-2 mb-2 btnColor"><FaPlus className="me-2" /> Add Role</button>
+                    </div>
+                    <div className="mb-3 d-flex align-items-center">
+                      <select
+                        className="form-select form-select-sm me-2"
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                      >
+                        <option value="">Delete Role</option>
+                        {roles.map((r) => (
+                          <option key={r._id} value={r._id}>
+                            {r.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <button
+                      className="btn btn-danger btn-sm w-100"
+                      onClick={() => {
+                        if (!selectedRole) return alert("Please select a role first");
+                        const role = roles.find(r => r._id === selectedRole);
+                        handleDeleteRole(selectedRole, role?.name);
+                      }}
+                    >
+                      Delete
+                    </button>
+
                   </form>
                 </div>
                 <p className="editFooterText mx-auto mb-5">

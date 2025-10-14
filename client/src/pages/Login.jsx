@@ -23,7 +23,8 @@ const Login = () => {
     Sr_Lead_Generator: "/leads",
     Lead_Gen_Team_Lead: "/leads",
     Lead_Generator: "/leads",
-    Sales_Manager: "/leads"
+    Sales_Manager: "/leads",
+    Resume: "/leads"
   };
 
   const handleSubmit = async (e) => {
@@ -88,6 +89,7 @@ const Login = () => {
                 <option value="Sr_Lead_Generator">Sr Lead Generator</option>
                 <option value="Lead_Generator">Lead Generator</option>
                 <option value="Sales_Manager">Sales Manager</option>
+                <option value="Resume">Resume</option>
               </select>
               <label htmlFor="role">Role</label>
             </div>

@@ -131,8 +131,8 @@ exports.getLeadState = async (req, res) => {
 
         const user = req.user;
         console.log("req.user for state:", req.user);
-        let total = 0, unassigned = 0, assigned = 0, enrolled = 0;
-        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [];
+        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, training = 0, cv = 0;
+        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], trainingLeads = [], cvLeads = [];
 
         if (role === "Lead_Gen_Manager") {
             total = await Lead.countDocuments();
@@ -174,11 +174,22 @@ exports.getLeadState = async (req, res) => {
             enrolled = enrolledLeads.length;
         }
 
+        if (role === "Resume") {
+
+            total = await Lead.countDocuments();
+
+            trainingLeads = await Candidate.find({ movedToTraining: true });
+            training = trainingLeads.length;
+
+            cvLeads = await Candidate.find({ movedToCV: true });
+            cv = cvLeads.length;
+        }
+
         if (role === "Sr_Lead_Generator") {
             total = await Lead.countDocuments();
         }
 
-        res.status(200).json({ total, unassigned, assigned, enrolled, unassignedLeads, assignedLeads, enrolledLeads });
+        res.status(200).json({ total, unassigned, assigned, enrolled, unassignedLeads, assignedLeads, enrolledLeads, cvLeads, training: trainingLeads.length, cv: cvLeads.length, trainingLeads, cvLeads });
 
     } catch (error) {
         console.error("Error fetching lead state:", error);

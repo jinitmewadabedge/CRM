@@ -1,5 +1,7 @@
 const Candidate = require("../models/Candidate");
 const Lead = require("../models/Lead");
+const Training = require("../models/Training");
+const CV = require("../models/CV");
 
 exports.enrollCandidate = async (req, res) => {
 
@@ -10,6 +12,7 @@ exports.enrollCandidate = async (req, res) => {
             plan,
             upfront,
             contracted,
+            collectedPayments,
             percentage,
             paymentGateway,
             salesPerson,
@@ -48,6 +51,7 @@ exports.enrollCandidate = async (req, res) => {
             plan: req.body.plan,
             upfront: req.body.upfront,
             contracted: req.body.contracted,
+            collectedPayments: req.body.collectedPayments,
             percentage: req.body.percentage,
             paymentGateway: req.body.paymentGateway,
             salesPerson: req.body.salesPerson || null,
@@ -91,20 +95,111 @@ exports.getAllCandidates = async (req, res) => {
 
 exports.updateCandidateStage = async (req, res) => {
     try {
-
         const { candidateId } = req.params;
         const { movedToCV, movedToTraining } = req.body;
 
         const candidate = await Candidate.findById(candidateId);
         if (!candidate) return res.status(404).json({ message: "Candidate not found" });
 
-        if (!movedToCV !== undefined) candidate.movedToCV = movedToCV;
-        if (movedToTraining !== undefined) candidate.movedToTraining = movedToTraining;
+        if (movedToCV !== undefined) {
+            candidate.movedToCV = movedToCV;
+
+            if (movedToCV) {
+                const existingCV = await CV.findOne({ candidateId: candidate._id });
+
+                if (!existingCV) {
+                    await CV.create({
+                        candidateId: candidate._id,
+                        progress: "CV Pending",
+                        status: "Active",
+                        startDate: new Date(),
+                        reviewer: null
+                    });
+                }
+            }
+        }
+
+        if (movedToTraining !== undefined) {
+            candidate.movedToTraining = movedToTraining;
+
+            if (movedToTraining) {
+                await Training.create({
+                    candidateId: candidate._id,
+                    candidateName: candidate.name,
+                    email: candidate.email,
+                    number: candidate.phone,
+                    technology: candidate.technology,
+                    startDate: new Date(),
+                    progress: "Not Started",
+                    status: "Active",
+                    trainer: null
+                });
+            }
+        }
 
         await candidate.save();
-
         res.status(200).json({ message: "Candidate stage updated successfully", candidate });
+
     } catch (error) {
+        console.error("Update Stage Error:", error); // 👈 log actual error in console
         res.status(500).json({ message: "Error updating candidate stage", error });
     }
 };
+
+
+// exports.updateCandidateStage = async (req, res) => {
+//     try {
+
+//         const { candidateId } = req.params;
+//         const { movedToCV, movedToTraining } = req.body;
+
+//         const candidate = await Candidate.findById(candidateId);
+//         if (!candidate) return res.status(404).json({ message: "Candidate not found" });
+
+//         if (!movedToCV !== undefined) {
+
+//             candidate.movedToCV = movedToCV;
+
+//             if (movedToCV) {
+
+//                 const existingCV = await CV.findOne({ candidateId: candidate._id });
+
+//                 if (!existingCV) {
+//                     await CV.create({
+//                         candidateId: candidate._id,
+//                         progress: "CV Pending",
+//                         status: "Active",
+//                         startDate: new Date(),
+//                         reviewer: null
+//                     });
+//                 }
+//             }
+//         }
+
+
+//         if (movedToTraining !== undefined) {
+
+//             candidate.movedToTraining = movedToTraining;
+
+//             if (movedToTraining) {
+//                 await Training.create({
+//                     candidateId: candidate._id,
+//                     candidateName: candidate.name,
+//                     email: candidate.email,
+//                     number: candidate.phone,
+//                     technology: candidate.technology,
+//                     startDate: new Date(),
+//                     progress: "Not Started",
+//                     status: "Active",
+//                     trainer: null
+//                 })
+//             }
+//         }
+
+//         await candidate.save();
+
+//         res.status(200).json({ message: "Candidate stage updated successfully", candidate });
+//     } catch (error) {
+//         res.status(500).json({ message: "Error updating candidate stage", error });
+//     }
+// };

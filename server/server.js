@@ -7,6 +7,8 @@ const testRoute = require("./routes/test");
 const leadRoute = require("./routes/leadRoutes");
 const roleRoutes = require("./routes/roleRoutes");
 const candidateRoutes = require("./routes/CandidateRoutes");
+const trainingRoutes = require("./routes/trainingRoutes");
+const cvRoutes = require("./routes/cvRoutes");
 const { importUsers } = require("./controllers/authController");
 
 dotenv.config();
@@ -36,6 +38,8 @@ app.use("/api/leads", leadRoute);
 app.use("/api/roles", roleRoutes);
 app.use("/users/import", importUsers);
 app.use("/api/candidates", candidateRoutes);
+app.use("/api/training", trainingRoutes);
+app.use("/api/cv", cvRoutes);
 
 app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });

@@ -21,8 +21,6 @@ import LeadDashboard from './pages/Lead/LeadDashboard'
 function App() {
   return (
     <Router>
-      {/* <Layout> */}
-
       <Routes>
         <Route path="/" element={<Login />} />
 
@@ -82,15 +80,10 @@ function App() {
             </ProtectedRoutes>
           }
         />
+
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/resetpassword/:token" element={<ResetPassword />} />
-
-        {/* <Route path="/leads/add" element={<LeadForm />} /> */}
-        {/* <Route path="/leads/:id" element={<Leads />} /> */}
-        {/* <Route path="/leads" element={<Leads />} /> */}
-        {/* <Route path="/leads/edit/:id" element={<EditLead />}></Route> */}
       </Routes>
-      {/* </Layout> */}
     </Router>
   );
 }

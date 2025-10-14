@@ -1,5 +1,10 @@
 const mongoose = require('mongoose');
 
+const paymentSchema = new mongoose.Schema({
+    amount: { type: Number, default: 0 },
+    date: { type: Date, default: null }
+});
+
 const candidateSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String },
@@ -25,6 +30,13 @@ const candidateSchema = new mongoose.Schema({
     reference: { type: String },
 
     paymentStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
+    collectedPayments: {
+        type: [paymentSchema], default: [
+            { amount: 0, date: null },
+            { amount: 0, date: null },
+            { amount: 0, date: null },
+        ]
+    },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Candidate", candidateSchema);

@@ -1,3 +1,4 @@
+import React from "react"
 import { useEffect, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
@@ -38,6 +39,7 @@ const Leads = () => {
   const [currentAssignedPage, setCurrentAssignedPage] = useState(1);
   const [modalSource, setModalSource] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const [trainingLeads, setTrainingLeads] = useState([]);
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedLead, setSelectedLead] = useState([]);
 
@@ -115,6 +117,11 @@ const Leads = () => {
     plan: "",
     upfront: "",
     contracted: "",
+    collectedPayments: [
+      { amount: "", date: "" },
+      { amount: "", date: "" },
+      { amount: "", date: "" }
+    ],
     percentage: "",
     paymentGateway: "",
     salesPerson: "",
@@ -130,6 +137,7 @@ const Leads = () => {
     paymentStatus: ""
   });
   const [candidates, setCandidates] = useState([]);
+  const [cvLeads, setCVLeads] = useState([]);
 
   useEffect(() => {
     const fetchState = async () => {
@@ -149,21 +157,21 @@ const Leads = () => {
     fetchState();
   }, []);
 
-  // useEffect(() => {
-  //   fetchCandidates();
-  // }, [])
+  useEffect(() => {
+    fetchCandidates();
+  }, [])
 
-  // const fetchCandidates = async () => {
-  //   try {
-  //     const token = sessionStorage.getItem("token");
-  //     const res = await axios.get(`${BASE_URL}/api/candidates`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     setCandidates(res.data);
-  //   } catch (error) {
-  //     console.error("Error fetching candidates:", error);
-  //   }
-  // };
+  const fetchCandidates = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/api/candidates`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCandidates(res.data);
+    } catch (error) {
+      console.error("Error fetching candidates:", error);
+    }
+  };
 
   useEffect(() => {
     async function fetchLead() {
@@ -201,6 +209,8 @@ const Leads = () => {
     fetchTeamMember();
     fetchPermissions();
     fetchAllLeadIds();
+    fetchTrainingLeads();
+    fetchCVLeads();
   }, []);
 
   const fetchBackendLeads = async () => {
@@ -513,6 +523,56 @@ const Leads = () => {
     }
   };
 
+  const fetchTrainingLeads = async () => {
+    const token = sessionStorage.getItem("token");
+    try {
+      const res = await axios.get(`${BASE_URL}/api/training`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setTrainingLeads(res.data);
+      console.log("Training Leads:", res.data);
+    } catch (error) {
+      console.error("Error fetching training leads:", error);
+    }
+  };
+
+  const fetchCVLeads = async () => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const res = await axios.get(`${BASE_URL}/api/cv`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCVLeads(res.data);
+    } catch (err) {
+      console.error("Error fetching CV leads:", err);
+    }
+  };
+
+
+  const updateStage = async (id, stage) => {
+    try {
+      const token = sessionStorage.getItem("token");
+      const data = {};
+
+      if (stage === "training") data.movedToTraining = true;
+      if (stage === "cv") data.movedToCV = true;
+
+      const res = await axios.put(`${BASE_URL}/api/candidates/update-stage/${id}`, data, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert(res.data.message);
+
+      fetchBackendLeads();
+
+      if (stage === "training") await fetchTrainingLeads();
+      if (stage === "cv") await fetchCVLeads();
+    } catch (error) {
+      console.error(error);
+      alert(`Failed to move candidate to ${stage === "training" ? "training" : "CV"}`);
+    }
+  };
+
+
   const handleMoveToTraining = async (id) => {
     try {
       const token = sessionStorage.getItem("token");
@@ -522,7 +582,9 @@ const Leads = () => {
 
       alert(res.data.message);
       // Refresh table after update
-      fetchEnrolledLeads();
+      // fetchEnrolledLeads();
+      fetchBackendLeads();
+      await fetchTrainingLeads();
     } catch (error) {
       console.error(error);
       alert("Failed to move candidate to training");
@@ -538,7 +600,8 @@ const Leads = () => {
 
       alert(res.data.message);
       // Refresh table after update
-      fetchEnrolledLeads();
+      // fetchEnrolledLeads();
+      fetchBackendLeads();
     } catch (error) {
       console.error(error);
       alert("Failed to move candidate to CV");
@@ -737,7 +800,8 @@ const Leads = () => {
 
       const res = await axios.post(`${BASE_URL}/api/candidates/enroll`, {
         leadId: enrollLead,
-        ...enrollmentData
+        ...enrollmentData,
+        collectedPayments: enrollmentData.collectedPayments
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       alert(res.data.message);
@@ -1069,7 +1133,7 @@ const Leads = () => {
           </div>
         </div>
 
-
+        {/* All Lead Main Table */}
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
             <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -1507,16 +1571,17 @@ const Leads = () => {
         </div>
 
         {/* Unassigned Leads */}
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Unassigned Leads({counts.unassigned})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+        {user.role !== "Resume" && user.role !== "Sales" && (
+          <div className="col-12 col-md-8 col-lg-12 mt-2">
+            <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div>
+                  <h5 className="text-left leadManagementTitle mt-4">All Unassigned Leads({counts.unassigned})</h5>
+                  <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+                </div>
               </div>
-            </div>
 
-            {/* <div>
+              {/* <div>
               <button className="btn btn-primary btn-sm"
                 onClick={() => setShowFilters(!showFilters)}
               >
@@ -1526,106 +1591,106 @@ const Leads = () => {
             </div> */}
 
 
-            {selectedUnassignedLeads.length > 0 && (
-              <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
-                <h6 className="tableHeader">Selected Leads : {selectedUnassignedLeads.length}</h6>
+              {selectedUnassignedLeads.length > 0 && (
+                <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
+                  <h6 className="tableHeader">Selected Leads : {selectedUnassignedLeads.length}</h6>
 
-                <div className="d-flex align-items-center gap-2">
-                  <select
-                    className="form-select form-select-sm selectFont"
-                    value={selectedMember}
-                    onChange={(e) => setSelectedMember(e.target.value)}
-                    style={{ width: "200px" }}>
-                    <option value="">Select Team Member</option>
-                    {teamMembers.map((user) => (
-                      <option value={user._id} key={user._id}>
-                        {user.name}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="d-flex align-items-center gap-2">
+                    <select
+                      className="form-select form-select-sm selectFont"
+                      value={selectedMember}
+                      onChange={(e) => setSelectedMember(e.target.value)}
+                      style={{ width: "200px" }}>
+                      <option value="">Select Team Member</option>
+                      {teamMembers.map((user) => (
+                        <option value={user._id} key={user._id}>
+                          {user.name}
+                        </option>
+                      ))}
+                    </select>
 
-                  <button
-                    className="btn btn-primary btn-sm"
-                    onClick={handleBulkAssign}
-                    disabled={!selectedMember || selectedUnassignedLeads.length === 0}>
-                    Assign Selected ({selectedUnassignedLeads.length})
-                  </button>
+                    <button
+                      className="btn btn-primary btn-sm"
+                      onClick={handleBulkAssign}
+                      disabled={!selectedMember || selectedUnassignedLeads.length === 0}>
+                      Assign Selected ({selectedUnassignedLeads.length})
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {loading ? (
-              <MyLoader
-                rowHeight={40}
-                rowCount={5}
-                columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
-            ) : (
-              <div className="table-container">
-                <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                  <thead className="bg-light">
-                    <tr>
-                      <th className="text-left tableHeader">
-                        <div className="d-flex align-items-start justify-content-center flex-column">
-                          <label htmlFor="selectAllCheckbox" className="form-label">
-                            Select All
-                          </label>
-                          <input
-                            type="checkbox"
-                            checked={selectAllUnassigned}
-                            onChange={(e) => handleSelectAllUnassigned(e, "unassigned")}
-                          />
-                        </div>
-                      </th>
-                      <th className="text-left tableHeader">Name</th>
-                      <th className="text-left tableHeader">Email</th>
-                      <th className="text-left tableHeader">Phone No</th>
-                      <th className="text-left tableHeader">Actions</th>
-                      {/* <th className="text-left tableHeader">Lead Type</th> */}
-                      {/* <th className="text-left tableHeader">URL</th> */}
-                      {/* <th className="text-left tableHeader">University</th> */}
-                      {/* <th className="text-left tableHeader">Technology</th> */}
-                      {/* <th className="text-left tableHeader">Visa</th> */}
-                      {/* <th className="text-left tableHeader">Preferred Time</th> */}
-                      {/* <th className="text-left tableHeader">Source</th> */}
-                      {/* <th className="text-center tableHeader">Status</th> */}
-                      {/* <th className="text-left tableHeader">Created At</th> */}
-                      {/* <th className="text-left tableHeader">Updated At</th> */}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentUnassignedLeads.map((a) => (
-                      <tr key={a._id}>
-                        <td>
-                          <input type="checkbox"
-                            checked={selectedUnassignedLeads.includes(a._id)}
-                            onChange={() => toggleLeadSelection(a._id, "unassigned")}
-                          />
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.candidate_name}</p>
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.candidate_email}</p>
-                        </td>
-                        {/* <td>
+              {loading ? (
+                <MyLoader
+                  rowHeight={40}
+                  rowCount={5}
+                  columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
+              ) : (
+                <div className="table-container">
+                  <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="text-left tableHeader">
+                          <div className="d-flex align-items-start justify-content-center flex-column">
+                            <label htmlFor="selectAllCheckbox" className="form-label">
+                              Select All
+                            </label>
+                            <input
+                              type="checkbox"
+                              checked={selectAllUnassigned}
+                              onChange={(e) => handleSelectAllUnassigned(e, "unassigned")}
+                            />
+                          </div>
+                        </th>
+                        <th className="text-left tableHeader">Name</th>
+                        <th className="text-left tableHeader">Email</th>
+                        <th className="text-left tableHeader">Phone No</th>
+                        <th className="text-left tableHeader">Actions</th>
+                        {/* <th className="text-left tableHeader">Lead Type</th> */}
+                        {/* <th className="text-left tableHeader">URL</th> */}
+                        {/* <th className="text-left tableHeader">University</th> */}
+                        {/* <th className="text-left tableHeader">Technology</th> */}
+                        {/* <th className="text-left tableHeader">Visa</th> */}
+                        {/* <th className="text-left tableHeader">Preferred Time</th> */}
+                        {/* <th className="text-left tableHeader">Source</th> */}
+                        {/* <th className="text-center tableHeader">Status</th> */}
+                        {/* <th className="text-left tableHeader">Created At</th> */}
+                        {/* <th className="text-left tableHeader">Updated At</th> */}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {currentUnassignedLeads.map((a) => (
+                        <tr key={a._id}>
+                          <td>
+                            <input type="checkbox"
+                              checked={selectedUnassignedLeads.includes(a._id)}
+                              onChange={() => toggleLeadSelection(a._id, "unassigned")}
+                            />
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                          </td>
+                          {/* <td>
                         <p className="mb-0 text-left tableData">{a.type}</p>
                       </td> */}
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
-                        </td>
-                        <td>
-                          {permissions?.lead?.assignToSales && (
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => setSelectedLead(a._id)}
-                              data-bs-toggle="modal"
-                              data-bs-target="#assignLeadModal">
-                              Assign
-                            </button>
-                          )}
-                        </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                          </td>
+                          <td>
+                            {permissions?.lead?.assignToSales && (
+                              <button
+                                className="btn btn-sm btn-success"
+                                onClick={() => setSelectedLead(a._id)}
+                                data-bs-toggle="modal"
+                                data-bs-target="#assignLeadModal">
+                                Assign
+                              </button>
+                            )}
+                          </td>
 
-                        {/* <td className="text-left tableData">
+                          {/* <td className="text-left tableData">
                         <button
                           type="button"
                           className="btn btn-outline-primary btn-sm btn-rounded me-2"
@@ -1634,9 +1699,9 @@ const Leads = () => {
                           View
                         </button> */}
 
-                        {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
+                          {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
 
-                        {/* <button
+                          {/* <button
                         type="button"
                         className="btn btn-outline-success btn-sm btn-rounded me-2"
                         onClick={() => navigate(`/leads/edit/${lead._id}`)}
@@ -1644,7 +1709,7 @@ const Leads = () => {
                         Edit
                       </button> */}
 
-                        {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
+                          {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
 
                         <button type="button"
                           className="btn btn-outline-danger btn-sm"
@@ -1656,306 +1721,310 @@ const Leads = () => {
                           }}>
                           Delete
                         </button> */}
-                        {/* </td> */}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          {/* </td> */}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
 
-                {
-                  finalLead && (
-                    <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
-                      <h3>Assign Lead</h3>
-                      <select
-                        value={selectedMember}
-                        onChange={(e) => setSelectedMember(e.target.value)}
-                      >
-                        <option value="">Select Team Member</option>
-                        {teamMembers
-                          .filter((member) => {
+                  {
+                    finalLead && (
+                      <div style={{ border: "1px solid black", padding: "10px", marginTop: "20px" }}>
+                        <h3>Assign Lead</h3>
+                        <select
+                          value={selectedMember}
+                          onChange={(e) => setSelectedMember(e.target.value)}
+                        >
+                          <option value="">Select Team Member</option>
+                          {teamMembers
+                            .filter((member) => {
 
-                            const roleName = JSON.parse(sessionStorage.getItem("user"))?.role?.name;
+                              const roleName = JSON.parse(sessionStorage.getItem("user"))?.role?.name;
 
-                            console.log("Member:", member.name, "Role:", member.role?.name);
+                              console.log("Member:", member.name, "Role:", member.role?.name);
 
-                            if (!member.role?.name) return false;
+                              if (!member.role?.name) return false;
 
-                            if (roleName === "Lead_Gen_Manager") {
-                              return member.role?.name === "Sales_Manager";
-                            }
-                            if (roleName === "Sales_Manager") {
-                              return member.role?.name === "Sales";
-                            }
-                            return false;
-                          })
-                          .map((member) => (
-                            <option key={member._id} value={member._id}>{member.name}</option>
-                          ))}
+                              if (roleName === "Lead_Gen_Manager") {
+                                return member.role?.name === "Sales_Manager";
+                              }
+                              if (roleName === "Sales_Manager") {
+                                return member.role?.name === "Sales";
+                              }
+                              return false;
+                            })
+                            .map((member) => (
+                              <option key={member._id} value={member._id}>{member.name}</option>
+                            ))}
 
-                      </select>
-                      <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
-                      <button onClick={() => setFinalLead(null)}>Cancel</button>
-                    </div>
-                  )
-                }
-              </div >
-            )}
-            <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
-              <button
-                className="btn btn-sm btn-outline-primary me-2"
-                disabled={currentUnassignedPage === 1}
-                onClick={() => setCurrentUnassignedPage(currentUnassignedPage - 1)}
-              >
-                Previous
-              </button>
-
-              {[...Array(totalUnassignedPages)].map((_, index) => (
+                        </select>
+                        <button onClick={handleAssign} disabled={!selectedMember}>Confirm Assign</button>
+                        <button onClick={() => setFinalLead(null)}>Cancel</button>
+                      </div>
+                    )
+                  }
+                </div >
+              )}
+              <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
                 <button
-                  key={index}
-                  className={`btn btn-sm me-1 ${currentUnassignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
-                  onClick={() => setCurrentUnassignedPage(index + 1)}
+                  className="btn btn-sm btn-outline-primary me-2"
+                  disabled={currentUnassignedPage === 1}
+                  onClick={() => setCurrentUnassignedPage(currentUnassignedPage - 1)}
                 >
-                  {index + 1}
+                  Previous
                 </button>
-              ))}
 
-              <button
-                className="btn btn-sm btn-outline-primary ms-2"
-                disabled={currentUnassignedPage === totalUnassignedPages}
-                onClick={() => setCurrentUnassignedPage(currentUnassignedPage + 1)}
-              >
-                Next
-              </button>
-            </div>
-          </div >
-        </div>
+                {[...Array(totalUnassignedPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    className={`btn btn-sm me-1 ${currentUnassignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setCurrentUnassignedPage(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button
+                  className="btn btn-sm btn-outline-primary ms-2"
+                  disabled={currentUnassignedPage === totalUnassignedPages}
+                  onClick={() => setCurrentUnassignedPage(currentUnassignedPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
+            </div >
+          </div>
+        )}
 
         {/* Assigned Leads */}
-        <div className="col-12 col-md-8 col-lg-12 mt-2" >
-          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads({counts.assigned})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+        {user.role !== "Resume" && (
+          <div className="col-12 col-md-8 col-lg-12 mt-2" >
+            <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div>
+                  <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads({counts.assigned})</h5>
+                  <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+                </div>
               </div>
-            </div>
 
-            <div>
-              {selectedAssignedLeads.length > 0 && (
-                <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
-                  <h6 className="tableHeader">Selected Leads : {selectedAssignedLeads.length}</h6>
+              <div>
+                {selectedAssignedLeads.length > 0 && (
+                  <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
+                    <h6 className="tableHeader">Selected Leads : {selectedAssignedLeads.length}</h6>
 
-                  {user?.role !== "Sales" && (
-                    <div className="d-flex align-items-center gap-2">
-                      <select
-                        className="form-select form-select-sm selectFont"
-                        value={selectedMember}
-                        onChange={(e) => setSelectedMember(e.target.value)}
-                        style={{ width: "200px" }}
-                      >
-                        <option value="">Select Team Member</option>
-                        {teamMembers.map((user) => (
-                          <option key={user._id} value={user._id}>
-                            {user.name} ({user.role.name})
-                          </option>
-                        ))}
-                      </select>
+                    {user?.role !== "Sales" && (
+                      <div className="d-flex align-items-center gap-2">
+                        <select
+                          className="form-select form-select-sm selectFont"
+                          value={selectedMember}
+                          onChange={(e) => setSelectedMember(e.target.value)}
+                          style={{ width: "200px" }}
+                        >
+                          <option value="">Select Team Member</option>
+                          {teamMembers.map((user) => (
+                            <option key={user._id} value={user._id}>
+                              {user.name} ({user.role.name})
+                            </option>
+                          ))}
+                        </select>
 
-                      <button
-                        className="btn btn-primary btn-sm"
-                        onClick={handleBulkAssign}
-                        disabled={!selectedMember || selectedAssignedLeads.length === 0}
-                      >
-                        Assign Selected ({selectedAssignedLeads.length})
-                      </button>
-                    </div>
-                  )}
+                        <button
+                          className="btn btn-primary btn-sm"
+                          onClick={handleBulkAssign}
+                          disabled={!selectedMember || selectedAssignedLeads.length === 0}
+                        >
+                          Assign Selected ({selectedAssignedLeads.length})
+                        </button>
+                      </div>
+                    )}
 
-                </div>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
 
-            {loading ? (
-              <MyLoader
-                rowHeight={40}
-                rowCount={5}
-                columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
-            ) : (
-              <div className="table-container">
-                <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                  <thead className="bg-light">
-                    <tr>
-                      <th className="text-left tableHeader">
-                        <div className="d-flex justify-content-center align-items-start flex-column">
-                          <label htmlFor="">Select All</label>
-                          <input
-                            type="checkbox"
-                            checked={selectAllAssigned}
-                            onChange={(e) => handleSelectAllAssigned(e, "assigned")}
-                          />
-                        </div>
-                      </th>
-                      <th className="text-left tableHeader">Name</th>
-                      <th className="text-left tableHeader">Email</th>
-                      {/* <th className="text-left tableHeader">Lead Type</th> */}
-                      <th className="text-left tableHeader">Phone No</th>
-                      {/* <th className="text-left tableHeader">URL</th> */}
-                      {/* <th className="text-left tableHeader">University</th> */}
-                      {/* <th className="text-left tableHeader">Technology</th> */}
-                      {/* <th className="text-left tableHeader">Visa</th> */}
-                      {/* <th className="text-left tableHeader">Preferred Time</th> */}
-                      {/* <th className="text-left tableHeader">Source</th> */}
-                      {/* <th className="text-center tableHeader">Status</th> */}
-                      {/* <th className="text-left tableHeader">Created At</th> */}
-                      {/* <th className="text-left tableHeader">Updated At</th> */}
-                      <th className="text-left tableHeader">Assigned To</th>
-                      <th className="text-left tableHeader">Assigned By</th>
-                      <th className="text-left tableHeader">Actions</th>
-                      {/* <th className="text-left tableHeader">Actions</th> */}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentAssignedLeads.map((a) => (
-                      <tr key={a._id}>
-                        <td>
-                          <input type="checkbox"
-                            checked={selectedAssignedLeads.includes(a._id)}
-                            onChange={() => toggleLeadSelection(a._id, "assigned")}
-                          />
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.candidate_name}</p>
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.candidate_email}</p>
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
-                        </td>
-                        <td>
-                          <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
-                        </td>
-                        <td>
-                          <button
-                            className="btn btn-outline-warning btn-sm btn-rounded me-2"
-                            data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
-                            onClick={() => {
-                              setSelectedLead(a);
-                              setModalSource("assigned")
-                            }}>
-                            View
-                          </button>
-                        </td>
+              {loading ? (
+                <MyLoader
+                  rowHeight={40}
+                  rowCount={5}
+                  columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
+              ) : (
+                <div className="table-container">
+                  <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                    <thead className="bg-light">
+                      <tr>
+                        <th className="text-left tableHeader">
+                          <div className="d-flex justify-content-center align-items-start flex-column">
+                            <label htmlFor="">Select All</label>
+                            <input
+                              type="checkbox"
+                              checked={selectAllAssigned}
+                              onChange={(e) => handleSelectAllAssigned(e, "assigned")}
+                            />
+                          </div>
+                        </th>
+                        <th className="text-left tableHeader">Name</th>
+                        <th className="text-left tableHeader">Email</th>
+                        {/* <th className="text-left tableHeader">Lead Type</th> */}
+                        <th className="text-left tableHeader">Phone No</th>
+                        {/* <th className="text-left tableHeader">URL</th> */}
+                        {/* <th className="text-left tableHeader">University</th> */}
+                        {/* <th className="text-left tableHeader">Technology</th> */}
+                        {/* <th className="text-left tableHeader">Visa</th> */}
+                        {/* <th className="text-left tableHeader">Preferred Time</th> */}
+                        {/* <th className="text-left tableHeader">Source</th> */}
+                        {/* <th className="text-center tableHeader">Status</th> */}
+                        {/* <th className="text-left tableHeader">Created At</th> */}
+                        {/* <th className="text-left tableHeader">Updated At</th> */}
+                        <th className="text-left tableHeader">Assigned To</th>
+                        <th className="text-left tableHeader">Assigned By</th>
+                        <th className="text-left tableHeader">Actions</th>
+                        {/* <th className="text-left tableHeader">Actions</th> */}
                       </tr>
-                    ))}
-                  </tbody>
+                    </thead>
+                    <tbody>
+                      {currentAssignedLeads.map((a) => (
+                        <tr key={a._id}>
+                          <td>
+                            <input type="checkbox"
+                              checked={selectedAssignedLeads.includes(a._id)}
+                              onChange={() => toggleLeadSelection(a._id, "assigned")}
+                            />
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
+                          </td>
+                          <td>
+                            <button
+                              className="btn btn-outline-warning btn-sm btn-rounded me-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewLead"
+                              onClick={() => {
+                                setSelectedLead(a);
+                                setModalSource("assigned")
+                              }}>
+                              View
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
 
-                </table>
+                  </table>
 
-                <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
-                  <button
-                    className="btn btn-sm btn-outline-primary me-2"
-                    disabled={currentAssignedPage === 1}
-                    onClick={() => setCurrentAssignedPage(currentAssignedPage - 1)}
-                  >
-                    Previous
-                  </button>
-
-                  {[...Array(totalAssignedPages)].map((_, index) => (
+                  <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
                     <button
-                      key={index}
-                      className={`btn btn-sm me-1 ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
-                      onClick={() => setCurrentAssignedPage(index + 1)}
+                      className="btn btn-sm btn-outline-primary me-2"
+                      disabled={currentAssignedPage === 1}
+                      onClick={() => setCurrentAssignedPage(currentAssignedPage - 1)}
                     >
-                      {index + 1}
+                      Previous
                     </button>
-                  ))}
 
-                  <button
-                    className="btn btn-sm btn-outline-primary ms-2"
-                    disabled={currentAssignedPage === totalAssignedPages}
-                    onClick={() => setCurrentAssignedPage(currentAssignedPage + 1)}
+                    {[...Array(totalAssignedPages)].map((_, index) => (
+                      <button
+                        key={index}
+                        className={`btn btn-sm me-1 ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                        onClick={() => setCurrentAssignedPage(index + 1)}
+                      >
+                        {index + 1}
+                      </button>
+                    ))}
+
+                    <button
+                      className="btn btn-sm btn-outline-primary ms-2"
+                      disabled={currentAssignedPage === totalAssignedPages}
+                      onClick={() => setCurrentAssignedPage(currentAssignedPage + 1)}
+                    >
+                      Next
+                    </button>
+                  </div>
+
+                  <div
+                    className="modal fade"
+                    id="assignLeadModal"
+                    tabIndex="-1"
+                    aria-hidden="true"
                   >
-                    Next
-                  </button>
-                </div>
+                    <div className="modal-dialog modal-dialog-centered modal-md" role="document">
+                      <div className="modal-content">
+                        <div className="modal-body p-0">
+                          <div className="card card-plain">
+                            <h3 className="modal-title mt-3 mb-2 text-center">Assign Lead</h3>
 
-                <div
-                  className="modal fade"
-                  id="assignLeadModal"
-                  tabIndex="-1"
-                  aria-hidden="true"
-                >
-                  <div className="modal-dialog modal-dialog-centered modal-md" role="document">
-                    <div className="modal-content">
-                      <div className="modal-body p-0">
-                        <div className="card card-plain">
-                          <h3 className="modal-title mt-3 mb-2 text-center">Assign Lead</h3>
+                            <div className="card-body">
+                              {selectedLead ? (
+                                <form className="card p-3 shadow-sm border-0">
+                                  {/* Dropdown */}
+                                  <label className="form-label form-label-sm fw-bold">Select Team Member</label>
+                                  <div className="input-group mb-3">
+                                    <select
+                                      className="form-select form-select-sm"
+                                      value={selectedMember}
+                                      onChange={(e) => setSelectedMember(e.target.value)}
+                                    >
+                                      <option value="">-- Choose Team Member --</option>
+                                      {teamMembers.map((member) => (
+                                        <option key={member._id} value={member._id}>
+                                          {member.name} ({member.role?.name})
+                                        </option>
+                                      ))}
+                                    </select>
+                                  </div>
 
-                          <div className="card-body">
-                            {selectedLead ? (
-                              <form className="card p-3 shadow-sm border-0">
-                                {/* Dropdown */}
-                                <label className="form-label form-label-sm fw-bold">Select Team Member</label>
-                                <div className="input-group mb-3">
-                                  <select
-                                    className="form-select form-select-sm"
-                                    value={selectedMember}
-                                    onChange={(e) => setSelectedMember(e.target.value)}
-                                  >
-                                    <option value="">-- Choose Team Member --</option>
-                                    {teamMembers.map((member) => (
-                                      <option key={member._id} value={member._id}>
-                                        {member.name} ({member.role?.name})
-                                      </option>
-                                    ))}
-                                  </select>
-                                </div>
-
-                                <div className="d-flex gap-2">
-                                  <button
-                                    type="button"
-                                    id="closeAssignModalBtn"
-                                    className="d-none"
-                                    data-bs-dismiss="modal"
-                                  ></button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-primary w-50 btn-sm"
-                                    onClick={handleAssign}
-                                    disabled={!selectedMember}
-                                  >
-                                    <i className="bi bi-check-circle me-2"></i>
-                                    Confirm
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="btn btn-outline-secondary w-50 btn-sm"
-                                    data-bs-dismiss="modal"
-                                    onClick={() => setSelectedLead(null)}
-                                  >
-                                    <i className="bi bi-x-circle me-2"></i>
-                                    Cancel
-                                  </button>
-                                </div>
-                              </form>
-                            ) : (
-                              <h5 className="text-center my-4">Loading...</h5>
-                            )}
+                                  <div className="d-flex gap-2">
+                                    <button
+                                      type="button"
+                                      id="closeAssignModalBtn"
+                                      className="d-none"
+                                      data-bs-dismiss="modal"
+                                    ></button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-primary w-50 btn-sm"
+                                      onClick={handleAssign}
+                                      disabled={!selectedMember}
+                                    >
+                                      <i className="bi bi-check-circle me-2"></i>
+                                      Confirm
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="btn btn-outline-secondary w-50 btn-sm"
+                                      data-bs-dismiss="modal"
+                                      onClick={() => setSelectedLead(null)}
+                                    >
+                                      <i className="bi bi-x-circle me-2"></i>
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </form>
+                              ) : (
+                                <h5 className="text-center my-4">Loading...</h5>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div >
-            )}
+                </div >
+              )}
+            </div >
           </div >
-        </div >
+        )}
+
       </div >
 
       {/* EDIT LEAD MODAL */}
@@ -2195,6 +2264,36 @@ const Leads = () => {
                     <label>Contracted</label>
                     <input type="number" className="form-control form-control-sm" value={enrollmentData.contracted} onChange={e => setEnrollmentData({ ...enrollmentData, contracted: e.target.value })} />
                   </div>
+                  {enrollmentData.collectedPayments.map((payment, index) => (
+                    <React.Fragment key={index}>
+                      <div className="col-md-6">
+                        <label>Collected Amount {index + 1}</label>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm"
+                          value={payment.amount}
+                          onChange={(e) => {
+                            const newPayments = [...enrollmentData.collectedPayments];
+                            newPayments[index].amount = e.target.value;
+                            setEnrollmentData({ ...enrollmentData, collectedPayments: newPayments });
+                          }}
+                        />
+                      </div>
+                      <div className="col-md-6">
+                        <label>Collected Date {index + 1}</label>
+                        <input
+                          type="date"
+                          className="form-control form-control-sm"
+                          value={payment.date}
+                          onChange={(e) => {
+                            const newPayments = [...enrollmentData.collectedPayments];
+                            newPayments[index].date = e.target.value;
+                            setEnrollmentData({ ...enrollmentData, collectedPayments: newPayments });
+                          }}
+                        />
+                      </div>
+                    </React.Fragment>
+                  ))}
                   <div className="col-md-6">
                     <label>Percentage</label>
                     <input type="number" className="form-control form-control-sm" value={enrollmentData.percentage} onChange={e => setEnrollmentData({ ...enrollmentData, percentage: e.target.value })} />
@@ -2686,71 +2785,205 @@ const Leads = () => {
         </div >
       </div>
 
-      <div className="col-12 col-md-8 col-lg-12 mt-2">
-        <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-          <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-            <div>
-              <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
-              <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+      {/* Enrolled Leads */}
+      {user.role == "Sales" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
             </div>
-          </div>
 
-          <div className="table-container">
-            <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-              <thead className="bg-light">
-                <tr>
-                  <th className="text-left tableHeader">#</th>
-                  <th className="text-left tableHeader">Name</th>
-                  <th className="text-left tableHeader">Email</th>
-                  <th className="text-left tableHeader">Phone</th>
-                  <th className="text-left tableHeader">Technology</th>
-                  <th className="text-left tableHeader">Upfront</th>
-                  <th className="text-left tableHeader">Contracted</th>
-                  <th className="text-left tableHeader">Percentage</th>
-                  <th className="text-left tableHeader">Payment Status</th>
-                  <th className="text-left tableHeader">Job Guarantee</th>
-                  <th className="text-left tableHeader">Enrollment Date</th>
-                  <th className="text-left tableHeader">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {enrolledLeads.length > 0 ? (
-                  enrolledLeads.map((c, index) => (
-                    <tr key={c._id}>
-                      <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
-                      <td><p className="mb-0 text-left tableData">{c.name}</p></td>
-                      <td><p className="mb-0 text-left tableData">{c.email}</p></td>
-                      <td><p className="mb-0 text-left tableData">{c.phone}</p></td>
-                      <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
-                      <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
-                      <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td>
-                      <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
-                      <td>
-                        <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
-                          {c.paymentStatus}
-                        </span>
-                      </td>
-                      <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
-                      {/* <td>{new Date(c.enrollmentDate.toLocaleDateString())}</td> */}
-                      <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
-                      <td>
-                        <button className="btn btn-sm btn-success me-2" onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
-                        <button className="btn btn-sm btn-success me-2" onClick={() => handleMoveToCV(c._id)}>Move to CV</button>
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Technology</th>
+                    <th className="text-left tableHeader">Upfront</th>
+                    <th className="text-left tableHeader">Contracted</th>
+                    <th className="text-left tableHeader">Payment 1 (Date)</th>
+                    <th className="text-left tableHeader">Payment 2 (Date)</th>
+                    <th className="text-left tableHeader">Payment 3 (Date)</th>
+                    <th className="text-left tableHeader">Percentage</th>
+                    <th className="text-left tableHeader">Payment Status</th>
+                    <th className="text-left tableHeader">Job Guarantee</th>
+                    <th className="text-left tableHeader">Enrollment Date</th>
+                    <th className="text-left tableHeader">Moved To Training</th>
+                    <th className="text-left tableHeader">Moved To CV</th>
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enrolledLeads.length > 0 ? (
+                    enrolledLeads.map((c, index) => (
+                      <tr key={c._id}>
+                        <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.name}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.email}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.phone}</p></td>
+                        <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[0]?.amount || 0} (
+                            {c.collectedPayments[0]?.date ? new Date(c.collectedPayments[0].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[1]?.amount || 0} (
+                            {c.collectedPayments[1]?.date ? new Date(c.collectedPayments[1].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[2]?.amount || 0} (
+                            {c.collectedPayments[2]?.date ? new Date(c.collectedPayments[2].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
+                        <td>
+                          <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
+                            {c.paymentStatus}
+                          </span>
+                        </td>
+                        <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                        <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToTraining ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToTraining ? "Done" : "Not Yet"}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToCV ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToCV ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToCV ? "Done" : "Not Yet"}
+                          </span>
+                        </td>
+                        <td>
+                          {/* <button className="btn btn-sm btn-warning me-2" disabled={c.movedToTraining} onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
+                        <button className="btn btn-sm btn-success me-2" disabled={c.movedToCV} onClick={() => handleMoveToCV(c._id)}>Move to CV</button> */}
+                          <button className="btn btn-sm btn-warning me-2" onClick={() => updateStage(c._id, "training")}>Move to Training</button>
+                          <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(c._id, "cv")}>Move to CV</button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="mb-0 text-center tableData">
+                        No enrolled candidates found
                       </td>
                     </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan="11" className="mb-0 text-center tableData">
-                      No enrolled candidates found
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* All Training Leads */}
+      {user.role === "Resume" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">All Training Leads({counts.enrolled})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Start Date</th>
+                    <th className="text-left tableHeader">Training Progress</th>
+                    <th className="text-left tableHeader">Training Status</th>
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trainingLeads.map((t, i) => (
+                    <tr key={t._id}>
+                      <td className="mb-0 text-left tableData">{i + 1}</td>
+                      <td className="mb-0 text-left tableData">{t.candidateId?.name || "N/A"}</td>
+                      <td className="mb-0 text-left tableData">{t.candidateId?.email}</td>
+                      <td className="mb-0 text-left tableData">{t.candidateId?.phone}</td>
+                      <td className="mb-0 text-left tableData">{formatDateTimeIST(t.startDate)}</td>
+                      <td className="mb-0 text-left tableData">{t.progress}</td>
+                      <td className="mb-0 text-left tableData">{t.status}</td>
+                      <td>
+                        <button className="btn btn-sm btn-success">View Lead</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* All Cvs Table */}
+      {user.role === "Resume" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">CVs({counts.enrolled})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active cvs</h6>
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Start Date</th>
+                    <th className="text-left tableHeader">Progress</th>
+                    <th className="text-left tableHeader">Status</th>
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cvLeads.map((t, i) => (
+                    <tr key={t._id}>
+                      <td className="mb-0 text-left tableData">{i + 1}</td>
+                      <td className="mb-0 text-left tableData">{t.candidateId?.name || "N/A"}</td>
+                      <td className="mb-0 text-left tableData">{t.candidateId?.email}</td>
+                      <td className="mb-0 text-left tableData">{t.candidateId?.phone}</td>
+                      <td className="mb-0 text-left tableData">{formatDateTimeIST(t.startDate)}</td>
+                      <td className="mb-0 text-left tableData">{t.progress}</td>
+                      <td className="mb-0 text-left tableData">{t.status}</td>
+                      <td>
+                        <button className="btn btn-sm btn-success">View Lead</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
