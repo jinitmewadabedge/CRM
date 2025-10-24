@@ -27,9 +27,24 @@ const Login = () => {
     Resume: "/leads"
   };
 
+  useEffect(() => {
+    const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+    const userRole = sessionStorage.getItem("role") || localStorage.getItem("role");
+
+    if (token && userRole) {
+      const route = roleRoutes[userRole] || "/";
+      navigate(route);
+    }
+  }, [navigate]);
+
+
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    sessionStorage.removeItem("token");
+    localStorage.removeItem("token");
 
     try {
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
@@ -53,7 +68,7 @@ const Login = () => {
       const route = roleRoutes[data.user.role] || "/";
       navigate(route);
     } catch (error) {
-      const message = error.response?.data?.message || "Login failed";
+      const message = error.response?.data?.message || error.message || "Login failed - please check credentials.";
       alert(message);
     } finally {
       setLoading(false);
@@ -152,8 +167,6 @@ const Login = () => {
                 </div>
               </button>
             </div>
-
-
           </form>
         </div>
 

@@ -1,5 +1,6 @@
 import React from "react";
 import Logo from '../assets/logo.png'
+import axios from "axios";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
     FaHome,
@@ -18,22 +19,31 @@ const AdminNavbar = () => {
 
     const navigate = useNavigate();
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+            const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
-        console.log("Before clear:", sessionStorage.getItem("role"), sessionStorage.getItem("token"), sessionStorage.getItem("user"));
+            if (token) {
+                await axios.post(
+                    `${BASE_URL}/api/auth/logout`,
+                    {},
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+            }
+        } catch (error) {
+            console.error("Logout error:", error.response?.data || error.message);
+        } finally {
 
-        localStorage.removeItem("role");
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
+            localStorage.clear();
+            sessionStorage.clear();
 
-        sessionStorage.removeItem("role");
-        sessionStorage.removeItem("token");
-        sessionStorage.removeItem("user");
+            navigate("/");
+        }
+    };
 
-        console.log("After clear:", sessionStorage.getItem("role"), sessionStorage.getItem("token"), sessionStorage.getItem("user"));
-
-        navigate("/");
-    }
 
     return (
         <>

@@ -118,11 +118,12 @@ exports.importLeads = async (req, res) => {
         return res.status(500).json({ message: "Server error while importing users", error: err.message });
     }
 };
+
 exports.getLeadState = async (req, res) => {
     try {
 
         if (!req.user) {
-            return res.status(401).json({ message: "Unauthorized: User not found" })
+            return res.status(401).json({ message: "Unauthorized: User not found" });
         }
 
         const role = req.user.role?.name;
@@ -131,8 +132,8 @@ exports.getLeadState = async (req, res) => {
 
         const user = req.user;
         console.log("req.user for state:", req.user);
-        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, training = 0, cv = 0;
-        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], trainingLeads = [], cvLeads = [];
+        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0;
+        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [];
 
         if (role === "Lead_Gen_Manager") {
             total = await Lead.countDocuments();
@@ -142,7 +143,6 @@ exports.getLeadState = async (req, res) => {
             assignedLeads = await Lead.find({ assignedTo: { $ne: null } })
                 .populate("assignedTo assignedBy createdBy departmentId teamId");
             assigned = assignedLeads.length;
-
         }
 
         if (role === "Sales_Manager") {
@@ -164,7 +164,6 @@ exports.getLeadState = async (req, res) => {
 
         if (role === "Sales") {
             total = await Lead.countDocuments({ assignedTo: user._id });
-            // assigned = await Lead.countDocuments({ assignedTo: user._id });
             assignedLeads = await Lead.find({
                 assignedTo: user._id
             }).populate("assignedTo assignedBy createdBy departmentId teamId");
@@ -178,18 +177,40 @@ exports.getLeadState = async (req, res) => {
 
             total = await Lead.countDocuments();
 
-            trainingLeads = await Candidate.find({ movedToTraining: true });
-            training = trainingLeads.length;
+            untouchedLeads = await Candidate.find({
+                movedToTraining: true,
+                movedToCV: false,
+                touchedByResume: false
+            }).populate("leadId");
+            untouched = untouchedLeads.length;
 
-            cvLeads = await Candidate.find({ movedToCV: true });
-            cv = cvLeads.length;
+            touchedLeads = await Candidate.find({
+                movedToTraining: true,
+                touchedByResume: true,
+                endDate: null
+            }).populate("leadId");
+            touched = touchedLeads.length;
+
+            completedLeads = await Candidate.find({
+                movedToTraining: true,
+                movedToCV: false,
+                touchedByResume: true,
+                endDate: { $ne: null }
+            }).populate("leadId");
+            completed = completedLeads.length;
+
+            // trainingLeads = await Candidate.find({ movedToTraining: true }).populate("leadId");
+            // cvLeads = await Candidate.find({ movedToCV: true }).populate("leadId");
+
+            // training = trainingLeads.length;
+            // cv = cvLeads.length;
         }
 
         if (role === "Sr_Lead_Generator") {
             total = await Lead.countDocuments();
         }
 
-        res.status(200).json({ total, unassigned, assigned, enrolled, unassignedLeads, assignedLeads, enrolledLeads, cvLeads, training: trainingLeads.length, cv: cvLeads.length, trainingLeads, cvLeads });
+        res.status(200).json({ total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads });
 
     } catch (error) {
         console.error("Error fetching lead state:", error);
@@ -297,72 +318,6 @@ exports.getUnassignedLeads = async (req, res) => {
         res.status(500).json({ message: "Error fetching unassigned leads", error: err })
     }
 }
-
-// exports.assignLeads = async (req, res) => {
-//     try {
-
-//         const { teamMemberId } = req.body;
-//         const { leadId } = req.params;
-
-//         console.log("Assign API Hit");
-//         console.log("req.params.leadId:", leadId);
-//         console.log("req.body.teamMemberId:", teamMemberId);
-//         console.log("req.user in controller:", req.user);
-
-//         if (!mongoose.Types.ObjectId.isValid(leadId) || !mongoose.Types.ObjectId.isValid(teamMemberId)) {
-//             return res.status(400).json({ message: "Invalid lead or user ID" });
-//         }
-
-//         const managerId = req.user.id;
-
-//         const assignerRole = req.user.role.name;
-//         const assignerId = req.user._id;
-
-//         const teamMember = await User.findById(teamMemberId).populate("role", "name");
-//         if (!teamMember || !teamMember.role)
-//             return res.status(404).json({ message: "Team member or role not found" });
-
-//         console.log("Assigner role:", assignerRole);
-//         console.log("Team member role:", teamMember.role.name);
-//         console.log("Team member after populate:", teamMember);
-
-//         if (assignerRole === "Lead_Gen_Manager" && teamMember.role.name != "Sales_Manager") {
-//             return res.status(403).json({ message: "LGM can assign only to Sales Managers" });
-//         }
-
-//         if(assignerRole === "Sales_Manager" && teamMember.role.name != "Sales"){
-//             return res.status(403).json({message: "Sales Manager can assign only to Sales team member"});
-//         }
-
-//         console.log("managerId to be saved:", managerId);
-
-//         const lead = await Lead.findByIdAndUpdate(
-//             leadId,
-//             {
-//                 assignedTo: teamMemberId,
-//                 assignedBy: assignerId,
-//                 status: "Assigned",
-//                 updatedAt: new Date(),
-//             },
-//             { new: true }
-//         )
-//             .populate("assignedTo", "name email")
-//             .populate("assignedBy", "name email");
-
-//         if (!lead) {
-//             return res.status(404).json({ message: "Lead not found" });
-//         }
-
-//         console.log("Updated lead:", lead);
-//         res.status(200).json({
-//             message: "Lead assigned successfully",
-//             lead,
-//         });
-//     } catch (error) {
-//         console.log("Assign Lead Error:", error);
-//         res.status(500).json({ message: "Error assigning lead" });
-//     }
-// };
 
 exports.assignLeads = async (req, res) => {
     try {

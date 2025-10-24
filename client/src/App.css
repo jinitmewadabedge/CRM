@@ -486,3 +486,80 @@ td {
     box-shadow: -38px 6px, -14px -6px, 14px 6px;
   }
 }
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  position: relative;
+}
+
+.timeline-start,
+.timeline-end {
+  font-size: 12px;
+  color: #333;
+  min-width: 150px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-align: center;
+}
+
+.timeline-bar {
+  flex: 1;
+  height: 6px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  position: relative;
+  overflow: hidden;
+}
+
+.timeline-bar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background-color: #28a745;
+  border-radius: 5px;
+  width: 50%;
+}
+
+.progress-container {
+  width: 100%;
+  height: 15px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  font-size: 10px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  text-align: center;
+  line-height: 20px;
+  color: white;
+  transition: width 0.5s ease;
+}
+
+.badge {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: white;
+  display: inline-block;
+}
+
+.badge-touched {
+  background-color: #285d8b;
+}
+
+.badge-inprogress {
+  background-color: #fdc10e;
+  color: rgb(255, 252, 252)!important;
+}
+
+.badge-completed {
+  background-color: #28a745;
+}

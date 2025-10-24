@@ -141,7 +141,7 @@ exports.updateCandidateStage = async (req, res) => {
         res.status(200).json({ message: "Candidate stage updated successfully", candidate });
 
     } catch (error) {
-        console.error("Update Stage Error:", error); // 👈 log actual error in console
+        console.error("Update Stage Error:", error); 
         res.status(500).json({ message: "Error updating candidate stage", error });
     }
 };

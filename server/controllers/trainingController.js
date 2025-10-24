@@ -23,3 +23,17 @@ exports.getAllCVs = async (req, res) => {
         res.status(500).json({ message: "Error fetching CVs" });
     }
 };
+
+exports.deleteTrainingLead = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deleted = await Training.findByIdAndDelete(id);
+        if (!deleted) {
+            return res.status(404).json({ message: "Training lead not found" });
+        }
+        res.json({ message: "Training lead deleted successfully" });
+    } catch (error) {
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+};

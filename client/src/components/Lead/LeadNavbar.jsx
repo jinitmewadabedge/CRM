@@ -1,16 +1,37 @@
 import { Navbar, Nav } from "react-bootstrap";
 import { useNavigate, NavLink } from "react-router-dom";
 import { FiLogOut, FiUser } from "react-icons/fi";
+import axios from "axios";
 import Logo from "../../assets/logo.png";
 
 const LeadNavbar = () => {
 
     const navigate = useNavigate();
-    const handleLogout = () => {
-        localStorage.clear();
-        sessionStorage.clear();
-        navigate("/");
+    const handleLogout = async () => {
+        try {
+            const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+            const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+            if (token) {
+                await axios.post(
+                    `${BASE_URL}/api/auth/logout`,
+                    {}, 
+                    {
+                        headers: { Authorization: `Bearer ${token}` },
+                    }
+                );
+            }
+        } catch (error) {
+            console.error("Logout error:", error.response?.data || error.message);
+        } finally {
+
+            localStorage.clear();
+            sessionStorage.clear();
+
+            navigate("/");
+        }
     };
+
 
     return (
         <Navbar expand="lg" className="d-flex flex-column justify-content-start align-items-start">

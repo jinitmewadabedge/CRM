@@ -9,6 +9,7 @@ const roleRoutes = require("./routes/roleRoutes");
 const candidateRoutes = require("./routes/CandidateRoutes");
 const trainingRoutes = require("./routes/trainingRoutes");
 const cvRoutes = require("./routes/cvRoutes");
+const resumeRoutes = require("./routes/resumeRoutes");
 const { importUsers } = require("./controllers/authController");
 
 dotenv.config();
@@ -40,6 +41,7 @@ app.use("/users/import", importUsers);
 app.use("/api/candidates", candidateRoutes);
 app.use("/api/training", trainingRoutes);
 app.use("/api/cv", cvRoutes);
+app.use("/api/resume", resumeRoutes);
 
 app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });
@@ -48,20 +50,38 @@ app.get("/api/ping", (req, res) => {
 const uri = process.env.MONGO_URL_DEV;
 console.log("MONGO_URI:", uri);
 
-(async () => {
-    try {
-        console.log("Connecting to MongoDB...");
-        await mongoose.connect(uri, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true,
-            serverSelectionTimeoutMS: 10000
-        });
-        console.log("MongoDB connected successfully!");
+mongoose.connect(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+});
 
-        app.listen(PORT, () =>
-            console.log(`Server running on PORT ${PORT}`)
-        );
-    } catch (err) {
-        console.error("MongoDB connection error:", err.message);
-    }
-})();
+const db = mongoose.connection;
+
+db.on("error", (err) => console.error("MongoDB connection error:", err));
+db.once("open", () => {
+    console.log("✅ Connected to MongoDB Database:", db.name);
+    console.log("MongoDB URI used:", uri);
+});
+
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
+
+// (async () => {
+//     try {
+//         console.log("Connecting to MongoDB...");
+//         await mongoose.connect(uri, {
+//             useNewUrlParser: true,
+//             useUnifiedTopology: true,
+//             serverSelectionTimeoutMS: 10000
+//         });
+//         console.log("MongoDB connected successfully!");
+
+//         app.listen(PORT, () =>
+//             console.log(`Server running on PORT ${PORT}`)
+//         );
+//     } catch (err) {
+//         console.error("MongoDB connection error:", err.message);
+//     }
+// })();

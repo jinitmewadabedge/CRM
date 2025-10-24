@@ -12,6 +12,9 @@ const candidateSchema = new mongoose.Schema({
     leadId: { type: mongoose.Schema.ObjectId, ref: "Lead", required: true },
 
     enrollmentDate: { type: Date, default: Date.now },
+    startDate: { type: Date, default: null },
+    endDate: { type: Date, default: null },
+    status:{ type: String, enum: ["touched", "in-progress", "completed"], default: "touched"},
     plan: { type: String },
     upfront: { type: Number },
 
@@ -28,6 +31,11 @@ const candidateSchema = new mongoose.Schema({
     technology: { type: [String] },
     paymentType: { type: String },
     reference: { type: String },
+
+    touchedByResume: { type: Boolean, default: false },
+    notes: { type: String, default: "" },
+    lastCallDate: { type: Date },
+    lastCallOutcome: { type: String },
 
     paymentStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
     collectedPayments: {
