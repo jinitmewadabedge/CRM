@@ -43,9 +43,6 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
 
-    sessionStorage.removeItem("token");
-    localStorage.removeItem("token");
-
     try {
       const res = await axios.post(`${BASE_URL}/api/auth/login`, {
         email,
@@ -54,6 +51,9 @@ const Login = () => {
       }, { withCredentials: true });
 
       const data = res.data;
+
+      sessionStorage.removeItem("token");
+      localStorage.removeItem("token");
 
       if (rememberMe) {
         localStorage.setItem("token", data.token);

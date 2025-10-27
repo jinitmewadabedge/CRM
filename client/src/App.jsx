@@ -61,17 +61,14 @@ function App() {
 
   useEffect(() => {
     const logoutOnClose = (event) => {
-      // Ignore page reload or navigation within SPA
-      if (event.persisted) return; // Safari bfcache
+      if (event.persisted) return; 
       if (performance.getEntriesByType("navigation")[0]?.type === "reload") return;
 
-      // Detect if user is actually closing or navigating away fully
       console.log("🧠 pagehide or beforeunload triggered — checking logout condition...");
 
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
 
-      // Send logout beacon
       const blob = new Blob([JSON.stringify({ token })], { type: "application/json" });
       const success = navigator.sendBeacon(`${BASE_URL}/api/auth/logout`, blob);
       console.log("📡 Beacon sent:", success);
