@@ -61,6 +61,7 @@ db.on("error", (err) => console.error("MongoDB connection error:", err));
 db.once("open", () => {
     console.log("Connected to MongoDB Database:", db.name);
     console.log("MongoDB URI used:", uri);
+    console.log("MongoDB");
 });
 
 
