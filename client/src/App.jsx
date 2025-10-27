@@ -19,6 +19,30 @@ import LeadForm from "./pages/Lead/LeadForm";
 import LeadDashboard from './pages/Lead/LeadDashboard'
 
 function App() {
+
+  const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      if (token) {
+
+        const url = `${BASE_URL}/auth/logout`;
+        const body = JSON.stringify({ token });
+        navigator.sendBeacon(url, body);
+
+        localStorage.clear();
+        sessionStorage.clear();
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
   return (
     <Router>
       <Routes>
