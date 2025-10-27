@@ -73,7 +73,7 @@ function App() {
 
       // Send logout beacon
       const blob = new Blob([JSON.stringify({ token })], { type: "application/json" });
-      const success = navigator.sendBeacon("http://localhost:5000/api/auth/logout", blob);
+      const success = navigator.sendBeacon(`${BASE_URL}/api/auth/logout`, blob);
       console.log("📡 Beacon sent:", success);
     };
 
