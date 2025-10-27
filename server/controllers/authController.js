@@ -9,86 +9,166 @@ const { permission } = require('process');
 
 let resetToken = {};
 
+// exports.login = async (req, res) => {
+//     try {
+
+//         console.log("Login request body:", req.body);
+
+//         const { email, role, password } = req.body;
+//         console.log("Email:", email, "Role:", role, "Password:", password);
+
+//         if (!email || !role || !password) {
+//             return res.status(400).json({ message: 'Please enter all fields' })
+//         }
+
+//         const user = await User.findOne({ email, isActive: true }).select('+password').populate('role');
+
+//         const freshUser = await User.findById(user._id);
+
+//         if (freshUser.isLoggedIn) {
+//             return res.status(403).json({ message: "User already logged in elsewhere" });
+//         }
+
+//         console.log("Login request in DB:", email, role, password);
+//         console.log("User found in DB:", user);
+
+//         if (!user) {
+//             return res.status(401).json({ message: "Invalid User Credentials" });
+//         }
+
+//         if (role && user.role.name !== role) {
+//             return res.status(401).json({ message: "Invalid Role" });
+//         }
+
+//         if (user.role.name !== role) {
+//             return res.status(401).json({ message: "Invalid Role" });
+//         }
+
+//         const enteredPassword = req.body.password.trim();
+
+//         console.log("Entered Password:", password);
+//         console.log("Stored Hash:", user.password);
+
+//         const isMatch = await bcrypt.compare(enteredPassword, user.password);
+//         console.log("Compare result:", isMatch);
+
+//         if (!isMatch) {
+//             return res.status(401).json({ message: "Invalid Password" });
+//         }
+
+//         if (freshUser.isLoggedIn && freshUser.activeToken) {
+//             try {
+//                 jwt.verify(freshUser.activeToken, process.env.JWT_SECRET || "bedge");
+//                 return res.status(403).json({ message: "User already logged in elsewhere" });
+//             } catch (e) {
+
+//                 freshUser.isLoggedIn = false;
+//                 freshUser.activeToken = null;
+//                 await freshUser.save();
+//             }
+//         }
+
+//         freshUser.isLoggedIn = true;
+//         await freshUser.save();
+
+//         const token = jwt.sign(
+//             { id: user._id, role: user.role.name },
+//             process.env.JWT_SECRET || 'bedge',
+//             { expiresIn: '1d' }
+//         );
+
+//         user.isLoggedIn = true;
+//         user.activeToken = token;
+//         await user.save();
+
+//         res.status(200).json({
+//             message: 'Login Successful',
+//             token,
+//             user: {
+//                 id: user._id,
+//                 name: user.name,
+//                 email: user.email,
+//                 role: user.role.name,
+//                 permission: user.role.permissions
+//             }
+//         });
+//     } catch (err) {
+//         console.error("Login Error:", err);
+//         return res.status(500).json({ message: "Internal Server Error", err: err.message });
+//     }
+// };
+
 exports.login = async (req, res) => {
     try {
-
-        console.log("Login request body:", req.body);
-
         const { email, role, password } = req.body;
-        console.log("Email:", email, "Role:", role, "Password:", password);
-
         if (!email || !role || !password) {
-            return res.status(400).json({ message: 'Please enter all fields' })
+            return res.status(400).json({ message: "Please enter all fields" });
         }
 
-        const user = await User.findOne({ email, isActive: true }).select('+password').populate('role');
-
-        const freshUser = await User.findById(user._id);
-
-        if (freshUser.isLoggedIn) {
-            return res.status(403).json({ message: "User already logged in elsewhere" });
-        }
-
-        console.log("Login request in DB:", email, role, password);
-        console.log("User found in DB:", user);
+        const user = await User.findOne({ email, isActive: true })
+            .select("+password")
+            .populate("role");
 
         if (!user) {
-            return res.status(401).json({ message: "Invalid User Credentials" });
+            return res.status(401).json({ message: "Invalid Credentials" });
         }
 
-        if (role && user.role.name !== role) {
-            return res.status(401).json({ message: "Invalid Role" });
-        }
-
+        // Compare role first
         if (user.role.name !== role) {
             return res.status(401).json({ message: "Invalid Role" });
         }
 
-        const enteredPassword = req.body.password.trim();
-
-        console.log("Entered Password:", password);
-        console.log("Stored Hash:", user.password);
-
-        const isMatch = await bcrypt.compare(enteredPassword, user.password);
-        console.log("Compare result:", isMatch);
-
+        // Compare password
+        const isMatch = await bcrypt.compare(password.trim(), user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid Password" });
         }
 
-        if (user.isLoggedIn) {
+        // Re-fetch latest state and check isLoggedIn again
+        const freshUser = await User.findById(user._id);
+        if (freshUser.isLoggedIn) {
             return res.status(403).json({ message: "User already logged in elsewhere" });
         }
 
-        freshUser.isLoggedIn = true;
-        await freshUser.save();
+        // Mark logged in atomically
+        await User.findByIdAndUpdate(
+            user._id,
+            { $set: { isLoggedIn: true } },
+            { new: true }
+        );
 
         const token = jwt.sign(
             { id: user._id, role: user.role.name },
-            process.env.JWT_SECRET || 'bedge',
-            { expiresIn: '1d' }
+            process.env.JWT_SECRET || "bedge",
+            { expiresIn: "1d" }
         );
 
         res.status(200).json({
-            message: 'Login Successful',
+            message: "Login Successful",
             token,
             user: {
                 id: user._id,
                 name: user.name,
                 email: user.email,
                 role: user.role.name,
-                permission: user.role.permissions
-            }
+                permission: user.role.permissions,
+            },
         });
     } catch (err) {
         console.error("Login Error:", err);
-        return res.status(500).json({ message: "Internal Server Error", err: err.message });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 };
 
+
 exports.logout = async (req, res) => {
     try {
-        const token = req.headers.authorization?.split(" ")[1];
+
+        console.log("🔔 Logout endpoint hit via:", req.method);
+        console.log("Received body:", req.body);
+
+        const token = req.headers.authorization?.split(" ")[1] || req.body.token;
+
         if (!token) return res.status(400).json({ message: "No token provided" });
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET || "bedge");
@@ -99,11 +179,13 @@ exports.logout = async (req, res) => {
         console.log("Logging out user:", user._id, "current isLoggedIn:", user.isLoggedIn);
 
         user.isLoggedIn = false;
+        user.activeToken = null;
         await user.save();
 
+        console.log("✅ Logout success for user:", user._id);
         res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
-        console.error("Logout Error:", error);
+        console.error("❌ Logout Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };

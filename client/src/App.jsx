@@ -23,27 +23,72 @@ function App() {
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
+  // useEffect(() => {
+  //   let isClosing = false;
+
+  //   const handleVisibilityChange = () => {
+  //     if (document.visibilityState === "hidden") {
+  //       isClosing = true;
+  //       setTimeout(() => {
+  //         if (isClosing) {
+  //           console.log("🧠 Detected tab closing — sending logout beacon...");
+
+  //           const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+  //           if (!token) return;
+
+  //           const blob = new Blob([JSON.stringify({ token })], { type: "application/json" });
+  //           const success = navigator.sendBeacon("http://localhost:5000/api/auth/logout", blob);
+  //           console.log("📡 Beacon sent:", success);
+  //         }
+  //       }, 300); 
+  //     }
+  //   };
+
+  //   const handleFocus = () => {
+  //     isClosing = false;
+  //   };
+
+  //   document.addEventListener("visibilitychange", handleVisibilityChange);
+  //   window.addEventListener("focus", handleFocus);
+
+  //   console.log("✅ Visibility + focus listeners added");
+
+  //   return () => {
+  //     document.removeEventListener("visibilitychange", handleVisibilityChange);
+  //     window.removeEventListener("focus", handleFocus);
+  //   };
+  // }, []);
+
   useEffect(() => {
-    const handleBeforeUnload = () => {
-      const token =
-        localStorage.getItem("token") || sessionStorage.getItem("token");
+    const logoutOnClose = (event) => {
+      // Ignore page reload or navigation within SPA
+      if (event.persisted) return; // Safari bfcache
+      if (performance.getEntriesByType("navigation")[0]?.type === "reload") return;
 
-      if (token) {
+      // Detect if user is actually closing or navigating away fully
+      console.log("🧠 pagehide or beforeunload triggered — checking logout condition...");
 
-        const url = `${BASE_URL}/auth/logout`;
-        const body = JSON.stringify({ token });
-        navigator.sendBeacon(url, body);
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      if (!token) return;
 
-        localStorage.clear();
-        sessionStorage.clear();
-      }
+      // Send logout beacon
+      const blob = new Blob([JSON.stringify({ token })], { type: "application/json" });
+      const success = navigator.sendBeacon("http://localhost:5000/api/auth/logout", blob);
+      console.log("📡 Beacon sent:", success);
     };
-    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    window.addEventListener("pagehide", logoutOnClose);
+    window.addEventListener("beforeunload", logoutOnClose);
+
+    console.log("✅ pagehide + beforeunload listeners added");
 
     return () => {
-      window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("pagehide", logoutOnClose);
+      window.removeEventListener("beforeunload", logoutOnClose);
     };
   }, []);
+
+
   return (
     <Router>
       <Routes>

@@ -30,7 +30,10 @@ app.use(cors({
     credentials: true
 }));
 
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({
+    limit: "10mb",
+    type: ["application/json", "text/plain"]
+}));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 
 app.use("/api/auth", authRoutes);
@@ -47,7 +50,7 @@ app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });
 });
 
-const uri = process.env.MONGO_URL_PROD;
+const uri = process.env.MONGO_URL_DEV;
 console.log("MONGO_URI:", uri);
 
 mongoose.connect(uri, {

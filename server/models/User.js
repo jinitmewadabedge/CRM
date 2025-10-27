@@ -44,6 +44,10 @@ const userSchema = new mongoose.Schema({
     isLoggedIn: {
         type: Boolean,
         default: false
+    },
+    activeToken: {
+        type: String,
+        default: null
     }
 }, {
     timestamps: true
