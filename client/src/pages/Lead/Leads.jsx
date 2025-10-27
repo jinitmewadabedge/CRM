@@ -255,7 +255,7 @@ const Leads = () => {
 
   useEffect(() => {
 
-    const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+    const loggedInUser = JSON.parse(sessionStorage.getItem("user")) || JSON.parse(localStorage.getItem("user"));
 
     if (loggedInUser?.name) {
       setUserName(loggedInUser?.name);
