@@ -3,6 +3,7 @@ import { useNavigate, NavLink } from "react-router-dom";
 import axios from "axios";
 import Logo from "../assets/logo.png";
 import "../App.css";
+import { toast } from "react-toastify";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -66,13 +67,18 @@ const Login = () => {
         sessionStorage.setItem("user", JSON.stringify(data.user));
       }
 
+      toast.success("Login Successfully!");
       const route = roleRoutes[data.user.role] || "/";
       navigate(route);
     } catch (error) {
       const message = error.response?.data?.message || error.message || "Login failed - please check credentials.";
       // alert(message);
-      setErrorMessage(message);
-      setTimeout(() => setErrorMessage(""), 8000);
+      toast.error(message, {
+        position: "top-right",
+        autoClose: 5000
+      });
+      // setErrorMessage(message);
+      setTimeout(() => setErrorMessage(""), 5000);
     } finally {
       setLoading(false);
     }
