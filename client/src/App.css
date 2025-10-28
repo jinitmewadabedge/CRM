@@ -557,9 +557,34 @@ td {
 
 .badge-inprogress {
   background-color: #fdc10e;
-  color: rgb(255, 252, 252)!important;
+  color: rgb(255, 252, 252) !important;
 }
 
 .badge-completed {
   background-color: #28a745;
+}
+
+.Toastify__toast--success {
+  background-color: #ffffff !important;
+  color: #09692e !important;
+  font-weight: 550;
+  border-left: 6px solid #09692e;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.3);
+}
+
+.Toastify__toast--error {
+  background-color: #dc2626 !important;
+  /* red */
+  color: #fff !important;
+  font-weight: 600;
+  border-left: 6px solid #7f1d1d;
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+}
+
+.Toastify__toast {
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  padding: 10px 15px;
 }

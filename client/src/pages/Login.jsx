@@ -10,6 +10,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -69,7 +70,9 @@ const Login = () => {
       navigate(route);
     } catch (error) {
       const message = error.response?.data?.message || error.message || "Login failed - please check credentials.";
-      alert(message);
+      // alert(message);
+      setErrorMessage(message);
+      setTimeout(() => setErrorMessage(""), 8000);
     } finally {
       setLoading(false);
     }
@@ -167,6 +170,9 @@ const Login = () => {
                 </div>
               </button>
             </div>
+            {errorMessage && (
+              <h6 className="alert alert-danger mt-3 forgot-password text-center"><strong><i class="bi-exclamation-octagon-fill"></i> {errorMessage}</strong></h6>
+            )}
           </form>
         </div>
 

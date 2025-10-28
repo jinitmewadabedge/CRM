@@ -18,6 +18,8 @@ import Leads from "./pages/Lead/Leads";
 import LeadDetails from "./pages/Lead/LeadDetails";
 import LeadForm from "./pages/Lead/LeadForm";
 import LeadDashboard from './pages/Lead/LeadDashboard'
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css"
 
 function App() {
 
@@ -61,7 +63,7 @@ function App() {
 
   useEffect(() => {
     const logoutOnClose = (event) => {
-      if (event.persisted) return; 
+      if (event.persisted) return;
       if (performance.getEntriesByType("navigation")[0]?.type === "reload") return;
 
       console.log("🧠 pagehide or beforeunload triggered — checking logout condition...");
@@ -87,71 +89,74 @@ function App() {
 
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Login />} />
+    <>
+      <Router>
+        <Routes>
+          <Route path="/" element={<Login />} />
 
-        {/* Admin */}
-        <Route
-          path="/admin-dashboard/*"
-          element={
-            <ProtectedRoutes allowedRoles={["Admin"]}>
-              <AdminDashboard />
-            </ProtectedRoutes>
-          }>
-          <Route path="" element={<ManageUsers />} />
-          <Route path="manage-users" element={<ManageUsers />} />
-          <Route path="roles-permission" element={<RolesPermission />} />
-          <Route path="department-report" element={<DepartmentReports />} />
-          <Route path="company-polices" element={<CompanyPolicies />} />
-          <Route path="announcements" element={<Announcements />} />
-          <Route path="settings" element={<Settings />} />
-        </Route>
+          {/* Admin */}
+          <Route
+            path="/admin-dashboard/*"
+            element={
+              <ProtectedRoutes allowedRoles={["Admin"]}>
+                <AdminDashboard />
+              </ProtectedRoutes>
+            }>
+            <Route path="" element={<ManageUsers />} />
+            <Route path="manage-users" element={<ManageUsers />} />
+            <Route path="roles-permission" element={<RolesPermission />} />
+            <Route path="department-report" element={<DepartmentReports />} />
+            <Route path="company-polices" element={<CompanyPolicies />} />
+            <Route path="announcements" element={<Announcements />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
 
-        <Route path="/leads/*"
-          element={
-            // <ProtectedRoutes>
-            <LeadDashboard />
-            // </ProtectedRoutes>
-          }>
-          <Route index element={<Leads />} />
+          <Route path="/leads/*"
+            element={
+              // <ProtectedRoutes>
+              <LeadDashboard />
+              // </ProtectedRoutes>
+            }>
+            <Route index element={<Leads />} />
 
-        </Route>
+          </Route>
 
-        {/* Sales route */}
-        <Route
-          path="/sales-dashboard"
-          element={
-            <ProtectedRoutes allowedRoles={["Sales"]}>
-              <SalesDashboard />
-            </ProtectedRoutes>
-          }
-        />
+          {/* Sales route */}
+          <Route
+            path="/sales-dashboard"
+            element={
+              <ProtectedRoutes allowedRoles={["Sales"]}>
+                <SalesDashboard />
+              </ProtectedRoutes>
+            }
+          />
 
-        {/* Marketing route */}
-        <Route
-          path="/marketing-dashboard"
-          element={
-            <ProtectedRoutes allowedRoles={["Marketing"]}>
-              <MarketingDashboard />
-            </ProtectedRoutes>
-          }
-        />
+          {/* Marketing route */}
+          <Route
+            path="/marketing-dashboard"
+            element={
+              <ProtectedRoutes allowedRoles={["Marketing"]}>
+                <MarketingDashboard />
+              </ProtectedRoutes>
+            }
+          />
 
-        {/* Technical route */}
-        <Route
-          path="/technical-dashboard"
-          element={
-            <ProtectedRoutes allowedRoles={["Technical"]}>
-              <TechnicalDashboard />
-            </ProtectedRoutes>
-          }
-        />
+          {/* Technical route */}
+          <Route
+            path="/technical-dashboard"
+            element={
+              <ProtectedRoutes allowedRoles={["Technical"]}>
+                <TechnicalDashboard />
+              </ProtectedRoutes>
+            }
+          />
 
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/resetpassword/:token" element={<ResetPassword />} />
-      </Routes>
-    </Router>
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/resetpassword/:token" element={<ResetPassword />} />
+        </Routes>
+      </Router>
+      <ToastContainer position="top-right" autoClose={5000} pauseOnHover theme="colored"/>
+    </>
   );
 }
 

@@ -127,7 +127,7 @@ exports.login = async (req, res) => {
         // Re-fetch latest state and check isLoggedIn again
         const freshUser = await User.findById(user._id);
         if (freshUser.isLoggedIn) {
-            return res.status(403).json({ message: "User already logged in elsewhere" });
+            return res.status(403).json({ message: "User already logged in." });
         }
 
         // Mark logged in atomically

@@ -14,6 +14,7 @@ import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, 
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import MyLoader from '../../components/Lead/MyLoader';
+import { toast } from "react-toastify";
 import { FiLogOut } from 'react-icons/fi'
 
 const Leads = () => {
@@ -72,7 +73,8 @@ const Leads = () => {
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
-  const [touchedSearch, setTouchedSearch] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const [allLeadIds, setAllLeadIds] = useState([]);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -222,7 +224,8 @@ const Leads = () => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    alert("Lead moved to touched successfully");
+    toast.success("Lead moved to touched successfully");
+    setSuccessMessage("Lead moved to touched successfully!");
     fetchResumeLeads();
   }
 
@@ -232,7 +235,8 @@ const Leads = () => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    alert("Work started successfully");
+    toast.success("Work started successfully");
+    setSuccessMessage("Work started successfully!");
     fetchResumeLeads();
   };
 
@@ -411,7 +415,7 @@ const Leads = () => {
       headers: { Authorization: `Bearer ${token}` }
     });
 
-    alert("Lead marked as done successfully");
+    toast.success("Lead marked as done successfully");
     fetchResumeLeads();
   };
 
@@ -618,14 +622,14 @@ const Leads = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      alert(res.data.message);
+      toast.success(res.data.message);
       setSelectedLead([]);
       setSelectAll(false);
       fetchBackendLeads();
       handleRefresh();
     } catch (error) {
-      console.error("Bulk assign error:", error);
-      alert("Error assigning leads");
+      // console.error("Bulk assign error:", error);
+      toast.error("Error assigning leads");
     }
   }
 
@@ -642,14 +646,14 @@ const Leads = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      alert(res.data.message);
+      toast.success(res.data.message);
       setSelectedAllLeads([]);
       setSelectAllAll(false);
       fetchBackendLeads();
       handleRefresh();
     } catch (error) {
-      console.error("Bulk delete error:", error);
-      alert("Error deleting leads");
+      // console.error("Bulk delete error:", error);
+      toast.error("Error deleting leads");
     }
   }
 
@@ -705,6 +709,7 @@ const Leads = () => {
       }
     } catch (error) {
       console.error("Error fetching permissions:", error);
+      setErrorMessage("Error Fetching Permissions!");
     }
   };
 
@@ -746,13 +751,14 @@ const Leads = () => {
       const res = await axios.put(`${BASE_URL}/api/candidates/update-stage/${id}`, data, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      alert(res.data.message);
+      toast.success(res.data.message);
+      setSuccessMessage(res.data.message);
 
       await fetchBackendLeads();
 
     } catch (error) {
-      console.error(error);
-      alert(`Failed to move candidate to ${stage === "training" ? "training" : "CV"}`);
+      // console.error(error);
+      Toast.error(`Failed to move candidate to ${stage === "training" ? "training" : "CV"}`);
     }
   };
 
@@ -764,14 +770,14 @@ const Leads = () => {
         movedToTraining: true
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      alert(res.data.message);
+      toast.success(res.data.message);
       // Refresh table after update
       // fetchEnrolledLeads();
       fetchBackendLeads();
       await fetchTrainingLeads();
     } catch (error) {
-      console.error(error);
-      alert("Failed to move candidate to training");
+      // console.error(error);
+      toast.error("Failed to move candidate to training");
     }
   };
 
@@ -782,13 +788,13 @@ const Leads = () => {
         movedToCV: true
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      alert(res.data.message);
+      toast.success(res.data.message);
       // Refresh table after update
       // fetchEnrolledLeads();
       fetchBackendLeads();
     } catch (error) {
-      console.error(error);
-      alert("Failed to move candidate to CV");
+      // console.error(error);
+      toast.error("Failed to move candidate to CV");
     }
   };
 
@@ -824,7 +830,7 @@ const Leads = () => {
     try {
       const res = await createLead(payload);
       console.log("New Lead Added:", res.data);
-      alert("Lead added successfully!");
+      toast.success("Lead Added Successfully!");
       setLeads([...leads, res.data]);
       setNewLead({
         type: "",
@@ -843,7 +849,7 @@ const Leads = () => {
       fetchBackendLeads();
     } catch (error) {
       console.error("Error adding lead:", error.response?.data || error.message);
-      alert("Failed to add lead");
+      toast.error("Failed to add lead. Please try again");
     }
   };
 
@@ -857,11 +863,11 @@ const Leads = () => {
 
     try {
       await axios.put(`${BASE_URL}/api/leads/${selectedLead._id}`, payload);
-      alert("Lead updated successfully!");
+      toast.success("Lead updated successfully!");
       setLeads(leads.map(l => (l._id === formData._id ? payload : l)));
     } catch (error) {
       console.error("Error updating lead:", error);
-      alert("Failed to update lead");
+      toast.error("Failed to update lead");
     }
   }
 
@@ -914,12 +920,12 @@ const Leads = () => {
   const handleImportExcel = (e) => {
     const file = e.target.files[0];
     if (!file) {
-      alert("No file selected");
+      toast.error("No file selected");
       return;
     }
 
     if (!file.name.endsWith(".xlsx") && !file.name.endsWith(".xls")) {
-      alert("Please upload a valid Excel file");
+      toast.error("Please upload a valid Excel file");
       return;
     }
 
@@ -929,7 +935,7 @@ const Leads = () => {
       const workbook = XLSX.read(data, { type: "array" });
 
       if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
-        alert("Excel file has no sheets or is invalid");
+        toast.error("Excel file has no sheets or is invalid");
         return;
       }
 
@@ -938,13 +944,13 @@ const Leads = () => {
 
       try {
         await axios.post(`${BASE_URL}/api/leads/import`, { leads: worksheet });
-        alert("Excel Imported Successfully");
+        toast.success("Excel Imported Successfully");
 
         const res = await getLeads();
         setLeads(res.data);
       } catch (error) {
         console.error("Excel Import Error:", error);
-        alert("Error importing Excel");
+        toast.error("Error importing Excel");
       }
     };
     reader.readAsArrayBuffer(file);
@@ -975,12 +981,12 @@ const Leads = () => {
         collectedPayments: enrollmentData.collectedPayments
       }, { headers: { Authorization: `Bearer ${token}` } });
 
-      alert(res.data.message);
+      toast.success(res.data.message);
       setShowEnrollModal(false);
       fetchBackendLeads();
     } catch (error) {
-      console.error("Enrollment error:", error);
-      alert("Error enrolling candidate");
+      // console.error("Enrollment error:", error);
+      toast.error("Error enrolling candidate");
     }
   };
 
@@ -1023,7 +1029,7 @@ const Leads = () => {
     await axios.put(`${BASE_URL}/api/resume/mark-completed/${candidateId}`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
-    alert("Lead marked as completed!");
+    toast.success("Lead marked as completed!");
     fetchResumeLeads();
   };
 
@@ -1080,7 +1086,7 @@ const Leads = () => {
 
       console.log("Assign response:", res.data);
 
-      alert("Lead assigned successfully!");
+      toast.success("Lead assigned successfully!");
 
       setFinalLead(null);
       setSelectedMember("");
@@ -1091,7 +1097,7 @@ const Leads = () => {
 
     } catch (error) {
       console.error("Error assigning lead:", error.message);
-      alert("Failed to assign lead. Check console for more details")
+      toast.error("Failed to assign lead. Check console for more details")
     }
   };
 
@@ -2522,10 +2528,10 @@ const Leads = () => {
                           <button className="btn btn-success btn-sm w-50" onClick={async () => {
                             try {
                               await updateLead(selectedLead._id, selectedLead);
-                              alert("Lead updated successfully!");
+                              toast.success("Lead updated successfully!");
                               window.location.reload();
                             } catch (err) {
-                              console.error("Error updating lead:", err);
+                              toast.error("Error updating lead:", err);
                             }
                           }}>Update</button>
                           {/* <button className="btn btn-round btn-success btn-sm w-100 mt-2 mb-0 btnColor" onClick={handleAddUser}>Add Lead</button> */}
@@ -2870,13 +2876,13 @@ const Leads = () => {
                             { outcome, date, time, duration, notes },
                             { headers: { Authorization: `Bearer ${token}` } }
                           );
-                          alert("Call outcome saved successfully!");
+                          toast.success("Call outcome saved successfully!");
                           fetchBackendLeads();
                           setSelectedLead(res.data.lead);
                           setOutcome(""); setDate(""); setTime(""); setDuration(""); setNotes("");
                         } catch (err) {
-                          console.error("Error saving call outcome:", err.response?.data || err);
-                          alert(err.response?.data?.message || "Failed to save call outcome!");
+                          // console.error("Error saving call outcome:", err.response?.data || err);
+                          toast.error(err.response?.data?.message || "Failed to save call outcome!");
                         } finally {
                           setLoading(false);
                         }
