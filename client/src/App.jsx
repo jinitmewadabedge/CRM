@@ -20,73 +20,43 @@ import LeadForm from "./pages/Lead/LeadForm";
 import LeadDashboard from './pages/Lead/LeadDashboard'
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"
+import useHeartbeat from "./hooks/useHeartbeat";
 
 function App() {
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
-  // useEffect(() => {
-  //   let isClosing = false;
-
-  //   const handleVisibilityChange = () => {
-  //     if (document.visibilityState === "hidden") {
-  //       isClosing = true;
-  //       setTimeout(() => {
-  //         if (isClosing) {
-  //           console.log("🧠 Detected tab closing — sending logout beacon...");
-
-  //           const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-  //           if (!token) return;
-
-  //           const blob = new Blob([JSON.stringify({ token })], { type: "application/json" });
-  //           const success = navigator.sendBeacon("http://localhost:5000/api/auth/logout", blob);
-  //           console.log("📡 Beacon sent:", success);
-  //         }
-  //       }, 300); 
-  //     }
-  //   };
-
-  //   const handleFocus = () => {
-  //     isClosing = false;
-  //   };
-
-  //   document.addEventListener("visibilitychange", handleVisibilityChange);
-  //   window.addEventListener("focus", handleFocus);
-
-  //   console.log("✅ Visibility + focus listeners added");
-
-  //   return () => {
-  //     document.removeEventListener("visibilitychange", handleVisibilityChange);
-  //     window.removeEventListener("focus", handleFocus);
-  //   };
-  // }, []);
+  useHeartbeat(BASE_URL);
 
   useEffect(() => {
+
+    let logoutSent = false;
+
     const logoutOnClose = (event) => {
+      if (logoutSent) return;
       if (event.persisted) return;
       if (performance.getEntriesByType("navigation")[0]?.type === "reload") return;
 
-      console.log("🧠 pagehide or beforeunload triggered — checking logout condition...");
+      console.log("pagehide or beforeunload triggered — checking logout condition...");
 
       const token = localStorage.getItem("token") || sessionStorage.getItem("token");
       if (!token) return;
 
       const blob = new Blob([JSON.stringify({ token })], { type: "application/json" });
       const success = navigator.sendBeacon(`${BASE_URL}/api/auth/logout`, blob);
-      console.log("📡 Beacon sent:", success);
+      console.log("Beacon sent:", success);
     };
 
     window.addEventListener("pagehide", logoutOnClose);
     window.addEventListener("beforeunload", logoutOnClose);
 
-    console.log("✅ pagehide + beforeunload listeners added");
+    console.log("pagehide + beforeunload listeners added");
 
     return () => {
       window.removeEventListener("pagehide", logoutOnClose);
       window.removeEventListener("beforeunload", logoutOnClose);
     };
   }, []);
-
 
   return (
     <>
@@ -155,7 +125,7 @@ function App() {
           <Route path="/resetpassword/:token" element={<ResetPassword />} />
         </Routes>
       </Router>
-      <ToastContainer position="top-right" autoClose={5000} pauseOnHover theme="colored"/>
+      <ToastContainer position="top-right" autoClose={5000} pauseOnHover theme="colored" />
     </>
   );
 }

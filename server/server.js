@@ -10,6 +10,7 @@ const candidateRoutes = require("./routes/CandidateRoutes");
 const trainingRoutes = require("./routes/trainingRoutes");
 const cvRoutes = require("./routes/cvRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
+const User = require("./models/User");
 const { importUsers } = require("./controllers/authController");
 
 dotenv.config();
@@ -50,7 +51,7 @@ app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });
 });
 
-const uri = process.env.MONGO_URL_DEV;
+const uri = process.env.MONGO_URL_PROD;
 console.log("MONGO_URI:", uri);
 
 mongoose.connect(uri, {
@@ -72,20 +73,20 @@ app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
 
-// (async () => {
-//     try {
-//         console.log("Connecting to MongoDB...");
-//         await mongoose.connect(uri, {
-//             useNewUrlParser: true,
-//             useUnifiedTopology: true,
-//             serverSelectionTimeoutMS: 10000
-//         });
-//         console.log("MongoDB connected successfully!");
+setInterval(async () => {
+    const timeoutMinutes = 5;
+    const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
 
-//         app.listen(PORT, () =>
-//             console.log(`Server running on PORT ${PORT}`)
-//         );
-//     } catch (err) {
-//         console.error("MongoDB connection error:", err.message);
-//     }
-// })();
+    try {
+        const inactiveUsers = await User.updateMany(
+            { isLoggedIn: true, lastActive: { $lt: cutoff } },
+            { $set: { isLoggedIn: false, activeToken: null } }
+        );
+
+        if (inactiveUsers.modifiedCount > 0) {
+            console.log(`Cleaned up ${inactiveUsers.modifiedCount} inactive users`);
+        }
+    } catch (err) {
+        console.error("Cleanup error:", err.message);
+    }
+}, 1 * 60 * 1000);

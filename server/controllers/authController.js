@@ -190,6 +190,38 @@ exports.logout = async (req, res) => {
     }
 };
 
+exports.heartbeat = async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (!token) {
+            console.log("Heartbeat request blocked — No token provided");
+            return res.status(401).json({ message: "No token provided" });
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "bedge");
+        console.log("Heartbeat received from:", decoded.id);
+        console.log("Time:", new Date().toLocaleString());
+
+        const user = await User.findById(decoded.id);
+        if (!user) {
+            console.log("Heartbeat failed — User not found");
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.lastActive = new Date();
+        await user.save();
+
+        console.log("User lastActive updated successfully\n");
+
+        return res.status(200).json({ message: "Heartbeat received" });
+    } catch (error) {
+        console.error("Heartbeat Error:", error.message);
+        return res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+
 exports.forgotpassword = async (req, res) => {
     const { email } = req.body;
 
