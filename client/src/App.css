@@ -588,3 +588,7 @@ td {
   font-size: 13px;
   padding: 10px 15px;
 }
+
+.Not_Interested_Leads_Shadow{
+  box-shadow: 1px 1px 5px #dc3545;
+}

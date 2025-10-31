@@ -9,7 +9,7 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
 import * as XLSX from 'xlsx';
-import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, FaArrowUp } from "react-icons/fa";
+import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, FaThumbsDown, FaArrowUp, FaThumbsUp, FaComments, FaRedo, FaGraduationCap, FaMoneyBillWave, FaClock } from "react-icons/fa";
 // import LinuxCard from "../../components/LinuxCard";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
@@ -64,17 +64,60 @@ const Leads = () => {
   const [selectedEnrolledLeads, setSelectedEnrolledLeads] = useState([]);
   const [selectAllEnrolled, setSelectAllEnrolled] = useState(false);
 
+  const [backendInterestedLeads, setBackendInterestedLeads] = useState([]);
+  const [backendNotInterestedLeads, setBackendNotInterestedLeads] = useState([]);
+  const [backendFollowUpLeads, setBackendFollowUpLeads] = useState([]);
+  const [backendInDiscussionLeads, setBackendInDiscussionLeads] = useState([]);
+
   const [selectAll, setSelectAll] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sqaureLoading, setSquareLoading] = useState(false);
   const [permissions, setPermissions] = useState({});
+
   const [outcome, setOutcome] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
   const [duration, setDuration] = useState("");
   const [notes, setNotes] = useState("");
+
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [salesLeads, setSalesLeads] = useState([]);
+
+  const [showOutcomeModal, setShowOutcomeModal] = useState(false);
+  const [selectedLeadId, setSelectedLeadId] = useState(null);
+
+  const [touchedFilters, setTouchedFilters] = useState({
+    search: "",
+  });
+
+  const [completedFilters, setCompletedFilters] = useState({
+    search: "",
+  });
+
+  const [untouchedFilters, setUntouchedFilters] = useState({
+    search: "",
+  });
+
+  const [interestedFilters, setInterestedFilters] = useState({
+    search: "",
+  });
+
+  const [notInterestedFilters, setNotInterestedFilters] = useState({
+    search: "",
+  });
+
+  const [inDiscussionFilters, setInDiscussionFilters] = useState({
+    search: ""
+  });
+
+  const [followUpFilters, setFollowUpFilters] = useState({
+    search: "",
+  });
+
+  const [enrolledFilters, setEnrolledFilters] = useState({
+    search: "",
+  });
 
   const [allLeadIds, setAllLeadIds] = useState([]);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -212,22 +255,41 @@ const Leads = () => {
     setTouchedLeads(touchedRes.data);
   };
 
-  const handleStart = async (candidateId) => {
-    const notes = prompt("Enter your notes:");
-    const outcome = prompt("Enter call outcome (Interested / Not Interested / Follow-up");
+  // const handleStart = async (candidateId) => {
+  //   const notes = prompt("Enter your notes:");
+  //   const outcome = prompt("Enter call outcome (Interested / Not Interested / Follow-up");
 
-    const token = sessionStorage.getItem("token");
-    await axios.put(`${BASE_URL}/api/resume/mark-touched/${candidateId}`, {
-      notes,
-      callOutcome: outcome
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+  //   const token = sessionStorage.getItem("token");
+  //   await axios.put(`${BASE_URL}/api/resume/mark-touched/${candidateId}`, {
+  //     notes,
+  //     callOutcome: outcome
+  //   }, {
+  //     headers: { Authorization: `Bearer ${token}` }
+  //   });
 
-    toast.success("Lead moved to touched successfully");
-    setSuccessMessage("Lead moved to touched successfully!");
-    fetchResumeLeads();
-  }
+  //   toast.success("Lead moved to touched successfully");
+  //   setSuccessMessage("Lead moved to touched successfully!");
+  //   fetchResumeLeads();
+  // }
+
+  const handleStart = (leadId) => {
+    console.log("Start Work clicked for:", leadId);
+    setSelectedLeadId(leadId);
+    setShowOutcomeModal(true);
+  };
+
+  const statusColors = {
+    "New": "#b83963ff",
+    "Assigned": "#305220ff",
+    "Interested": "#16a34a",       // green
+    "Not Interested": "#dc2626",   // red
+    "Follow-up": "#facc15",        // yellow
+    "In Discussion": "#3b82f6",    // blue
+    "Enrolled": "#8b5cf6",         // purple
+    "completed": "#059669",        // teal
+    "untouched": "#6b7280",        // gray
+    "touched": "#f97316"           // orange
+  };
 
   const handleStartWork = async (candidateId) => {
     const token = sessionStorage.getItem("token");
@@ -311,6 +373,10 @@ const Leads = () => {
       setUntouchedLeads(res.data.untouchedLeads || []);
       setTouchedLeads(res.data.touchedLeads || []);
       setCompletedLeads(res.data.completedLeads || []);
+      setBackendInterestedLeads(res.data.interestedLeads || []);
+      setBackendNotInterestedLeads(res.data.notInterestedLeads || []);
+      setBackendFollowUpLeads(res.data.followUpLeads || []);
+      setBackendInDiscussionLeads(res.data.inDiscussionLeads || []);
 
       console.log("Unassigned state (after API):", res.data.unassignedLeads);
       console.log("Assigned state (after API):", res.data.assignedLeads);
@@ -318,6 +384,7 @@ const Leads = () => {
       console.log("Untouched state (after API):", res.data.untouchedLeads);
       console.log("Touched state (after API):", res.data.touchedLeads);
       console.log("Completed state (after API):", res.data.completedLeads);
+      console.log("In Discussion state (after API):", res.data.inDiscussionLeads);
       // console.log("Training state (after API):", res.data.trainingLeads);
       // console.log("cv state (after API):", res.data.cvLeads);
 
@@ -328,10 +395,11 @@ const Leads = () => {
         enrolled: res.data.enrolled || 0,
         untouched: res.data.untouched || 0,
         touched: res.data.touched || 0,
-        completed: res.data.completed || 0
-        // training: res.data.training || 0,
-        // cv: res.data.cv || 0,
-
+        completed: res.data.completed || 0,
+        backendInterested: res.data.interested || 0,
+        backendNotInterested: res.data.notInterested || 0,
+        backendFollowUp: res.data.followUp || 0,
+        backendInDiscussion: res.data.inDiscussion || 0,
       });
 
       console.log(`${roleName} Lead State:`, res.data.training);
@@ -758,7 +826,7 @@ const Leads = () => {
 
     } catch (error) {
       // console.error(error);
-      Toast.error(`Failed to move candidate to ${stage === "training" ? "training" : "CV"}`);
+      toast.error(`Failed to move candidate to ${stage === "training" ? "training" : "CV"}`);
     }
   };
 
@@ -818,6 +886,37 @@ const Leads = () => {
     })
   }
 
+  const handleSaveOutcome = async () => {
+    if (!outcome) {
+      alert("Please select a call outcome");
+      return;
+    }
+
+    try {
+      const res = await axios.put(
+        `${BASE_URL}/api/resume/mark-touched/${selectedLeadId}`,
+        {
+          notes,
+          callOutcome: outcome,
+          duration,
+        },
+        { withCredentials: true }
+      );
+
+      if (res.status === 200) {
+        alert("Lead moved to touched successfully!");
+        setShowOutcomeModal(false);
+        setOutcome("");
+        setDuration("");
+        setNotes("");
+        fetchBackendLeads();
+      }
+    } catch (err) {
+      console.error("Error marking lead as touched:", err);
+      alert("Failed to save outcome");
+    }
+  };
+
   const handleSubmitNew = async (e) => {
     e.preventDefault();
     console.log("Submitting Lead:", newLead);
@@ -872,6 +971,7 @@ const Leads = () => {
   }
 
   const handleViewClick = (lead) => {
+    console.log("Selected Lead in modal:", lead);
     setSelectedLead(lead);
     setShowViewModal(true);
   }
@@ -888,7 +988,6 @@ const Leads = () => {
       await fetchBackendLeads();
       await fetchPermissions();
       await fetchCandidates();
-      await fetchTrainingLeads();
 
     } catch (err) {
       console.error("Error refreshing users:", err);
@@ -1170,7 +1269,7 @@ const Leads = () => {
     });
 
   const filteredTouchedLeads = touchedLeads.filter((lead) => {
-    const searchTerm = filters.search.toLowerCase();
+    const searchTerm = touchedFilters.search.toLowerCase().trim();
     return (
       lead.name?.toLowerCase().includes(searchTerm) ||
       lead.email?.toLowerCase().includes(searchTerm) ||
@@ -1179,7 +1278,7 @@ const Leads = () => {
   });
 
   const filteredCompletedLeads = completedLeads.filter((lead) => {
-    const searchTerm = filters.search.toLowerCase();
+    const searchTerm = completedFilters.search.toLowerCase();
     return (
       lead.name?.toLowerCase().includes(searchTerm) ||
       lead.email?.toLowerCase().includes(searchTerm) ||
@@ -1187,6 +1286,14 @@ const Leads = () => {
     );
   });
 
+  const filteredUntouchedLeads = untouchedLeads.filter((lead) => {
+    const searchTerm = untouchedFilters.search.toLowerCase();
+    return (
+      lead.name?.toLowerCase().includes(searchTerm) ||
+      lead.email?.toLowerCase().includes(searchTerm) ||
+      lead.phone?.toLowerCase().includes(searchTerm)
+    );
+  });
 
   const getProgress = (candidate) => {
     if (!candidate.startDate && !candidate.endDate) return 0;
@@ -1241,6 +1348,22 @@ const Leads = () => {
   const totalUnassignedPages = Math.ceil(unassignedLeads.length / leadsPerPage);
   const totalAssignedPages = Math.ceil(assignedLeads.length / leadsPerPage);
 
+  const interestedLeads = salesLeads.filter(l => l.status === "Interested");
+  const notInterestedLeads = salesLeads.filter(l => l.status === "Not Interested");
+  const followUpLeads = salesLeads.filter(l => l.status === "Follow-up");
+  const inDiscussionLeads = salesLeads.filter(l => l.status === "In Discussion");
+
+  useEffect(() => {
+    const interestedLeads = salesLeads.filter(l => l.status === "Interested");
+    console.log("Interested Leads:", interestedLeads);
+
+    const notInterestedLeads = salesLeads.filter(l => l.status === "Not Interested");
+    console.log("Not Interested Leads:", notInterestedLeads);
+
+    const followUpLeads = salesLeads.filter(l => l.status === "Follow-up");
+    console.log("Follow Up Leads:", followUpLeads);
+  }, [salesLeads]);
+
 
   useEffect(() => {
     async function fetchLeads() {
@@ -1248,6 +1371,7 @@ const Leads = () => {
         const res = await getLeads()
         console.log("Full API Response:", res.data)
         setLeads(Array.isArray(res.data) ? res.data : [res.data])
+        setSalesLeads(Array.isArray(res.data) ? res.data : [res.data])
       } catch (error) {
         console.error("Error fetching leads:", error)
       }
@@ -1298,6 +1422,66 @@ const Leads = () => {
     fetchActiveLead();
   }, []);
 
+  const filteredInterestedLeads = interestedLeads.filter((lead) => {
+    const searchTerm = interestedFilters.search.toLowerCase().trim();
+    if (!searchTerm) return true;
+
+    return (
+      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_phone_no?.toString().includes(searchTerm) ||
+      lead.technology?.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const filteredNotInterestedLeads = notInterestedLeads.filter((lead) => {
+    const searchTerm = notInterestedFilters.search.toLowerCase().trim();
+    if (!searchTerm) return true;
+
+    return (
+      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_phone_no?.toString().includes(searchTerm) ||
+      lead.technology?.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const filteredInDiscussionLeads = inDiscussionLeads.filter((lead) => {
+    const searchTerm = inDiscussionFilters.search.toLowerCase().trim();
+    if (!searchTerm) return true;
+
+    return (
+      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_phone_no?.toString().includes(searchTerm) ||
+      lead.technology?.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const filteredFollowUpLeads = followUpLeads.filter((lead) => {
+    const searchTerm = followUpFilters.search.toLowerCase().trim();
+    if (!searchTerm) return true;
+
+    return (
+      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+      lead.candidate_phone_no?.toString().includes(searchTerm) ||
+      lead.technology?.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
+  const filteredEnrolledLeads = enrolledLeads.filter((lead) => {
+    const searchTerm = enrolledFilters.search.toLowerCase().trim();
+    if (!searchTerm) return true;
+
+    return (
+      lead.name?.toLowerCase().includes(searchTerm) ||
+      lead.email?.toLowerCase().includes(searchTerm) ||
+      lead.phone?.toString().includes(searchTerm) ||
+      lead.technology?.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+
   console.log("Unassigned state(render):", unassignedLeads);
   console.log("Assigned state(render):", assignedLeads);
 
@@ -1305,7 +1489,7 @@ const Leads = () => {
 
     <div className="container-fluid mt-5 px-5">
       <div className="row g-5">
-        <div className="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <div className="d-flex justify-content-between align-items-center mt-4 mb-2">
           <h4 className="text-left adminDashboardTitle mb-0">
             Hello, {userName || "User"}{" "}
             <img
@@ -1322,7 +1506,7 @@ const Leads = () => {
           </h4>
         </div>
 
-        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Sales"].includes(userRole) && (
+        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager"].includes(userRole) && (
           <div className="col-12 col-md-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
@@ -1398,6 +1582,82 @@ const Leads = () => {
           </div>
         )}
 
+        {userRole === "Sales" && (
+          <div className="col-12 col-md-4 m-0 mb-2">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+              {loading ? (
+                <span className="squareLoader"></span>
+              ) : (
+                <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <div>
+                    <h6 className="mb-1 text-muted">Interested Leads</h6>
+                    <h4 className="fw-bold">{counts.backendInterested}</h4>
+                    <small className="text-success">16% this month</small>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {userRole === "Sales" && (
+          <div className="col-12 col-md-4 m-0 mb-2">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+              {loading ? (
+                <span className="squareLoader"></span>
+              ) : (
+                <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <div>
+                    <h6 className="mb-1 text-muted">Not Interested Leads</h6>
+                    <h4 className="fw-bold">{counts.backendNotInterested}</h4>
+                    <small className="text-success">16% this month</small>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {userRole === "Sales" && (
+          <div className="col-12 col-md-4 m-0 mb-2">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+              {loading ? (
+                <span className="squareLoader"></span>
+              ) : (
+                <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <div>
+                    <h6 className="mb-1 text-muted">In Discussion Leads</h6>
+                    <h4 className="fw-bold">{counts.backendInDiscussion}</h4>
+                    <small className="text-success">16% this month</small>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {userRole === "Sales" && (
+          <div className="col-12 col-md-4 m-0 mb-2">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+              {loading ? (
+                <span className="squareLoader"></span>
+              ) : (
+                <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <div>
+                    <h6 className="mb-1 text-muted">Follow-up Leads</h6>
+                    <h4 className="fw-bold">{counts.backendFollowUp}</h4>
+                    <small className="text-success">16% this month</small>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {userRole === "Resume" && (
           <div className="col-12 col-md-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
@@ -1456,7 +1716,7 @@ const Leads = () => {
         )}
 
         {/* All Lead Main Table */}
-        {user.role !== "Resume" && (
+        {user.role !== "Resume" && user.role !== "Sales" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
               <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -1490,8 +1750,6 @@ const Leads = () => {
                   </button>
                 </div>
               </div>
-
-
 
               {showFilters && (
                 <div className="d-flex flex-wrap gap-2 mx-3 my-2 filterContainer">
@@ -1781,7 +2039,7 @@ const Leads = () => {
                           <td className="text-left tableData">
                             <p className="mb-0">{lead.source}</p>
                           </td>
-                          <td className="text-center">
+                          {/* <td className="text-center">
                             <span
                               className={`badge status-badge px-2 py-2 d-flex gap-2
                             ${lead.status === "New" ? "bg-new" :
@@ -1799,6 +2057,35 @@ const Leads = () => {
                               {lead.status === "Rejected" && <FaTimesCircle />}
                               {lead.status === "Converted" && <FaUserCheck />}
                               {lead.status === "Assigned" && <FaCheckCircle />}
+
+                              {lead.status}
+                            </span>
+                          </td> */}
+                          <td className="text-center">
+                            <span
+                              className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                              style={{
+                                backgroundColor: statusColors[lead.status] || "#d1d5db",
+                                color: "white",
+                                borderRadius: "12px",
+                                fontSize: "12px",
+                                fontWeight: "normal",
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {/* Icons same as before */}
+                              {lead.status === "New" && <FaLink />}
+                              {lead.status === "Connected" && <FaCheckCircle />}
+                              {lead.status === "In Progress" && <FaHourglassHalf />}
+                              {lead.status === "Shortlisted" && <FaStar />}
+                              {lead.status === "Rejected" && <FaTimesCircle />}
+                              {lead.status === "Assigned" && <FaCheckCircle />}
+                              {lead.status === "Converted" && <FaUserCheck />}
+                              {lead.status === "Interested" && <FaThumbsUp />}
+                              {lead.status === "Enrolled" && <FaGraduationCap />}
+                              {lead.status === "Not Interested" && <FaThumbsDown />}
+                              {lead.status === "Follow-up" && <FaRedo />}
+                              {lead.status === "In Discussion" && <FaComments />}
 
                               {lead.status}
                             </span>
@@ -1830,14 +2117,6 @@ const Leads = () => {
                                 data-bs-target="#editLead"
                                 onClick={() => handleEditClick(lead)}>
                                 Edit
-                              </button>
-                            )}
-
-                            {lead.status === "Interested" && (
-                              <button
-                                className="btn btn-success btn-sm me-2"
-                                onClick={() => handleEnrollCandidate(lead)}>
-                                Enroll
                               </button>
                             )}
 
@@ -2190,21 +2469,20 @@ const Leads = () => {
                         </th>
                         <th className="text-left tableHeader">Name</th>
                         <th className="text-left tableHeader">Email</th>
-                        {/* <th className="text-left tableHeader">Lead Type</th> */}
+                        <th className="text-left tableHeader">Lead Type</th>
                         <th className="text-left tableHeader">Phone No</th>
-                        {/* <th className="text-left tableHeader">URL</th> */}
-                        {/* <th className="text-left tableHeader">University</th> */}
-                        {/* <th className="text-left tableHeader">Technology</th> */}
-                        {/* <th className="text-left tableHeader">Visa</th> */}
-                        {/* <th className="text-left tableHeader">Preferred Time</th> */}
-                        {/* <th className="text-left tableHeader">Source</th> */}
-                        {/* <th className="text-center tableHeader">Status</th> */}
-                        {/* <th className="text-left tableHeader">Created At</th> */}
-                        {/* <th className="text-left tableHeader">Updated At</th> */}
+                        <th className="text-left tableHeader">URL</th>
+                        <th className="text-left tableHeader">University</th>
+                        <th className="text-left tableHeader">Technology</th>
+                        <th className="text-left tableHeader">Visa</th>
+                        <th className="text-left tableHeader">Preferred Time</th>
+                        <th className="text-left tableHeader">Source</th>
+                        <th className="text-center tableHeader">Status</th>
+                        <th className="text-left tableHeader">Created At</th>
+                        <th className="text-left tableHeader">Updated At</th>
                         <th className="text-left tableHeader">Assigned To</th>
                         <th className="text-left tableHeader">Assigned By</th>
                         <th className="text-left tableHeader">Actions</th>
-                        {/* <th className="text-left tableHeader">Actions</th> */}
                       </tr>
                     </thead>
                     <tbody>
@@ -2223,7 +2501,64 @@ const Leads = () => {
                             <p className="mb-0 text-left tableData">{a.candidate_email}</p>
                           </td>
                           <td>
+                            <p className="mb-0 text-left tableData">{a.type}</p>
+                          </td>
+                          <td>
                             <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.university}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.technology}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.visa}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.preferred_time_to_talk}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{a.source}</p>
+                          </td>
+                          <td className="text-center">
+                            <span
+                              className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                              style={{
+                                backgroundColor: statusColors[a.status] || "#d1d5db",
+                                color: "white",
+                                borderRadius: "12px",
+                                fontSize: "12px",
+                                fontWeight: "normal",
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {/* Icons same as before */}
+                              {a.status === "New" && <FaLink />}
+                              {a.status === "Connected" && <FaCheckCircle />}
+                              {a.status === "In Progress" && <FaHourglassHalf />}
+                              {a.status === "Shortlisted" && <FaStar />}
+                              {a.status === "Rejected" && <FaTimesCircle />}
+                              {a.status === "Assigned" && <FaCheckCircle />}
+                              {a.status === "Converted" && <FaUserCheck />}
+                              {a.status === "Interested" && <FaThumbsUp />}
+                              {a.status === "Enrolled" && <FaGraduationCap />}
+                              {a.status === "Not Interested" && <FaThumbsDown />}
+                              {a.status === "Follow-up" && <FaRedo />}
+                              {a.status === "In Discussion" && <FaComments />}
+
+                              {a.status}
+                            </span>
+                          </td>
+
+                          <td>
+                            <p className="mb-0 text-left tableData">{formatDateTimeIST(a.createdAt)}</p>
+                          </td>
+                          <td>
+                            <p className="mb-0 text-left tableData">{formatDateTimeIST(a.updatedAt)}</p>
                           </td>
                           <td>
                             <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
@@ -2242,7 +2577,30 @@ const Leads = () => {
                               }}>
                               View
                             </button>
+                            {permissions?.lead?.updateScope !== "none" && (
+                              <button
+                                className="btn btn-outline-success btn-sm btn-rounded me-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editLead"
+                                onClick={() => handleEditClick(a)}>
+                                Edit
+                              </button>
+                            )}
+                            {permissions?.lead?.deleteScope !== "none" && (
+                              <button type="button"
+                                className="btn btn-outline-danger btn-sm"
+                                onClick={async () => {
+                                  if (window.confirm("Are you sure?")) {
+                                    await deleteLead(a._id);
+                                    setLeads(leads.filter(l => l._id !== a._id));
+                                    fetchBackendLeads();
+                                  }
+                                }}>
+                                Delete
+                              </button>
+                            )}
                           </td>
+
                         </tr>
                       ))}
                     </tbody>
@@ -2495,11 +2853,11 @@ const Leads = () => {
                           >
                             <option value="">----Select Status----</option>
                             <option value="New">New</option>
-                            <option value="Connected">Connected</option>
+                            {/* <option value="Connected">Connected</option>
                             <option value="In Progress">In Progress</option>
                             <option value="Shortlisted">Shortlisted</option>
                             <option value="Rejected">Rejected</option>
-                            <option value="Converted">Converted</option>
+                            <option value="Converted">Converted</option> */}
                           </select>
                         </div>
 
@@ -2851,6 +3209,7 @@ const Leads = () => {
         </div>
       </div >
 
+      {console.log("Selected Lead in modal:", selectedLead)}
       {/* View Lead Modal */}
       <div className="modal fade" id="viewLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
@@ -2894,19 +3253,19 @@ const Leads = () => {
                           <tbody>
                             <tr>
                               <th className="tableHeader">Name</th>
-                              <td className="tableData">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || "N/A"}</td>
+                              <td className="tableData" colSpan="5">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Email</th>
-                              <td className="tableData">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A"}</td>
+                              <td className="tableData" colSpan="5">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Phone</th>
-                              <td className="tableData">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A"}</td>
+                              <td className="tableData" colSpan="5">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Technology</th>
-                              <td className="tableData">
+                              <td className="tableData" colSpan="5">
                                 {Array.isArray(selectedLead.technology)
                                   ? selectedLead.technology.join(", ")
                                   : selectedLead.technology}
@@ -2915,37 +3274,37 @@ const Leads = () => {
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">LinkedIn</th>
-                                <td className="tableData">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A"}</td>
+                                <td className="tableData" colSpan="5">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A"}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Visa</th>
-                                <td className="tableData">{selectedLead.visa || selectedLead?.leadId?.visa}</td>
+                                <td className="tableData" colSpan="5">{selectedLead.visa || selectedLead?.leadId?.visa}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Lead Type</th>
-                                <td className="tableData">{selectedLead.type || selectedLead?.leadId?.type}</td>
+                                <td className="tableData" colSpan="5">{selectedLead.type || selectedLead?.leadId?.type}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">University</th>
-                                <td className="tableData">{selectedLead.university || selectedLead?.leadId?.university}</td>
+                                <td className="tableData" colSpan="5">{selectedLead.university || selectedLead?.leadId?.university}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Preferred Time to Talk</th>
-                                <td className="tableData">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk}</td>
+                                <td className="tableData" colSpan="5">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Source</th>
-                                <td className="tableData">{selectedLead.source || selectedLead?.leadId?.source}</td>
+                                <td className="tableData" colSpan="5">{selectedLead.source || selectedLead?.leadId?.source}</td>
                               </tr>
                             )}
                             {modalSource === "assigned" && selectedLead.assignedTo && (
@@ -2972,69 +3331,20 @@ const Leads = () => {
                                 <td className="tableData">{formatDateTimeIST(selectedLead.updatedAt)}</td>
                               </tr>
                             )}
+
                             {modalSource === "completed" && (
                               <tr>
                                 <th className="tableHeader">Lead Work Start Date</th>
-                                <td className="tableData">{formatDateTimeIST(selectedLead.startDate)}</td>
+                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.startDate)}</td>
                               </tr>
                             )}
                             {modalSource === "completed" && (
                               <tr>
                                 <th className="tableHeader">Lead Work End Date</th>
-                                <td className="tableData">{formatDateTimeIST(selectedLead.endDate)}</td>
+                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.endDate)}</td>
                               </tr>
                             )}
-
-                            {modalSource === "enrolled" || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Upfront</th>
-                                <td className="tableData">{selectedLead.upfront && selectedLead.upfront}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Contracted</th>
-                                <td className="tableData">{selectedLead.contracted}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Payment 1</th>
-                                <td className="tableData">
-                                  {selectedLead.collectedPayments[0].amount} ({new Date(selectedLead.collectedPayments[0].date).toLocaleDateString("en-IN")})
-                                </td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Payment 2</th>
-                                <td className="tableData">
-                                  {selectedLead.collectedPayments[1].amount} ({new Date(selectedLead.collectedPayments[1].date).toLocaleDateString("en-IN")})
-                                </td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Payment 2</th>
-                                <td className="tableData">
-                                  {selectedLead.collectedPayments[2].amount} ({new Date(selectedLead.collectedPayments[2].date).toLocaleDateString("en-IN")})
-                                </td>
-                              </tr>
-                            )}
-
-                            {modalSource === "enrolled" || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Percentage</th>
-                                <td className="tableData">{selectedLead.percentage}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" || modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Job Guarantee</th>
-                                <td className="tableData">{selectedLead.jobGuarantee ? "Yes" : "No"}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" || modalSource === "completed" && (
+                            {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Payment Status</th>
                                 <td className="tableData">
@@ -3047,19 +3357,70 @@ const Leads = () => {
                                 </td>
                               </tr>
                             )}
-                            {modalSource === "enrolled" || modalSource === "completed" && (
+
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Upfront</th>
+                                <td className="tableData">{selectedLead.upfront && selectedLead.upfront}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Contracted</th>
+                                <td className="tableData">{selectedLead.contracted}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
+                              <tr>
+                                <th className="tableHeader">Payment 1</th>
+                                <td className="tableData">
+                                  {selectedLead.collectedPayments[0].amount} ({new Date(selectedLead.collectedPayments[0].date).toLocaleDateString("en-IN")})
+                                </td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
+                              <tr>
+                                <th className="tableHeader">Payment 2</th>
+                                <td className="tableData">
+                                  {selectedLead.collectedPayments[1].amount} ({new Date(selectedLead.collectedPayments[1].date).toLocaleDateString("en-IN")})
+                                </td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
+                              <tr>
+                                <th className="tableHeader">Payment 2</th>
+                                <td className="tableData">
+                                  {selectedLead.collectedPayments[2].amount} ({new Date(selectedLead.collectedPayments[2].date).toLocaleDateString("en-IN")})
+                                </td>
+                              </tr>
+                            )}
+
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Percentage</th>
+                                <td className="tableData">{selectedLead.percentage}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Job Guarantee</th>
+                                <td className="tableData">{selectedLead.jobGuarantee ? "Yes" : "No"}</td>
+                              </tr>
+                            )}
+
+                            {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Payment Gateway</th>
                                 <td className="tableData">{selectedLead.paymentGateway}</td>
                               </tr>
                             )}
-                            {modalSource === "enrolled" || modalSource === "completed" && (
+                            {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Enrollment Date</th>
                                 <td><p className="mb-0 text-left tableData">{formatDateTimeIST(selectedLead.createdAt)}</p></td>
                               </tr>
                             )}
-                            {modalSource === "enrolled" || modalSource === "completed" && (
+                            {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Plan</th>
                                 <td className="tableData mb-0">{selectedLead.plan}</td>
@@ -3067,31 +3428,118 @@ const Leads = () => {
                             )}
                             <tr>
                               <th className="tableHeader">Status</th>
-                              <td className="tableData">
+                              <td colSpan="5">
                                 <span
-                                  className={`badge px-3 py-2 rounded-pill fw-normal 
-                                 ${selectedLead.status === "New"
-                                      ? "bg-primary"
-                                      : selectedLead.status === "Connected"
-                                        ? "bg-success"
-                                        : selectedLead.status === "In Progress"
-                                          ? "bg-warning text-dark"
-                                          : selectedLead.status === "Shortlisted"
-                                            ? "bg-info text-dark"
-                                            : selectedLead.status === "Rejected"
-                                              ? "bg-danger"
-                                              : "bg-success"
-                                    }`}
+                                  className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                                  style={{
+                                    backgroundColor: statusColors[selectedLead.status] || "#d1d5db",
+                                    color: "white",
+                                    borderRadius: "12px",
+                                    fontWeight: "normal",
+                                    textTransform: "capitalize",
+                                    maxWidth: "100px"
+                                  }}
                                 >
+                                  {selectedLead.status === "New" && <FaLink />}
+                                  {selectedLead.status === "Connected" && <FaCheckCircle />}
+                                  {selectedLead.status === "In Progress" && <FaHourglassHalf />}
+                                  {selectedLead.status === "Shortlisted" && <FaStar />}
+                                  {selectedLead.status === "Rejected" && <FaTimesCircle />}
+                                  {selectedLead.status === "Assigned" && <FaCheckCircle />}
+                                  {selectedLead.status === "Converted" && <FaUserCheck />}
+                                  {selectedLead.status === "Interested" && <FaThumbsUp />}
+                                  {selectedLead.status === "Not Interested" && <FaThumbsDown />}
+                                  {selectedLead.status === "Follow-up" && <FaRedo />}
+                                  {selectedLead.status === "In Discussion" && <FaComments />}
+                                  {selectedLead.status === "completed" && <FaComments />}
+
                                   {selectedLead.status}
                                 </span>
                               </td>
                             </tr>
+
+                            {modalSource === "completed" || modalSource === "touched" && (
+                              <>
+                                {(() => {
+
+                                  const resumeCalls = selectedLead?.callHistory || [];
+                                  const salesCalls = selectedLead?.leadId?.callHistory || [];
+
+                                  const allCalls = [...resumeCalls, ...salesCalls]
+                                    .filter(call => call.source !== "Resume" || modalSource !== "assigned")
+                                    .sort((a, b) => new Date(b.date) - new Date(a.date)
+                                    );
+
+                                  return allCalls.length > 0 ? (
+                                    <>
+                                      <tr>
+                                        <th colSpan="12" className="text-center tableHeader bg-success text-white">
+                                          Call Log Outcomes
+                                        </th>
+                                      </tr>
+
+                                      <tr className="table-light">
+                                        <th className="tableHeader">Index</th>
+                                        <th className="tableHeader">Outcome</th>
+                                        <th className="tableHeader">Date</th>
+                                        <th className="tableHeader">Time</th>
+                                        <th className="tableHeader">Duration</th>
+                                        <th className="tableHeader">Notes</th>
+                                        <th className="tableHeader">Source</th>
+                                      </tr>
+
+                                      {allCalls.map((call, index) => (
+                                        <tr key={index}>
+                                          <td className="tableData">{index + 1}</td>
+                                          <td className="tableData">{call.outcome || "—"}</td>
+                                          <td className="tableData">
+                                            {call.date
+                                              ? new Date(call.date).toLocaleDateString()
+                                              : "N/A"}
+                                          </td>
+                                          <td className="tableData">
+                                            {(() => {
+                                              if (!call.time) return "N/A";
+                                              if (/am|pm/i.test(call.time)) return call.time;
+
+                                              const [h, m] = call.time.split(":");
+                                              const hr = parseInt(h, 10);
+                                              const ampm = hr >= 12 ? "PM" : "AM";
+                                              const formattedHr = ((hr + 11) % 12 + 1).toString().padStart(2, "0");
+                                              return `${formattedHr}:${m} ${ampm}`;
+                                            })()}
+                                          </td>
+                                          <td className="tableData">{call.duration || "N/A"}</td>
+                                          <td className="tableData">{call.notes || "—"}</td>
+                                          <td className="tableData">
+                                            {resumeCalls.includes(call) ? "Resume" : "Sales"}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <tr>
+                                        <th colSpan="14" className="text-center tableHeader bg-secondary text-white">
+                                          Call Log Outcomes
+                                        </th>
+                                      </tr>
+                                      <tr>
+                                        <td colSpan="14" className="text-center text-muted py-2 tableData">
+                                          No outcome history found
+                                        </td>
+                                      </tr>
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            )}
+
                           </tbody>
                         </table>
                       </div>
 
-                      {user.role === "Sales" && modalSource === "assigned" && modalSource !== "enrolled" && (
+                      {user.role === "Sales" && (modalSource === "interested" || modalSource === "Not Interested" || modalSource === "inDiscussion" || modalSource === "follow-up" || modalSource === "assigned") && modalSource !== "enrolled" && (
                         <>
                           <div className="card p-3 shadow-sm mb-3">
                             <h6 className="text-center mb-3">Log Call Outcome</h6>
@@ -3220,14 +3668,449 @@ const Leads = () => {
         </div >
       </div>
 
-      {/* Enrolled Leads */}
+
+      {/* Interested Leads */}
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
             <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
               <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
+                <h5 className="text-left leadManagementTitle mt-4">Interested Leads({counts.backendInterested})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+              <div className="input-group input-group-sm w-auto mb-3 px-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="form-control form-control-sm"
+                  value={interestedFilters.search}
+                  onChange={(e) =>
+                    setInterestedFilters({ ...interestedFilters, search: e.target.value })
+                  }
+                />
+              </div>
+
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Technology</th>
+                    <th className="text-left tableHeader">Status</th>
+                    <th className="text-left tableHeader">Created At</th>
+                    <th className="text-left tableHeader">Updated At</th>
+                    {/* <th className="text-left tableHeader">Upfront</th>
+                    <th className="text-left tableHeader">Contracted</th> */}
+                    {/* <th className="text-left tableHeader">Payment 1 (Date)</th>
+                    <th className="text-left tableHeader">Payment 2 (Date)</th>
+                    <th className="text-left tableHeader">Payment 3 (Date)</th> */}
+                    {/* <th className="text-left tableHeader">Percentage</th>
+                    <th className="text-left tableHeader">Payment Status</th>
+                    <th className="text-left tableHeader">Job Guarantee</th>
+                    <th className="text-left tableHeader">Enrollment Date</th> */}
+                    {/* <th className="text-left tableHeader">Moved To Resume</th> */}
+                    {/* <th className="text-left tableHeader">Moved To CV</th> */}
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredInterestedLeads.length > 0 ? (
+                    filteredInterestedLeads.map((c, index) => (
+                      <tr key={c._id}>
+                        <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_email}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_phone_no || "N/A"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                        {/* <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td> */}
+                        {/* <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[0]?.amount || 0} (
+                            {c.collectedPayments[0]?.date ? new Date(c.collectedPayments[0].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[1]?.amount || 0} (
+                            {c.collectedPayments[1]?.date ? new Date(c.collectedPayments[1].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[2]?.amount || 0} (
+                            {c.collectedPayments[2]?.date ? new Date(c.collectedPayments[2].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td> */}
+                        {/* <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
+                        <td>
+                          <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
+                            {c.paymentStatus}
+                          </span>
+                        </td>
+                        <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                        <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToTraining ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToTraining ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        {/* <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToCV ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToCV ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToCV ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        <td className="text-center">
+                          <span
+                            className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                            style={{
+                              backgroundColor: statusColors[c.status] || "#d1d5db",
+                              color: "white",
+                              borderRadius: "12px",
+                              fontWeight: "normal",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {/* Icons same as before */}
+                            {c.status === "New" && <FaLink />}
+                            {c.status === "Connected" && <FaCheckCircle />}
+                            {c.status === "In Progress" && <FaHourglassHalf />}
+                            {c.status === "Shortlisted" && <FaStar />}
+                            {c.status === "Rejected" && <FaTimesCircle />}
+                            {c.status === "Assigned" && <FaCheckCircle />}
+                            {c.status === "Converted" && <FaUserCheck />}
+                            {c.status === "Interested" && <FaThumbsUp />}
+                            {c.status === "Not Interested" && <FaThumbsDown />}
+                            {c.status === "Follow-up" && <FaRedo />}
+                            {c.status === "In Discussion" && <FaComments />}
+
+                            {c.status}
+                          </span>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.createdAt)}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.updatedAt)}</p>
+                        </td>
+                        {/* <td className="text-center">
+                          <span
+                            className={`badge status-badge px-2 py-2 d-flex gap-2
+                            ${c.status === "New" ? "bg-new" :
+                                c.status === "Connected" ? "bg-connected" :
+                                  c.status === "In Progress" ? "bg-inprogress" :
+                                    c.status === "Shortlisted" ? "bg-shortlisted text-dark" :
+                                      c.status === "Rejected" ? "bg-rejected" :
+                                        c.status === "Assigned" ? "bg-success" :
+                                          c.status === "In Discussion" ? "bg-warning" :
+                                            c.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
+                          >
+                            {c.status === "New" && <FaLink />}
+                            {c.status === "Connected" && <FaCheckCircle />}
+                            {c.status === "In Progress" && <FaHourglassHalf />}
+                            {c.status === "Shortlisted" && <FaStar />}
+                            {c.status === "Rejected" && <FaTimesCircle />}
+                            {c.status === "Converted" && <FaUserCheck />}
+                            {c.status === "Assigned" && <FaCheckCircle />}
+
+                            {c.status}
+                          </span>
+                        </td> */}
+
+                        <td>
+                          <div className="d-flex justify-content-center align-items-center gap-2">
+                            {c.status === "Interested" && (
+                              <button
+                                className="btn btn-sm"
+                                style={{
+                                  backgroundColor: statusColors["Enrolled"],
+                                  color: "white",
+                                  fontWeight: "normal",
+                                  borderRadius: "6px",
+                                  padding: "5px 7px",
+                                  border: "none",
+                                  transition: "0.3s ease",
+                                }}
+                                onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                                onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                                onClick={() => handleEnrollCandidate(c)}
+                              >
+                                <i className="bi bi-person-check-fill me-2"></i> Enroll
+                              </button>
+                            )}
+                            <button
+                              className="btn btn-sm me-2 d-flex align-items-center"
+                              style={{
+                                backgroundColor: "#2563eb",
+                                color: "white",
+                                fontWeight: "normal",
+                                borderRadius: "6px",
+                                border: "none",
+                                transition: "0.3s ease",
+                              }}
+                              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewLead"
+                              onClick={() => {
+                                setSelectedLead(c);
+                                setModalSource("interested");
+                              }}
+                            >
+                              <i className="bi bi-eye-fill me-2"></i> View Lead
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="mb-0 text-center tableData">
+                        No enrolled candidates found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Not Interested Leads */}
+      {user.role == "Sales" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">Not Interested Leads({counts.backendNotInterested})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+              <div className="input-group input-group-sm w-auto mb-3 px-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="form-control form-control-sm"
+                  value={notInterestedFilters.search}
+                  onChange={(e) =>
+                    setNotInterestedFilters({ ...notInterestedFilters, search: e.target.value })
+                  }
+                />
+              </div>
+
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Technology</th>
+                    <th className="text-left tableHeader">Status</th>
+                    <th className="text-left tableHeader">Created At</th>
+                    <th className="text-left tableHeader">Updated At</th>
+                    {/* <th className="text-left tableHeader">Upfront</th>
+                    <th className="text-left tableHeader">Contracted</th> */}
+                    {/* <th className="text-left tableHeader">Payment 1 (Date)</th>
+                    <th className="text-left tableHeader">Payment 2 (Date)</th>
+                    <th className="text-left tableHeader">Payment 3 (Date)</th> */}
+                    {/* <th className="text-left tableHeader">Percentage</th>
+                    <th className="text-left tableHeader">Payment Status</th>
+                    <th className="text-left tableHeader">Job Guarantee</th>
+                    <th className="text-left tableHeader">Enrollment Date</th> */}
+                    {/* <th className="text-left tableHeader">Moved To Resume</th> */}
+                    {/* <th className="text-left tableHeader">Moved To CV</th> */}
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredNotInterestedLeads.length > 0 ? (
+                    filteredNotInterestedLeads.map((c, index) => (
+                      <tr key={c._id}>
+                        <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_email}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_phone_no || "N/A"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                        {/* <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td> */}
+                        {/* <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[0]?.amount || 0} (
+                            {c.collectedPayments[0]?.date ? new Date(c.collectedPayments[0].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[1]?.amount || 0} (
+                            {c.collectedPayments[1]?.date ? new Date(c.collectedPayments[1].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[2]?.amount || 0} (
+                            {c.collectedPayments[2]?.date ? new Date(c.collectedPayments[2].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td> */}
+                        {/* <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
+                        <td>
+                          <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
+                            {c.paymentStatus}
+                          </span>
+                        </td>
+                        <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                        <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToTraining ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToTraining ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        {/* <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToCV ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToCV ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToCV ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        <td className="text-center">
+                          <span
+                            className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                            style={{
+                              backgroundColor: statusColors[c.status] || "#d1d5db",
+                              color: "white",
+                              borderRadius: "8px",
+                              fontWeight: "normal",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {/* Icons same as before */}
+                            {c.status === "New" && <FaLink />}
+                            {c.status === "Connected" && <FaCheckCircle />}
+                            {c.status === "In Progress" && <FaHourglassHalf />}
+                            {c.status === "Shortlisted" && <FaStar />}
+                            {c.status === "Rejected" && <FaTimesCircle />}
+                            {c.status === "Assigned" && <FaCheckCircle />}
+                            {c.status === "Converted" && <FaUserCheck />}
+                            {c.status === "Interested" && <FaThumbsUp />}
+                            {c.status === "Not Interested" && <FaThumbsDown />}
+                            {c.status === "Follow-up" && <FaRedo />}
+                            {c.status === "In Discussion" && <FaComments />}
+
+                            {c.status}
+                          </span>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.createdAt)}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.updatedAt)}</p>
+                        </td>
+                        {/* <td className="text-center">
+                          <span
+                            className={`badge status-badge px-2 py-2 d-flex gap-2
+                            ${c.status === "New" ? "bg-new" :
+                                c.status === "Connected" ? "bg-connected" :
+                                  c.status === "In Progress" ? "bg-inprogress" :
+                                    c.status === "Shortlisted" ? "bg-shortlisted text-dark" :
+                                      c.status === "Rejected" ? "bg-rejected" :
+                                        c.status === "Assigned" ? "bg-success" :
+                                          c.status === "Converted" ? "bg-converted" : "bg-secondary"}`}
+                          >
+                            {c.status === "New" && <FaLink />}
+                            {c.status === "Connected" && <FaCheckCircle />}
+                            {c.status === "In Progress" && <FaHourglassHalf />}
+                            {c.status === "Shortlisted" && <FaStar />}
+                            {c.status === "Rejected" && <FaTimesCircle />}
+                            {c.status === "Converted" && <FaUserCheck />}
+                            {c.status === "Assigned" && <FaCheckCircle />}
+
+                            {c.status}
+                          </span>
+                        </td> */}
+
+                        <td>
+                          {/* <button className="btn btn-sm btn-warning me-2" disabled={c.movedToTraining} onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
+                        <button className="btn btn-sm btn-success me-2" disabled={c.movedToCV} onClick={() => handleMoveToCV(c._id)}>Move to CV</button> */}
+                          {/* <button className="btn btn-sm btn-warning me-2" onClick={() => updateStage(c._id, "training")} disabled={c.movedToTraining}>{c.movedToTraining ? "Moved" : "Move to Resume"}</button> */}
+                          {/* <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(c._id, "cv")}>Move to CV</button> */}
+
+                          <button
+                            className="btn btn-sm me-2 d-flex align-items-center"
+                            style={{
+                              backgroundColor: "#2563eb",
+                              color: "white",
+                              fontWeight: "normal",
+                              borderRadius: "6px",
+                              border: "none",
+                              transition: "0.3s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(c);
+                              setModalSource("Not Interested");
+                            }}
+                          >
+                            <i className="bi bi-eye-fill me-2"></i> View Lead
+                          </button>
+
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="mb-0 text-center tableData">
+                        No enrolled candidates found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* In Discussion Leads */}
+      {user.role == "Sales" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">In Discussion Leads({counts.backendInDiscussion})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+              <div className="input-group input-group-sm w-auto mb-3 px-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="form-control form-control-sm"
+                  value={inDiscussionFilters.search}
+                  onChange={(e) =>
+                    setInDiscussionFilters({ ...inDiscussionFilters, search: e.target.value })
+                  }
+                />
               </div>
             </div>
 
@@ -3240,13 +4123,394 @@ const Leads = () => {
                     <th className="text-left tableHeader">Email</th>
                     <th className="text-left tableHeader">Phone</th>
                     <th className="text-left tableHeader">Technology</th>
+                    <th className="text-left tableHeader">Status</th>
+                    <th className="text-left tableHeader">Created At</th>
+                    <th className="text-left tableHeader">Updated At</th>
+                    {/* <th className="text-left tableHeader">Upfront</th>
+                    <th className="text-left tableHeader">Contracted</th> */}
+                    {/* <th className="text-left tableHeader">Payment 1 (Date)</th>
+                    <th className="text-left tableHeader">Payment 2 (Date)</th>
+                    <th className="text-left tableHeader">Payment 3 (Date)</th> */}
+                    {/* <th className="text-left tableHeader">Percentage</th>
+                    <th className="text-left tableHeader">Payment Status</th>
+                    <th className="text-left tableHeader">Job Guarantee</th>
+                    <th className="text-left tableHeader">Enrollment Date</th> */}
+                    {/* <th className="text-left tableHeader">Moved To Resume</th> */}
+                    {/* <th className="text-left tableHeader">Moved To CV</th> */}
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredInDiscussionLeads.length > 0 ? (
+                    filteredInDiscussionLeads.map((c, index) => (
+                      <tr key={c._id}>
+                        <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_email}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_phone_no || "N/A"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                        {/* <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td> */}
+                        {/* <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[0]?.amount || 0} (
+                            {c.collectedPayments[0]?.date ? new Date(c.collectedPayments[0].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[1]?.amount || 0} (
+                            {c.collectedPayments[1]?.date ? new Date(c.collectedPayments[1].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[2]?.amount || 0} (
+                            {c.collectedPayments[2]?.date ? new Date(c.collectedPayments[2].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td> */}
+                        {/* <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
+                        <td>
+                          <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
+                            {c.paymentStatus}
+                          </span>
+                        </td>
+                        <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                        <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToTraining ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToTraining ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        {/* <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToCV ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToCV ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToCV ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        <td className="text-center">
+                          <span
+                            className="badge status-badge px-2 py-2 d-flex align-items-center justify-content-center gap-2"
+                            style={{
+                              backgroundColor: statusColors[c.status] || "#d1d5db",
+                              color: "white",
+                              padding: "6px 12px",
+                              borderRadius: "8px",
+                              fontWeight: "bold",
+                              textTransform: "capitalize",
+                              minWidth: "120px"
+                            }}
+                          >
+                            {/* Icons same as before */}
+                            {c.status === "New" && <FaLink />}
+                            {c.status === "Connected" && <FaCheckCircle />}
+                            {c.status === "In Progress" && <FaHourglassHalf />}
+                            {c.status === "Shortlisted" && <FaStar />}
+                            {c.status === "Rejected" && <FaTimesCircle />}
+                            {c.status === "Assigned" && <FaCheckCircle />}
+                            {c.status === "Converted" && <FaUserCheck />}
+                            {c.status === "Interested" && <FaThumbsUp />}
+                            {c.status === "Not Interested" && <FaThumbsDown />}
+                            {c.status === "Follow-up" && <FaRedo />}
+                            {c.status === "In Discussion" && <FaComments />}
+
+                            {c.status}
+                          </span>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.createdAt)}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.updatedAt)}</p>
+                        </td>
+                        <td>
+                          {/* <button className="btn btn-sm btn-warning me-2" disabled={c.movedToTraining} onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
+                        <button className="btn btn-sm btn-success me-2" disabled={c.movedToCV} onClick={() => handleMoveToCV(c._id)}>Move to CV</button> */}
+                          {/* <button className="btn btn-sm btn-warning me-2" onClick={() => updateStage(c._id, "training")} disabled={c.movedToTraining}>{c.movedToTraining ? "Moved" : "Move to Resume"}</button> */}
+                          {/* <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(c._id, "cv")}>Move to CV</button> */}
+
+                          {/* <button
+                            className="btn btn-sm btn-success ms-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(c);
+                              setModalSource("inDiscussion");
+                            }}
+                          >
+                            View Lead
+                          </button> */}
+
+                          <button
+                            className="btn btn-sm me-2 d-flex align-items-center"
+                            style={{
+                              backgroundColor: "#2563eb",
+                              color: "white",
+                              fontWeight: "normal",
+                              borderRadius: "6px",
+                              border: "none",
+                              transition: "0.3s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(c);
+                              setModalSource("inDiscussion");
+                            }}
+                          >
+                            <i className="bi bi-eye-fill me-2"></i> View Lead
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="mb-0 text-center tableData">
+                        No enrolled candidates found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Follow-Up Leads */}
+      {user.role == "Sales" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">Follow Up Leads({counts.backendFollowUp})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+              <div className="input-group input-group-sm w-auto mb-3 px-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="form-control form-control-sm"
+                  value={followUpFilters.search}
+                  onChange={(e) =>
+                    setFollowUpFilters({ ...followUpFilters, search: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Technology</th>
+                    <th className="text-left tableHeader">Status</th>
+                    <th className="text-left tableHeader">Created At</th>
+                    <th className="text-left tableHeader">Updated At</th>
+                    {/* <th className="text-left tableHeader">Upfront</th>
+                    <th className="text-left tableHeader">Contracted</th> */}
+                    {/* <th className="text-left tableHeader">Payment 1 (Date)</th>
+                    <th className="text-left tableHeader">Payment 2 (Date)</th>
+                    <th className="text-left tableHeader">Payment 3 (Date)</th> */}
+                    {/* <th className="text-left tableHeader">Percentage</th>
+                    <th className="text-left tableHeader">Payment Status</th>
+                    <th className="text-left tableHeader">Job Guarantee</th>
+                    <th className="text-left tableHeader">Enrollment Date</th> */}
+                    {/* <th className="text-left tableHeader">Moved To Resume</th> */}
+                    {/* <th className="text-left tableHeader">Moved To CV</th> */}
+                    <th className="text-left tableHeader">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredFollowUpLeads.length > 0 ? (
+                    filteredFollowUpLeads.map((c, index) => (
+                      <tr key={c._id}>
+                        <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_email}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.candidate_phone_no || "N/A"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                        {/* <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td> */}
+                        {/* <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[0]?.amount || 0} (
+                            {c.collectedPayments[0]?.date ? new Date(c.collectedPayments[0].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[1]?.amount || 0} (
+                            {c.collectedPayments[1]?.date ? new Date(c.collectedPayments[1].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableData">
+                            {c.collectedPayments[2]?.amount || 0} (
+                            {c.collectedPayments[2]?.date ? new Date(c.collectedPayments[2].date).toLocaleDateString() : "N/A"})
+                          </p>
+                        </td> */}
+                        {/* <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
+                        <td>
+                          <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
+                            {c.paymentStatus}
+                          </span>
+                        </td>
+                        <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
+                        <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
+                        <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToTraining ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToTraining ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        {/* <td>
+                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToCV ? "bg-success" : "bg-warning text-dark"}`}>
+                            <i className={c.movedToCV ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                            {c.movedToCV ? "Done" : "Not Yet"}
+                          </span>
+                        </td> */}
+                        <td className="text-center">
+                          <span
+                            className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                            style={{
+                              backgroundColor: statusColors[c.status] || "#d1d5db",
+                              color: "white",
+                              borderRadius: "12px",
+                              fontWeight: "normal",
+                              textTransform: "capitalize",
+                            }}
+                          >
+                            {c.status === "New" && <FaLink />}
+                            {c.status === "Connected" && <FaCheckCircle />}
+                            {c.status === "In Progress" && <FaHourglassHalf />}
+                            {c.status === "Shortlisted" && <FaStar />}
+                            {c.status === "Rejected" && <FaTimesCircle />}
+                            {c.status === "Assigned" && <FaCheckCircle />}
+                            {c.status === "Converted" && <FaUserCheck />}
+                            {c.status === "Interested" && <FaThumbsUp />}
+                            {c.status === "Not Interested" && <FaThumbsDown />}
+                            {c.status === "Follow-up" && <FaRedo />}
+                            {c.status === "In Discussion" && <FaComments />}
+
+                            {c.status}
+                          </span>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.createdAt)}</p>
+                        </td>
+                        <td>
+                          <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.updatedAt)}</p>
+                        </td>
+
+                        <td>
+                          {/* <button className="btn btn-sm btn-warning me-2" disabled={c.movedToTraining} onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
+                        <button className="btn btn-sm btn-success me-2" disabled={c.movedToCV} onClick={() => handleMoveToCV(c._id)}>Move to CV</button> */}
+                          {/* <button className="btn btn-sm btn-warning me-2" onClick={() => updateStage(c._id, "training")} disabled={c.movedToTraining}>{c.movedToTraining ? "Moved" : "Move to Resume"}</button> */}
+                          {/* <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(c._id, "cv")}>Move to CV</button> */}
+
+                          {/* <button
+                            className="btn btn-sm btn-success ms-2"
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(c);
+                              setModalSource("enrolled");
+                            }}
+                          >
+                            View Lead
+                          </button> */}
+
+                          <button
+                            className="btn btn-sm me-2 d-flex align-items-center"
+                            style={{
+                              backgroundColor: "#2563eb",
+                              color: "white",
+                              fontWeight: "normal",
+                              borderRadius: "6px",
+                              border: "none",
+                              transition: "0.3s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
+                            data-bs-toggle="modal"
+                            data-bs-target="#viewLead"
+                            onClick={() => {
+                              setSelectedLead(c);
+                              setModalSource("follow-up");
+                            }}
+                          >
+                            <i className="bi bi-eye-fill me-2"></i> View Lead
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="11" className="mb-0 text-center tableData">
+                        No enrolled candidates found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Enrolled Leads */}
+      {user.role == "Sales" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
+                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
+              </div>
+              <div className="input-group input-group-sm w-auto mb-3 px-3">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search..."
+                  className="form-control form-control-sm"
+                  value={enrolledFilters.search}
+                  onChange={(e) =>
+                    setEnrolledFilters({ ...enrolledFilters, search: e.target.value })
+                  }
+                />
+              </div>
+
+            </div>
+
+            <div className="table-container">
+              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <thead className="bg-light">
+                  <tr>
+                    <th className="text-left tableHeader">#</th>
+                    <th className="text-left tableHeader">Name</th>
+                    <th className="text-left tableHeader">Email</th>
+                    <th className="text-left tableHeader">Phone</th>
+                    <th className="text-left tableHeader">Technology</th>
+                    <th className="text-left tableHeader">Payment Status</th>
                     <th className="text-left tableHeader">Upfront</th>
                     <th className="text-left tableHeader">Contracted</th>
                     <th className="text-left tableHeader">Payment 1 (Date)</th>
                     <th className="text-left tableHeader">Payment 2 (Date)</th>
                     <th className="text-left tableHeader">Payment 3 (Date)</th>
                     <th className="text-left tableHeader">Percentage</th>
-                    <th className="text-left tableHeader">Payment Status</th>
                     <th className="text-left tableHeader">Job Guarantee</th>
                     <th className="text-left tableHeader">Enrollment Date</th>
                     <th className="text-left tableHeader">Moved To Resume</th>
@@ -3255,14 +4519,36 @@ const Leads = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {enrolledLeads.length > 0 ? (
-                    enrolledLeads.map((c, index) => (
+                  {filteredEnrolledLeads.length > 0 ? (
+                    filteredEnrolledLeads.map((c, index) => (
                       <tr key={c._id}>
                         <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.name}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.email}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.phone}</p></td>
                         <td><p className="mb-0 text-left tableData">{Array.isArray(c.technology) ? c.technology.join(", ") : c.technology}</p></td>
+                        <td className="text-center">
+                          <span
+                            className="badge d-flex align-items-center gap-2 px-2"
+                            style={{
+                              fontSize: "12px",
+                              fontWeight: "normal",
+                              backgroundColor:
+                                c.paymentStatus === "paid"
+                                  ? "#16a34a"
+                                  : c.paymentStatus === "pending"
+                                    ? "#f59e0b"
+                                    : "#d1d5db",
+                              color: c.paymentStatus === "pending" ? "white" : "white",
+                              borderRadius: "8px",
+                            }}
+                          >
+                            {c.paymentStatus === "paid" && <FaMoneyBillWave />}
+                            {c.paymentStatus === "pending" && <FaClock />}
+
+                            {c.paymentStatus?.charAt(0).toUpperCase() + c.paymentStatus?.slice(1)}
+                          </span>
+                        </td>
                         <td><p className="mb-0 text-left tableData">{c.upfront || "-"}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.contracted || "-"}</p></td>
                         <td>
@@ -3284,32 +4570,41 @@ const Leads = () => {
                           </p>
                         </td>
                         <td><p className="mb-0 text-left tableData">{c.percentage || "-"}</p></td>
-                        <td>
-                          <span className={`badge ${c.paymentStatus === "paid" ? "bg-success" : "bg-warning text-dark"}`}>
-                            {c.paymentStatus}
-                          </span>
-                        </td>
                         <td><p className="mb-0 text-left tableData">{c.jobGuarantee ? "Yes" : "No"}</p></td>
                         <td><p className="mb-0 text-left tableData">{formatDateTimeIST(c.createdAt)}</p></td>
-                        <td>
-                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToTraining ? "bg-success" : "bg-warning text-dark"}`}>
-                            <i className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}></i>
+                        <td className="text-center">
+                          <span
+                            className="badge d-flex align-items-center justify-content-center gap-2 px-3 py-1"
+                            style={{
+                              fontSize: "12px",
+                              backgroundColor: c.movedToTraining ? "#16a34a" : "#f59e0b",
+                              color: "white",
+                              borderRadius: "8px",
+                              fontWeight: "normal",
+                            }}
+                          >
+                            <i
+                              className={c.movedToTraining ? "bi bi-check-circle" : "bi bi-clock"}
+                              style={{ fontSize: "14px" }}
+                            ></i>
                             {c.movedToTraining ? "Done" : "Not Yet"}
                           </span>
                         </td>
-                        {/* <td>
-                          <span className={`badge d-flex align-items-center gap-1 ${c.movedToCV ? "bg-success" : "bg-warning text-dark"}`}>
-                            <i className={c.movedToCV ? "bi bi-check-circle" : "bi bi-clock"}></i>
-                            {c.movedToCV ? "Done" : "Not Yet"}
-                          </span>
-                        </td> */}
-                        <td>
-                          {/* <button className="btn btn-sm btn-warning me-2" disabled={c.movedToTraining} onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
-                        <button className="btn btn-sm btn-success me-2" disabled={c.movedToCV} onClick={() => handleMoveToCV(c._id)}>Move to CV</button> */}
+
+                        <td className="d-flex">
                           <button className="btn btn-sm btn-warning me-2" onClick={() => updateStage(c._id, "training")} disabled={c.movedToTraining}>{c.movedToTraining ? "Moved" : "Move to Resume"}</button>
-                          {/* <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(c._id, "cv")}>Move to CV</button> */}
                           <button
-                            className="btn btn-sm btn-success ms-2"
+                            className="btn btn-sm me-2 d-flex align-items-center"
+                            style={{
+                              backgroundColor: "#2563eb",
+                              color: "white",
+                              fontWeight: "normal",
+                              borderRadius: "6px",
+                              border: "none",
+                              transition: "0.3s ease",
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
+                            onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                             data-bs-toggle="modal"
                             data-bs-target="#viewLead"
                             onClick={() => {
@@ -3317,7 +4612,7 @@ const Leads = () => {
                               setModalSource("enrolled");
                             }}
                           >
-                            View Lead
+                            <i className="bi bi-eye-fill me-2"></i> View Lead
                           </button>
 
                         </td>
@@ -3335,7 +4630,8 @@ const Leads = () => {
             </div>
           </div>
         </div>
-      )}
+      )
+      }
 
       {/* All Training Leads */}
       {/* {user.role === "Resume" && (
@@ -3438,320 +4734,426 @@ const Leads = () => {
       )} */}
 
       {/* All Untouched Leads */}
-      {user.role === "Resume" && (
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">Untouched Leads({counts.untouched})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Untouched Leads</h6>
+      {
+        user.role === "Resume" && (
+          <div className="col-12 col-md-8 col-lg-12 mt-2">
+            <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div>
+                  <h5 className="text-left leadManagementTitle mt-4">Untouched Leads({counts.untouched})</h5>
+                  <h6 className="leadManagementSubtitle mb-3">Active Untouched Leads</h6>
+                </div>
+                <div className="input-group input-group-sm w-auto search">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm w-auto"
+                    value={untouchedFilters.search}
+                    onChange={(e) => setUntouchedFilters({ ...untouchedFilters, search: e.target.value })}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader">#</th>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    <th className="text-left tableHeader">Phone</th>
-                    {/* <th className="text-left tableHeader">Start Date</th>
+              <div className="table-container">
+                <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="text-left tableHeader">#</th>
+                      <th className="text-left tableHeader">Name</th>
+                      <th className="text-left tableHeader">Email</th>
+                      <th className="text-left tableHeader">Phone</th>
+                      {/* <th className="text-left tableHeader">Start Date</th>
                   <th className="text-left tableHeader">CV Progress</th>
                   <th className="text-left tableHeader">CV Status</th> */}
-                    <th className="text-left tableHeader">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {untouchedLeads.length > 0 ? (
-                    untouchedLeads.map((t, i) => (
-                      <tr key={t._id}>
-                        <td className="mb-0 text-left tableData">{i + 1}</td>
-                        <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
-                        <td>
-                          <button className="btn btn-sm btn-success" onClick={() => handleStart(t._id)}>Start Work</button>
-                          <button className="btn btn-sm btn-success">View Lead</button>
+                      <th className="text-left tableHeader">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUntouchedLeads.length > 0 ? (
+                      filteredUntouchedLeads.map((t, i) => (
+                        <tr key={t._id}>
+                          <td className="mb-0 text-left tableData">{i + 1}</td>
+                          <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
+                          <td>
+                            <button className="btn btn-sm btn-success" onClick={() => handleStart(t._id)}>Start Work</button>
+                            <button
+                              className="btn btn-sm btn-success ms-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewLead"
+                              onClick={() => {
+                                setTimeout(() => {
+                                  setSelectedLead(t);
+                                  setModalSource("untouched");
+                                }, 600);
+                              }}
+                            >
+                              View Lead
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="text-center tableData">
+                          No untouched leads found....
                         </td>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="text-center tableData">
-                        No untouched leads found....
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {showOutcomeModal && (
+        <div
+          className="modal-overlay d-flex align-items-center justify-content-center"
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            background: "rgba(0, 0, 0, 0.5)",
+            zIndex: 9999,
+          }}
+        >
+          <div
+            className="bg-white p-4 rounded shadow"
+            style={{ width: "400px", maxWidth: "90%" }}
+          >
+            <h5 className="text-center mb-3">Log Call Outcome</h5>
+
+            <select
+              value={outcome}
+              onChange={(e) => setOutcome(e.target.value)}
+              className="form-select form-select-sm mb-2"
+            >
+              <option value="">Select Outcome</option>
+              <option value="In Discussion">In Discussion</option>
+              <option value="Verification">Verification</option>
+              <option value="Final">Final</option>
+            </select>
+
+            <input
+              type="text"
+              value={duration}
+              onChange={(e) => setDuration(e.target.value)}
+              placeholder="Enter Duration (e.g., 12 mins)"
+              required
+              className="form-control form-control-sm mb-2 selectFont"
+            />
+
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Enter notes..."
+              className="form-control form-control-sm mb-3"
+            />
+
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowOutcomeModal(false)}
+              >
+                Cancel
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={handleSaveOutcome}>
+                Save Outcome
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* All Touched Leads */}
-      {user.role === "Resume" && (
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">Touched Leads({counts.touched})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Touched Leads</h6>
-              </div>
-              <div className="input-group input-group-sm w-auto search">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm w-auto"
-                  value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                />
+      {
+        user.role === "Resume" && (
+          <div className="col-12 col-md-8 col-lg-12 mt-2">
+            <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div>
+                  <h5 className="text-left leadManagementTitle mt-4">Touched Leads({counts.touched})</h5>
+                  <h6 className="leadManagementSubtitle mb-3">Active Touched Leads</h6>
+                </div>
+                <div className="input-group input-group-sm w-auto search">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm w-auto"
+                    value={touchedFilters.search}
+                    onChange={(e) => setTouchedFilters({ ...touchedFilters, search: e.target.value })}
+                  />
+                </div>
+
               </div>
 
-            </div>
-
-            <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader">
-                      <div className="d-flex align-items-start justify-content-center flex-column">
-                        <label htmlFor="selectAllTouchedCheckbox" className="form-label">
-                          Select All
-                        </label>
-                        <input
-                          type="checkbox"
-                          checked={selectAllTouched}
-                          onChange={(e) => handleSelectAllTouched(e, "touched")}
-                        />
-                      </div>
-                    </th>
-                    <th className="text-left tableHeader">#</th>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    <th className="text-left tableHeader">Phone</th>
-                    <th className="text-left tableHeader">Status</th>
-                    <th className="text-left tableHeader">Timeline</th>
-                    <th className="text-left tableHeader">Start Date</th>
-                    <th className="text-left tableHeader">End Date</th>
-                    {/* <th className="text-left tableHeader">Start Date</th>
-                  <th className="text-left tableHeader">CV Progress</th>
-                  <th className="text-left tableHeader">CV Status</th> */}
-                    <th className="text-left tableHeader">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredTouchedLeads.length > 0 ? (
-                    filteredTouchedLeads.map((t, i) => (
-                      <tr key={t._id}>
-                        <td>
+              <div className="table-container">
+                <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="text-left tableHeader">
+                        <div className="d-flex align-items-start justify-content-center flex-column">
+                          <label htmlFor="selectAllTouchedCheckbox" className="form-label">
+                            Select All
+                          </label>
                           <input
                             type="checkbox"
-                            checked={selectedTouchedLeads.includes(t._id)}
-                            onChange={() => toggleLeadSelection(t._id, "touched")}
+                            checked={selectAllTouched}
+                            onChange={(e) => handleSelectAllTouched(e, "touched")}
                           />
-                        </td>
-                        <td className="mb-0 text-left tableData">{i + 1}</td>
-                        <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{getStatusBadge(t.status)}</td>
-                        <td className="mb-0 text-left tableData">
-                          <div className="progress-container" style={{ position: "relative" }}>
-                            <div
-                              className="progress-bar"
-                              style={{
-                                width: `${getProgress(t)}%`,
-                                backgroundColor: getColor(getProgress(t)),
-                                height: "20px",
-                              }}
-                            ></div>
-                            <span
-                              style={{
-                                position: "absolute",
-                                left: "50%",
-                                top: "50%",
-                                transform: "translate(-50%, -50%)",
-                                fontWeight: "bold",
-                                color: getTextColor(getProgress(t)),
-                              }}
-                            >
-                              {getProgress(t)}%
-                            </span>
-                          </div>
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          {t.startDate ? new Date(t.startDate).toLocaleString() : "N/A"}
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          {t.startDate ? (
-                            t.endDate ? (
-                              <button className="btn btn-sm btn-bg-muted" disabled>
-                                Done
-                              </button>
-                            ) : (
-                              <button className="btn btn-sm btn-primary" onClick={() => handleDone(t._id)}>
-                                Done
-                              </button>
-                            )
-                          ) : (
-                            <button className="btn btn-sm btn-success" onClick={() => handleStartWork(t._id)}>
-                              Start
-                            </button>
-                          )}
-                          <button
-                            className="btn btn-sm btn-success ms-2"
-                            data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
-                            onClick={() => {
-                              setSelectedLead(t);
-                              setModalSource("touched");
-                            }}
-                          >
-                            View Lead
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={10} className="text-center tableData">
-                        No touched leads found
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Completed Leads */}
-      {user.role === "Resume" && (
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">Completed Leads({counts.completed})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Completed Leads</h6>
-              </div>
-              <div className="input-group input-group-sm w-auto search">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm w-auto"
-                  value={filters.search}
-                  onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-                />
-              </div>
-            </div>
-
-            <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader"></th>
-                    <th className="text-left tableHeader">#</th>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    <th className="text-left tableHeader">Phone</th>
-                    <th className="text-left tableHeader">Status</th>
-                    <th className="text-left tableHeader">Timeline</th>
-                    <th className="text-left tableHeader">Start Date</th>
-                    <th className="text-left tableHeader">End Date</th>
-                    {/* <th className="text-left tableHeader">Start Date</th>
+                        </div>
+                      </th>
+                      <th className="text-left tableHeader">#</th>
+                      <th className="text-left tableHeader">Name</th>
+                      <th className="text-left tableHeader">Email</th>
+                      <th className="text-left tableHeader">Phone</th>
+                      <th className="text-left tableHeader">Status</th>
+                      <th className="text-left tableHeader">Timeline</th>
+                      <th className="text-left tableHeader">Start Date</th>
+                      <th className="text-left tableHeader">End Date</th>
+                      {/* <th className="text-left tableHeader">Start Date</th>
                   <th className="text-left tableHeader">CV Progress</th>
                   <th className="text-left tableHeader">CV Status</th> */}
-                    <th className="text-left tableHeader">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredCompletedLeads
-                    .map((t, i) => (
-                      <tr key={t._id}>
-                        <td>
-                          <input type="checkbox"
-                            checked={selectedCompletedLeads.includes(t._id)}
-                            onChange={() => toggleLeadSelection(t._id, "completed")}
-                          />
-                        </td>
-                        <td className="mb-0 text-left tableData">{i + 1}</td>
-                        <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
-                        <td className="mb-0 text-left tableData">
-                          {getStatusBadge(t.status)}
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          <div className="progress-container">
-                            <div className="progress-bar"
-                              style={{
-                                width: getWidth(getProgress(t)),
-                                backgroundColor: getColor(getProgress(t)),
-                                color: getTextColor(getProgress(t))
-                              }}
-                            >{getProgress(t) > 0 && `${getProgress(t)}%`}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          {t.startDate ? new Date(t.startDate).toLocaleString() : "N/A"}
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
-                        </td>
-                        <td className="mb-0 text-left tableData">
-                          {t.startDate ? (
-                            t.endDate ? (
-                              <button
-                                className="btn btn-sm btn-bg-muted"
-                                disabled>
-                                Done
-                              </button>
-                            ) : (
-                              <button
-                                className="btn btn-sm btn-primary"
-                                onClick={() => handleDone(t._id)}
+                      <th className="text-left tableHeader">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredTouchedLeads.length > 0 ? (
+                      filteredTouchedLeads.map((t, i) => (
+                        <tr key={t._id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedTouchedLeads.includes(t._id)}
+                              onChange={() => toggleLeadSelection(t._id, "touched")}
+                            />
+                          </td>
+                          <td className="mb-0 text-left tableData">{i + 1}</td>
+                          <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{getStatusBadge(t.status)}</td>
+                          <td className="mb-0 text-left tableData">
+                            <div className="progress-container" style={{ position: "relative" }}>
+                              <div
+                                className="progress-bar"
+                                style={{
+                                  width: `${getProgress(t)}%`,
+                                  backgroundColor: getColor(getProgress(t)),
+                                  height: "20px",
+                                }}
+                              ></div>
+                              <span
+                                style={{
+                                  position: "absolute",
+                                  left: "50%",
+                                  top: "50%",
+                                  transform: "translate(-50%, -50%)",
+                                  fontWeight: "bold",
+                                  color: getTextColor(getProgress(t)),
+                                }}
                               >
-                                Done
+                                {getProgress(t)}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            {t.startDate ? new Date(t.startDate).toLocaleString() : "N/A"}
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            {t.startDate ? (
+                              t.endDate ? (
+                                <button className="btn btn-sm btn-bg-muted" disabled>
+                                  Done
+                                </button>
+                              ) : (
+                                <button className="btn btn-sm btn-primary" onClick={() => handleDone(t._id)}>
+                                  Done
+                                </button>
+                              )
+                            ) : (
+                              <button className="btn btn-sm btn-success" onClick={() => handleStartWork(t._id)}>
+                                Start
                               </button>
-                            )
-                          ) : (
-                            <button
-                              className="btn btn-sm btn-success"
-                              onClick={() => handleStartWork(t._id)}
+                            )}
+                            {/* <button
+                              className="btn btn-sm btn-success ms-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewLead"
+                              onClick={() => {
+                                setSelectedLead(t);
+                                setModalSource("touched");
+                              }}
                             >
-                              Start
+                              View Lead
+                            </button> */}
+                            <button
+                              className="btn btn-sm btn-success ms-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewLead"
+                              onClick={() => {
+                                setTimeout(() => {
+                                  console.log("Selected Lead in modal", t);
+                                  setSelectedLead(t);
+                                  setModalSource("touched");
+                                }, 600);
+                              }}
+                            >
+                              View Lead
                             </button>
 
-                          )}
-                          <button className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => {
-                            setSelectedLead(t);
-                            setModalSource("completed");
-                          }}>View Lead</button>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={10} className="text-center tableData">
+                          No touched leads found
                         </td>
                       </tr>
-                    ))}
-                </tbody>
-              </table>
+                    )}
+                  </tbody>
+
+                </table>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+      {/* Completed Leads */}
+      {
+        user.role === "Resume" && (
+          <div className="col-12 col-md-8 col-lg-12 mt-2">
+            <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
+              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div>
+                  <h5 className="text-left leadManagementTitle mt-4">Completed Leads({counts.completed})</h5>
+                  <h6 className="leadManagementSubtitle mb-3">Active Completed Leads</h6>
+                </div>
+                <div className="input-group input-group-sm w-auto search">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm w-auto"
+                    value={completedFilters.search}
+                    onChange={(e) => setCompletedFilters({ ...completedFilters, search: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className="table-container">
+                <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <thead className="bg-light">
+                    <tr>
+                      <th className="text-left tableHeader"></th>
+                      <th className="text-left tableHeader">#</th>
+                      <th className="text-left tableHeader">Name</th>
+                      <th className="text-left tableHeader">Email</th>
+                      <th className="text-left tableHeader">Phone</th>
+                      <th className="text-left tableHeader">Status</th>
+                      <th className="text-left tableHeader">Timeline</th>
+                      <th className="text-left tableHeader">Start Date</th>
+                      <th className="text-left tableHeader">End Date</th>
+                      {/* <th className="text-left tableHeader">Start Date</th>
+                  <th className="text-left tableHeader">CV Progress</th>
+                  <th className="text-left tableHeader">CV Status</th> */}
+                      <th className="text-left tableHeader">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredCompletedLeads
+                      .map((t, i) => (
+                        <tr key={t._id}>
+                          <td>
+                            <input type="checkbox"
+                              checked={selectedCompletedLeads.includes(t._id)}
+                              onChange={() => toggleLeadSelection(t._id, "completed")}
+                            />
+                          </td>
+                          <td className="mb-0 text-left tableData">{i + 1}</td>
+                          <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
+                          <td className="mb-0 text-left tableData">
+                            {getStatusBadge(t.status)}
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            <div className="progress-container">
+                              <div className="progress-bar"
+                                style={{
+                                  width: getWidth(getProgress(t)),
+                                  backgroundColor: getColor(getProgress(t)),
+                                  color: getTextColor(getProgress(t))
+                                }}
+                              >{getProgress(t) > 0 && `${getProgress(t)}%`}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            {t.startDate ? new Date(t.startDate).toLocaleString() : "N/A"}
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
+                          </td>
+                          <td className="mb-0 text-left tableData">
+                            {t.startDate ? (
+                              t.endDate ? (
+                                <button
+                                  className="btn btn-sm btn-bg-muted"
+                                  disabled>
+                                  Done
+                                </button>
+                              ) : (
+                                <button
+                                  className="btn btn-sm btn-primary"
+                                  onClick={() => handleDone(t._id)}
+                                >
+                                  Done
+                                </button>
+                              )
+                            ) : (
+                              <button
+                                className="btn btn-sm btn-success"
+                                onClick={() => handleStartWork(t._id)}
+                              >
+                                Start
+                              </button>
+
+                            )}
+                            <button className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => {
+                              setSelectedLead(t);
+                              setModalSource("completed");
+                            }}>View Lead</button>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+    </div >
   )
 }
 

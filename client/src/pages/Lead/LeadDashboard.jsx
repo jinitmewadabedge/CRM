@@ -1,7 +1,6 @@
 import React from 'react'
 import LeadNavbar from '../../components/Lead/LeadNavbar'
 import { Outlet } from 'react-router-dom'
-import Logo from '../../assets/logo.png'
 
 const LeadDashboard = () => {
     return (

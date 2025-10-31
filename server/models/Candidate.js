@@ -14,7 +14,7 @@ const candidateSchema = new mongoose.Schema({
     enrollmentDate: { type: Date, default: Date.now },
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
-    status:{ type: String, enum: ["touched", "in-progress", "completed"], default: "touched"},
+    status: { type: String, enum: ["touched", "in-progress", "completed"], default: "touched" },
     plan: { type: String },
     upfront: { type: Number },
 
@@ -34,8 +34,24 @@ const candidateSchema = new mongoose.Schema({
 
     touchedByResume: { type: Boolean, default: false },
     notes: { type: String, default: "" },
-    lastCallDate: { type: Date },
+    lastCallDate: { type: String },
     lastCallOutcome: { type: String },
+    callHistory: [
+        {
+            outcome: {
+                type: String,
+                enum: ["In Discussion", "Verification", "Final"],
+                default: "In Discussion",
+                required: true,
+
+            },
+            date: { type: Date, default: Date.now, required: true },
+            time: { type: String },
+            duration: { type: String, required: true },
+            notes: { type: String },
+            createdAt: { type: Date, default: Date.now }
+        }
+    ],
 
     paymentStatus: { type: String, enum: ["pending", "paid"], default: "pending" },
     collectedPayments: {

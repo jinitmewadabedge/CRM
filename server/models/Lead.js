@@ -29,7 +29,7 @@ const leadSchema = new mongoose.Schema({
     technology: [String],
     visa: {
         type: String,
-        enum: ["H1B", "F1", "OPT", "L1", "Green Card", "Citizen"]
+        enum: ["H1B", "F1","OCI", "Tier 2", "OPT", "L1", "Green Card", "Citizen"]
     },
     preferred_time_to_talk: {
         type: String,
@@ -42,7 +42,7 @@ const leadSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ["New", "Connected", "In Discussion", "Interested", "Not Interested", "Enrolled", "Plan Selected", "Upfront Paid", "Rejected", "Converted", "Assigned"],
+        enum: ["New", "Connected", "In Discussion", "Interested", "Not Interested", "Enrolled", "Plan Selected", "Upfront Paid", "Rejected", "Converted", "Assigned", "Follow-up"],
         default: "New"
     },
     callHistory: [
@@ -102,7 +102,8 @@ const leadSchema = new mongoose.Schema({
     },
     assignToSales: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+        ref: "User",
+        default: null
     },
     assignedBy: {
         type: mongoose.Schema.Types.ObjectId,

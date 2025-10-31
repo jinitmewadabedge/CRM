@@ -51,22 +51,122 @@ exports.getCompletedLeads = async (req, res) => {
     }
 };
 
+// exports.markAsTouched = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { notes, callOutcome } = req.body;
+
+//         const updated = await Candidate.findByIdAndUpdate(id, {
+//             touchedByResume: true,
+//             notes,
+//             lastCallOutcome: callOutcome,
+//             lastCallDate: new Date(),
+//             startDate: new Date(),
+//             endDate: null,
+//             status: "touched"
+//         }, { new: true }).populate("leadId");
+
+//         if (!updated) return res.status(404).json({ message: "Candidate not found" });
+
+//         res.status(200).json({
+//             message: "Lead moved to touched successfully",
+//             candidate: updated,
+//         });
+//     } catch (error) {
+//         console.error("Error marking lead as touched", error);
+//         res.status(500).json({ message: "Error marking lead as touched" });
+//     }
+// };
+
+// exports.markAsTouched = async (req, res) => {
+//     try {
+//         const { id } = req.params;
+//         const { callOutcome, duration, notes } = req.body;
+
+//         const candidate = await Candidate.findById(id);
+//         if (!candidate) return res.status(404).json({ message: "Candidate not found" });
+
+//         if (!candidate.callHistory) candidate.callHistory = [];
+
+//         candidate.callHistory.push({
+//             outcome: callOutcome,
+//             date: date || new Date(),
+//             time: time | "",
+//             duration: duration | "",
+//             notes: notes || "",
+//             createdAt: new Date(),
+//         });
+
+//         candidate.touchedByResume = true;
+//         candidate.lastCallOutcome = callOutcome;
+//         candidate.lastCallDate = date ? new Date(date) : new Date();
+//         candidate.startDate = new Date();
+//         candidate.endDate = null;
+//         candidate.status = "touched",
+//             candidate.notes = notes;
+
+//         await candidate.save();
+
+//         await candidate.populate("leadId");
+
+//         res.status(200).json({
+//             message: "Lead moved to touched successfully",
+//             candidate
+//         });
+//     } catch (error) {
+//         console.error("Error marking lead as touched", error);
+//         res.status(500).json({ message: "Error marking lead as touched" });
+//     }
+
+// };
+
 exports.markAsTouched = async (req, res) => {
     try {
         const { id } = req.params;
-        const { notes, callOutcome } = req.body;
+        const { notes, callOutcome, duration } = req.body;
 
-        const updated = await Candidate.findByIdAndUpdate(id, {
-            touchedByResume: true,
+        const candidate = await Candidate.findById(id);
+        if (!candidate) return res.status(404).json({ message: "Candidate not found" });
+
+        // const getISTDate = () => {
+        //     const now = new Date();
+        //     const istOffset = 5.5 * 60 * 60 * 1000;
+        //     return new Date(now.getTime() + istOffset);
+        // };
+
+        const now = new Date();
+        const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+
+        const formattedDate = istDate.toLocaleDateString("en-IN", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric"
+        });
+
+        const formattedTime = istDate.toLocaleTimeString("en-IN", {
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: true,
+        });
+
+        candidate.callHistory.push({
+            outcome: callOutcome,
+            date: formattedDate,
+            time: formattedTime,
+            duration,
             notes,
-            lastCallOutcome: callOutcome,
-            lastCallDate: new Date(),
-            startDate: new Date(),
-            endDate: null,
-            status: "touched"
-        }, { new: true }).populate("leadId");
+            createdAt: istDate,
+        });
 
-        if (!updated) return res.status(404).json({ message: "Candidate not found" });
+        candidate.touchedByResume = true;
+        candidate.notes = notes;
+        candidate.lastCallOutcome = callOutcome;
+        candidate.lastCallDate = formattedDate;
+        candidate.startDate = istDate;
+        candidate.endDate = null;
+        candidate.status = "touched";
+
+        const updated = await candidate.save();
 
         res.status(200).json({
             message: "Lead moved to touched successfully",

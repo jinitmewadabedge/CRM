@@ -132,8 +132,8 @@ exports.getLeadState = async (req, res) => {
 
         const user = req.user;
         console.log("req.user for state:", req.user);
-        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0;
-        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [];
+        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
+        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
 
         if (role === "Lead_Gen_Manager") {
             total = await Lead.countDocuments();
@@ -163,6 +163,7 @@ exports.getLeadState = async (req, res) => {
         }
 
         if (role === "Sales") {
+
             total = await Lead.countDocuments({ assignedTo: user._id });
             assignedLeads = await Lead.find({
                 assignedTo: user._id
@@ -171,6 +172,29 @@ exports.getLeadState = async (req, res) => {
 
             enrolledLeads = await Candidate.find().populate();
             enrolled = enrolledLeads.length;
+
+            interestedLeads = await Lead.find({
+                assignedTo: user._id,
+                status: "Interested"
+            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            interested = interestedLeads.length;
+
+            notInterestedLeads = await Lead.find({
+                assignedTo: user._id,
+                status: "Not Interested"
+            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            notInterested = notInterestedLeads.length;
+
+            followUpLeads = await Lead.find({
+                status: "Follow-up"
+            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            followUp = followUpLeads.length;
+
+            inDiscussionLeads = await Lead.find({
+                assignedTo: user._id,
+                status: "In Discussion"
+            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            inDiscussion = inDiscussionLeads.length;
         }
 
         if (role === "Resume") {
@@ -210,7 +234,16 @@ exports.getLeadState = async (req, res) => {
             total = await Lead.countDocuments();
         }
 
-        res.status(200).json({ total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads });
+        res.status(200).json({
+            total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
+            notInterested,
+            followUp,
+            inDiscussion,
+            interestedLeads,
+            notInterestedLeads,
+            followUpLeads,
+            inDiscussionLeads
+        });
 
     } catch (error) {
         console.error("Error fetching lead state:", error);
@@ -589,7 +622,7 @@ exports.addCallOutcome = async (req, res) => {
                 lead.status = "In Discussion";
                 break;
             case "Follow-up":
-                lead.status = "Connected";
+                lead.status = "Follow-up";
                 break;
         }
 
