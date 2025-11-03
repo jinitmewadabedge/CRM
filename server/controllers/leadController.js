@@ -1,6 +1,7 @@
 const { default: mongoose } = require('mongoose');
 const Lead = require('../models/Lead');
 const User = require("../models/User");
+const Role = require("../models/Role");
 const Candidate = require('../models/Candidate');
 
 exports.createLead = async (req, res) => {
@@ -73,51 +74,247 @@ exports.activeLeadCount = async (req, res) => {
     }
 }
 
+// exports.importLeads = async (req, res) => {
+//     try {
+
+//         console.log("Raw Body:", req.body);
+//         console.log("Users Fields:", req.body.users);
+
+//         const { leads } = req.body;
+
+//         if (!leads || !Array.isArray(leads)) {
+//             console.error("Invalid format, users is:", leads);
+//             return res.status(400).json({ message: "Invalid data format. Expected { users: [...] }", received: req.body });
+//         }
+
+//         const createdUsers = [];
+
+//         for (const u of leads) {
+//             console.log("Importing User:", u);
+//             let role = await Role.findOne({ name: u.role });
+//             if (!role) {
+//                 console.error("Role is not found:", u.role);
+//                 return res.status(400).json({ message: `Role not found: ${u.role}` });
+//             }
+
+//             const hashedPassword = await bcrypt.hash(u.password, 10);
+
+//             const newUser = new User({
+//                 email: u.email,
+//                 password: hashedPassword,
+//                 plainPassword: u.password,
+//                 role: role._id
+//             });
+
+//             await newUser.save();
+//             createdUsers.push(newUser);
+//         }
+
+//         return res.status(201).json({
+//             message: "Users imported successfully",
+//             users: createdUsers
+//         });
+//     } catch (err) {
+//         console.error("Import Error:", err);
+//         return res.status(500).json({ message: "Server error while importing users", error: err.message });
+//     }
+// };
+
+// exports.importLeads = async (req, res) => {
+//     try {
+//         console.log("Incoming Lead Data:", req.body);
+//         console.log("Lead Fields:", req.body.leads);
+
+//         const { leads } = req.body;
+
+//         if (!leads || !Array.isArray(leads)) {
+//             return res.status(400).json({
+//                 message: "Invalid format. Expected { leads: [...] }",
+//                 received: req.body
+//             });
+//         }
+
+//         const uniqueLeads = [];
+
+//         for (const lead of leads) {
+//             console.log("Importing Lead:", lead);
+//             const insertedLeads = await Lead.insertMany(uniqueLeads);
+//         }
+
+//         if (uniqueLeads.length === 0) {
+//             return res.status(400).json({ message: "All leads already exist in DB" });
+//         }
+
+//         console.log(`Inserted ${insertedLeads.length} new leads`);
+
+//         res.status(201).json({
+//             message: "Leads imported successfully",
+//             count: insertedLeads.length,
+//             leads: insertedLeads,
+//         });
+
+//     } catch (error) {
+//         console.error("Import Leads Error:", error);
+//         res.status(500).json({
+//             message: "Server error while importing leads",
+//             error: error.message,
+//         });
+//     }
+// };
+
+
+// exports.importLeads = async (req, res) => {
+//   try {
+//     console.log("📦 Raw Body:", req.body);
+//     console.log("🧾 Leads Fields:", req.body.leads);
+
+//     const { leads } = req.body;
+
+//     // Validation
+//     if (!leads || !Array.isArray(leads)) {
+//       console.error("❌ Invalid format, leads is:", leads);
+//       return res.status(400).json({
+//         message: "Invalid data format. Expected { leads: [...] }",
+//         received: req.body,
+//       });
+//     }
+
+//     const createdLeads = [];
+//     const skippedLeads = [];
+
+//     for (const l of leads) {
+//       console.log("➡️ Importing Lead:", l);
+
+//       // Check for existing lead (by email or phone)
+//       const existingLead = await Lead.findOne({
+//         $or: [
+//           { email: l.email?.trim().toLowerCase() },
+//           { phone: l["Phone No"] || l.phone },
+//         ],
+//       });
+
+//       if (existingLead) {
+//         console.log(`⚠️ Duplicate found: ${l.email || l["Phone No"]}`);
+//         skippedLeads.push(l);
+//         continue;
+//       }
+
+//       // Create new lead
+//       const newLead = new Lead({
+//         candidate_name: l.Name || l.name,
+//         email: l.email?.trim().toLowerCase(),
+//         phone: l["Phone No"] || l.phone,
+//         leadType: l["Lead Type"] || l.leadType,
+//         url: l.URL || l.url,
+//         university: l.University || l.university,
+//         technology: l.Technology || l.technology,
+//         visa: l.Visa || l.visa,
+//         preferredTime: l["Preferred Time"] || l.preferredTime,
+//         source: l.Source || l.source,
+//         status: l.Status || "New",
+//         createdAt: l["Created At"] ? new Date(l["Created At"]) : new Date(),
+//         updatedAt: l["Updated At"] ? new Date(l["Updated At"]) : new Date(),
+//       });
+
+//       await newLead.save();
+//       createdLeads.push(newLead);
+//     }
+
+//     // Final Response
+//     if (createdLeads.length === 0) {
+//       return res.status(400).json({
+//         message: "All leads already exist in DB",
+//         skippedCount: skippedLeads.length,
+//       });
+//     }
+
+//     return res.status(201).json({
+//       message: "Leads imported successfully",
+//       insertedCount: createdLeads.length,
+//       skippedCount: skippedLeads.length,
+//       createdLeads,
+//     });
+//   } catch (err) {
+//     console.error("🔥 Import Leads Error:", err);
+//     return res.status(500).json({
+//       message: "Server error while importing leads",
+//       error: err.message,
+//     });
+//   }
+// };
+
 exports.importLeads = async (req, res) => {
     try {
+        console.log("📦 Raw Body:", req.body);
+        const { leads } = req.body;
 
-        console.log("Raw Body:", req.body);
-        console.log("Users Fields:", req.body.users);
-
-        const { users } = req.body;
-
-        if (!users || !Array.isArray(users)) {
-            console.error("Invalid format, users is:", users);
-            return res.status(400).json({ message: "Invalid data format. Expected { users: [...] }", received: req.body });
+        if (!leads || !Array.isArray(leads)) {
+            return res.status(400).json({ message: "Invalid data format. Expected { leads: [...] }" });
         }
 
-        const createdUsers = [];
+        const createdLeads = [];
+        const skippedLeads = [];
 
-        for (const u of users) {
-            console.log("Importing User:", u);
-            let role = await Role.findOne({ name: u.role });
-            if (!role) {
-                console.error("Role is not found:", u.role);
-                return res.status(400).json({ message: `Role not found: ${u.role}` });
-            }
+        for (const lead of leads) {
+            console.log("➡️ Importing Lead:", lead);
 
-            const hashedPassword = await bcrypt.hash(u.password, 10);
+            // normalize fields
+            const candidate_email = String(lead.Email).toLowerCase().trim();
+            const candidate_phone_no = String(lead["Phone No"]).trim();
 
-            const newUser = new User({
-                email: u.email,
-                password: hashedPassword,
-                plainPassword: u.password,
-                role: role._id
+            // check duplicates using schema fields
+            console.log("🔍 Checking duplicates for:", { candidate_email, candidate_phone_no });
+            const existingLead = await Lead.findOne({
+                $or: [
+                    { candidate_email },
+                    { candidate_phone_no }
+                ]
             });
 
-            await newUser.save();
-            createdUsers.push(newUser);
+            if (existingLead) {
+                console.log("⚠️ Duplicate found for:", existingLead.candidate_email || existingLead.candidate_phone_no);
+                skippedLeads.push(lead);
+                continue;
+            }
+
+            // create new lead object
+            const newLead = new Lead({
+                type: lead["Lead Type"],
+                candidate_name: lead.Name,
+                candidate_email,
+                candidate_phone_no,
+                linked_in_url: lead.URL,
+                university: lead.University || "N/A",
+                technology: lead.Technology ? lead.Technology.split(",").map(t => t.trim()) : [],
+                visa: lead.Visa,
+                preferred_time_to_talk: lead["Preferred Time"],
+                source: lead.Source || "N/A",
+                status: lead.Status || "New",
+                createdAt: new Date(lead["Created At"]),
+                updatedAt: new Date(lead["Updated At"])
+            });
+
+            await newLead.save();
+            createdLeads.push(newLead);
         }
 
         return res.status(201).json({
-            message: "Users imported successfully",
-            users: createdUsers
+            message: "Leads imported successfully",
+            createdCount: createdLeads.length,
+            skippedCount: skippedLeads.length,
+            createdLeads,
+            skippedLeads
         });
-    } catch (err) {
-        console.error("Import Error:", err);
-        return res.status(500).json({ message: "Server error while importing users", error: err.message });
+
+    } catch (error) {
+        console.error("❌ Import Error:", error);
+        return res.status(500).json({
+            message: "Server error while importing leads",
+            error: error.message
+        });
     }
 };
+
 
 exports.getLeadState = async (req, res) => {
     try {
@@ -600,12 +797,21 @@ exports.addCallOutcome = async (req, res) => {
             return res.status(404).json({ message: "Lead not found" });
         }
 
+        const now = new Date();
+        const formattedTime =
+            time ||
+            now.toLocaleTimeString("en-IN", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            });
+
         lead.callHistory = lead.callHistory || [];
 
         lead.callHistory.push({
             outcome,
             date: date || new Date(),
-            time,
+            time: formattedTime,
             duration,
             notes,
             salesPerson: salesPersonId

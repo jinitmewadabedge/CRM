@@ -123,7 +123,7 @@ exports.getCompletedLeads = async (req, res) => {
 exports.markAsTouched = async (req, res) => {
     try {
         const { id } = req.params;
-        const { notes, callOutcome, duration } = req.body;
+        const { notes, callOutcome, duration, time: userTime } = req.body;
 
         const candidate = await Candidate.findById(id);
         if (!candidate) return res.status(404).json({ message: "Candidate not found" });
@@ -132,18 +132,10 @@ exports.markAsTouched = async (req, res) => {
         //     const now = new Date();
         //     const istOffset = 5.5 * 60 * 60 * 1000;
         //     return new Date(now.getTime() + istOffset);
-        // };
+        // }
 
-        const now = new Date();
-        const istDate = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-
-        const formattedDate = istDate.toLocaleDateString("en-IN", {
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric"
-        });
-
-        const formattedTime = istDate.toLocaleTimeString("en-IN", {
+        const istDate = new Date();
+        const finalTime = userTime || istDate.toLocaleTimeString("en-IN", {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
@@ -151,8 +143,8 @@ exports.markAsTouched = async (req, res) => {
 
         candidate.callHistory.push({
             outcome: callOutcome,
-            date: formattedDate,
-            time: formattedTime,
+            date: istDate,
+            time: finalTime,
             duration,
             notes,
             createdAt: istDate,
@@ -161,7 +153,7 @@ exports.markAsTouched = async (req, res) => {
         candidate.touchedByResume = true;
         candidate.notes = notes;
         candidate.lastCallOutcome = callOutcome;
-        candidate.lastCallDate = formattedDate;
+        candidate.lastCallDate = istDate;
         candidate.startDate = istDate;
         candidate.endDate = null;
         candidate.status = "touched";

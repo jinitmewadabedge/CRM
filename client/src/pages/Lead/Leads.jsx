@@ -539,7 +539,7 @@ const Leads = () => {
       setSelectAllCompleted(false);
       console.log("Deselected all 'Assigned Leads'");
     } else {
-      const ids = touchedLeads.map(l => l._id);
+      const ids = completedLeads.map(l => l._id);
       setSelectedCompletedLeads(ids);
       setSelectedLead(ids);
       setSelectAllCompleted(true);
@@ -643,11 +643,13 @@ const Leads = () => {
             setSelectAllCompleted(false);
           } else {
             updated = [...prev, id];
-            if (updated.length === completedLeads.length) setSelectAllCompleted(true);
+            if (updated.length === completedLeads.length)
+              setSelectAllCompleted(true);
           }
           return updated;
         });
         break;
+
     }
   };
 
@@ -988,6 +990,7 @@ const Leads = () => {
       await fetchBackendLeads();
       await fetchPermissions();
       await fetchCandidates();
+      await fetchResumeLeads();
 
     } catch (err) {
       console.error("Error refreshing users:", err);
@@ -1885,7 +1888,6 @@ const Leads = () => {
                   </h6>
                 )}
 
-
                 {selectedAllLeads.length > 0 && permissions?.lead?.deleteScope !== "none" && (
 
                   <button className="btn btn-outline-danger btn-sm" onClick={handleBulkDelete}> <i className="bi bi-trash-fill me-2"></i>Delete All ({selectedAllLeads.length})</button>
@@ -2142,7 +2144,7 @@ const Leads = () => {
                 </div>
               )}
 
-              <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
+              <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
                 <button
                   className="btn btn-sm btn-outline-primary me-2"
                   disabled={currentPage === 1}
@@ -2410,6 +2412,12 @@ const Leads = () => {
                   <h5 className="text-left leadManagementTitle mt-4">All Assigned Leads({counts.assigned})</h5>
                   <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
                 </div>
+                {user.role === "Sales" && (
+                  <button
+                    className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
+                    <FaSync className="me-1" /> Refresh
+                  </button>
+                )}
               </div>
 
               <div>
@@ -2607,7 +2615,7 @@ const Leads = () => {
 
                   </table>
 
-                  <div className="d-flex justify-content-end align-items-center mt-3 mb-3 p-2">
+                  <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
                     <button
                       className="btn btn-sm btn-outline-primary me-2"
                       disabled={currentAssignedPage === 1}
@@ -3217,6 +3225,7 @@ const Leads = () => {
             <div className="modal-body p-0">
               <div className="card card-plain">
                 <h3 className="modal-title editUserTitle mt-2 text-center">Lead Details</h3>
+                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <div className="card-body">
                   {selectedLead ? (
                     <form
@@ -3248,7 +3257,7 @@ const Leads = () => {
                       }}
                     >
 
-                      <div className="mb-0">
+                      <div className="mb-0 table-responsive">
                         <table className="table table-bordered table-sm">
                           <tbody>
                             <tr>
@@ -3472,6 +3481,7 @@ const Leads = () => {
 
                                   return allCalls.length > 0 ? (
                                     <>
+
                                       <tr>
                                         <th colSpan="12" className="text-center tableHeader bg-success text-white">
                                           Call Log Outcomes
@@ -3494,24 +3504,30 @@ const Leads = () => {
                                           <td className="tableData">{call.outcome || "—"}</td>
                                           <td className="tableData">
                                             {call.date
-                                              ? new Date(call.date).toLocaleDateString()
+                                              ? new Date(call.date).toLocaleDateString("en-IN", {
+                                                day: "2-digit",
+                                                month: "2-digit",
+                                                year: "numeric",
+                                              })
                                               : "N/A"}
                                           </td>
                                           <td className="tableData">
-                                            {(() => {
-                                              if (!call.time) return "N/A";
-                                              if (/am|pm/i.test(call.time)) return call.time;
-
-                                              const [h, m] = call.time.split(":");
-                                              const hr = parseInt(h, 10);
-                                              const ampm = hr >= 12 ? "PM" : "AM";
-                                              const formattedHr = ((hr + 11) % 12 + 1).toString().padStart(2, "0");
-                                              return `${formattedHr}:${m} ${ampm}`;
-                                            })()}
+                                            {call.date
+                                              ? new Date(call.date).toLocaleTimeString("en-IN", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: true,
+                                              })
+                                              : "N/A"}
                                           </td>
-                                          <td className="tableData">{call.duration || "N/A"}</td>
-                                          <td className="tableData">{call.notes || "—"}</td>
-                                          <td className="tableData">
+                                          <td className="tableData">{call.duration}</td>
+                                          <td className="tableData">{call.notes}</td>
+                                          <td
+                                            className={`tableData ${resumeCalls.includes(call)
+                                                ? "text-dark"
+                                                : "text-dark"
+                                              }`}
+                                          >
                                             {resumeCalls.includes(call) ? "Resume" : "Sales"}
                                           </td>
                                         </tr>
@@ -3673,26 +3689,29 @@ const Leads = () => {
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div className="mb-2 mb-md-0">
                 <h5 className="text-left leadManagementTitle mt-4">Interested Leads({counts.backendInterested})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
-              </div>
-              <div className="input-group input-group-sm w-auto mb-3 px-3">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm"
-                  value={interestedFilters.search}
-                  onChange={(e) =>
-                    setInterestedFilters({ ...interestedFilters, search: e.target.value })
-                  }
-                />
+                <h6 className="leadManagementSubtitle mb-3">Active Interested Leads</h6>
               </div>
 
+              <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm border-start-0"
+                    value={interestedFilters.search}
+                    onChange={(e) =>
+                      setInterestedFilters({ ...interestedFilters, search: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="table-container">
@@ -3891,26 +3910,29 @@ const Leads = () => {
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div className="mb-2 mb-md-0">
                 <h5 className="text-left leadManagementTitle mt-4">Not Interested Leads({counts.backendNotInterested})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
-              </div>
-              <div className="input-group input-group-sm w-auto mb-3 px-3">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm"
-                  value={notInterestedFilters.search}
-                  onChange={(e) =>
-                    setNotInterestedFilters({ ...notInterestedFilters, search: e.target.value })
-                  }
-                />
+                <h6 className="leadManagementSubtitle mb-3">Active Not Interested Leads</h6>
               </div>
 
+              <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm border-start-0"
+                    value={notInterestedFilters.search}
+                    onChange={(e) =>
+                      setNotInterestedFilters({ ...notInterestedFilters, search: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="table-container">
@@ -4093,24 +4115,28 @@ const Leads = () => {
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">In Discussion Leads({counts.backendInDiscussion})</h5>
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div className="mb-2 mb-md-0">
+                <h5 className="text-left leadManagementTitle mt-4">In Discussion Leads({counts.backendNotInterested})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
-              <div className="input-group input-group-sm w-auto mb-3 px-3">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm"
-                  value={inDiscussionFilters.search}
-                  onChange={(e) =>
-                    setInDiscussionFilters({ ...inDiscussionFilters, search: e.target.value })
-                  }
-                />
+
+              <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm border-start-0"
+                    value={inDiscussionFilters.search}
+                    onChange={(e) =>
+                      setInDiscussionFilters({ ...inDiscussionFilters, search: e.target.value })
+                    }
+                  />
+                </div>
               </div>
             </div>
 
@@ -4284,24 +4310,28 @@ const Leads = () => {
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">Follow Up Leads({counts.backendFollowUp})</h5>
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div className="mb-2 mb-md-0">
+                <h5 className="text-left leadManagementTitle mt-4">Follow Up Leads({counts.backendNotInterested})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
-              <div className="input-group input-group-sm w-auto mb-3 px-3">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm"
-                  value={followUpFilters.search}
-                  onChange={(e) =>
-                    setFollowUpFilters({ ...followUpFilters, search: e.target.value })
-                  }
-                />
+
+              <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm border-start-0"
+                    value={followUpFilters.search}
+                    onChange={(e) =>
+                      setFollowUpFilters({ ...followUpFilters, search: e.target.value })
+                    }
+                  />
+                </div>
               </div>
             </div>
 
@@ -4473,32 +4503,47 @@ const Leads = () => {
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
+
+            <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div className="mb-2 mb-md-0">
+                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.backendNotInterested})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
-              <div className="input-group input-group-sm w-auto mb-3 px-3">
-                <span className="input-group-text bg-white border-end-0">
-                  <i className="bi bi-search"></i>
-                </span>
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className="form-control form-control-sm"
-                  value={enrolledFilters.search}
-                  onChange={(e) =>
-                    setEnrolledFilters({ ...enrolledFilters, search: e.target.value })
-                  }
-                />
-              </div>
 
+              <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm border-start-0"
+                    value={enrolledFilters.search}
+                    onChange={(e) =>
+                      setEnrolledFilters({ ...enrolledFilters, search: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="table-container">
               <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                 <thead className="bg-light">
                   <tr>
+                    <th className="text-left tableHeader">
+                      <div className="d-flex align-items-start justify-content-center flex-column">
+                        <label htmlFor="selectAllTouchedCheckbox" className="form-label">
+                          Select All
+                        </label>
+                        <input
+                          type="checkbox"
+                          checked={selectAllEnrolled}
+                          onChange={(e) => handleSelectAllEnrolled(e, "enrolled")}
+                        />
+                      </div>
+                    </th>
                     <th className="text-left tableHeader">#</th>
                     <th className="text-left tableHeader">Name</th>
                     <th className="text-left tableHeader">Email</th>
@@ -4522,6 +4567,13 @@ const Leads = () => {
                   {filteredEnrolledLeads.length > 0 ? (
                     filteredEnrolledLeads.map((c, index) => (
                       <tr key={c._id}>
+                        <td>
+                          <input
+                            type="checkbox"
+                            checked={selectedEnrolledLeads.includes(c._id)}
+                            onChange={() => toggleLeadSelection(c._id, "enrolled")}
+                          />
+                        </td>
                         <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.name}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.email}</p></td>
@@ -4738,27 +4790,36 @@ const Leads = () => {
         user.role === "Resume" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-                <div>
+              <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div className="mb-2 mb-md-0">
                   <h5 className="text-left leadManagementTitle mt-4">Untouched Leads({counts.untouched})</h5>
                   <h6 className="leadManagementSubtitle mb-3">Active Untouched Leads</h6>
                 </div>
-                <div className="input-group input-group-sm w-auto search">
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="form-control form-control-sm w-auto"
-                    value={untouchedFilters.search}
-                    onChange={(e) => setUntouchedFilters({ ...untouchedFilters, search: e.target.value })}
-                  />
+
+                <div className="d-flex flex-wrap align-items-center gap-2">
+                  <div className="input-group input-group-sm search w-auto">
+                    <span className="input-group-text bg-white border-end-0">
+                      <i className="bi bi-search"></i>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      className="form-control form-control-sm border-start-0"
+                      value={untouchedFilters.search}
+                      onChange={(e) =>
+                        setUntouchedFilters({ ...untouchedFilters, search: e.target.value })
+                      }
+                    />
+                  </div>
+                  <button
+                    className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
+                    <FaSync className="me-1" /> Refresh
+                  </button>
                 </div>
               </div>
 
-              <div className="table-container">
-                <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <div className="table-container table-responsive">
+                <table className="table table-hover table-striped table-bordered align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
                       <th className="text-left tableHeader">#</th>
@@ -4842,6 +4903,14 @@ const Leads = () => {
               <option value="Final">Final</option>
             </select>
 
+            {/* <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+              className="form-control form-control-sm mb-2 selectFont"
+            /> */}
+
             <input
               type="text"
               value={duration}
@@ -4870,6 +4939,7 @@ const Leads = () => {
               </button>
             </div>
           </div>
+
         </div>
       )}
 
@@ -4878,22 +4948,27 @@ const Leads = () => {
         user.role === "Resume" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-                <div>
+              <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div className="mb-2 mb-md-0">
                   <h5 className="text-left leadManagementTitle mt-4">Touched Leads({counts.touched})</h5>
                   <h6 className="leadManagementSubtitle mb-3">Active Touched Leads</h6>
                 </div>
-                <div className="input-group input-group-sm w-auto search">
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="form-control form-control-sm w-auto"
-                    value={touchedFilters.search}
-                    onChange={(e) => setTouchedFilters({ ...touchedFilters, search: e.target.value })}
-                  />
+
+                <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                  <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                    <span className="input-group-text bg-white border-end-0">
+                      <i className="bi bi-search"></i>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      className="form-control form-control-sm border-start-0"
+                      value={touchedFilters.search}
+                      onChange={(e) =>
+                        setTouchedFilters({ ...touchedFilters, search: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
 
               </div>
@@ -5040,22 +5115,29 @@ const Leads = () => {
         user.role === "Resume" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-              <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-                <div>
+              <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
+                <div className="mb-2 mb-md-0">
                   <h5 className="text-left leadManagementTitle mt-4">Completed Leads({counts.completed})</h5>
                   <h6 className="leadManagementSubtitle mb-3">Active Completed Leads</h6>
+                  {selectedCompletedLeads.length > 0 && (
+                    <h6 className="tableHeader">
+                      Selected Leads : {selectedCompletedLeads.length}
+                    </h6>
+                  )}
                 </div>
-                <div className="input-group input-group-sm w-auto search">
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="form-control form-control-sm w-auto"
-                    value={completedFilters.search}
-                    onChange={(e) => setCompletedFilters({ ...completedFilters, search: e.target.value })}
-                  />
+                <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                  <div className="input-group input-group-sm search flex-nowrap w-md-auto w-100">
+                    <span className="input-group-text bg-white border-end-0">
+                      <i className="bi bi-search"></i>
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      className="form-control form-control-sm"
+                      value={completedFilters.search}
+                      onChange={(e) => setCompletedFilters({ ...completedFilters, search: e.target.value })}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -5063,7 +5145,18 @@ const Leads = () => {
                 <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
-                      <th className="text-left tableHeader"></th>
+                      <th className="text-left tableHeader">
+                        <div className="d-flex align-items-start justify-content-center flex-column">
+                          <label htmlFor="selectAllCompletedCheckbox" className="form-label">
+                            Select All
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={selectAllCompleted}
+                            onChange={(e) => handleSelectAllCompleted(e, "completed")}
+                          />
+                        </div>
+                      </th>
                       <th className="text-left tableHeader">#</th>
                       <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
