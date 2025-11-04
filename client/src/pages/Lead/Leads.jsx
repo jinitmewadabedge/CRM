@@ -906,7 +906,8 @@ const Leads = () => {
       );
 
       if (res.status === 200) {
-        alert("Lead moved to touched successfully!");
+        // alert("Lead moved to touched successfully!");
+        toast.success("Lead Moved to touched successfully!");
         setShowOutcomeModal(false);
         setOutcome("");
         setDuration("");
@@ -914,7 +915,8 @@ const Leads = () => {
         fetchBackendLeads();
       }
     } catch (err) {
-      console.error("Error marking lead as touched:", err);
+      toast.error("Error marking lead as touched")
+      // console.error("Error marking lead as touched:", err);
       alert("Failed to save outcome");
     }
   };
@@ -3655,6 +3657,7 @@ const Leads = () => {
                                       </tr>
                                     );
                                   })}
+
                                 </tbody>
                               </table>
                             </div>
