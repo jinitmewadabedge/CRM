@@ -1,5 +1,5 @@
 import React from "react"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
 import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaArrowRight } from "react-icons/fa";
@@ -1306,17 +1306,19 @@ const Leads = () => {
   console.log("Unassigned Leads:", unassignedLeads);
   console.log("Current Unassigned Leads:", currentUnassignedLeads);
 
-  const sortedAssignedLeads = [...assignedLeads].sort((a, b) => {
-    if (assignedFilters.sortByDate === "asc") {
-      return new Date(a.createdAt) - new Date(b.createdAt);
-    } else {
-      return new Date(b.createdAt) - new Date(a.createdAt);
-    }
-  });
+  const sortedAssignedLeads = useMemo(() => {
+    return [...assignedLeads].sort((a, b) => {
+      if (assignedFilters.sortByDate === "desc") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+    });
+  }, [assignedLeads, assignedFilters.sortByDate]);
 
   const indexOfLastAssignedLeads = currentAssignedPage * leadsPerPage;
   const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
-  const currentAssignedLeads = assignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
+  const currentAssignedLeads = sortedAssignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
 
   const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
   const totalUnassignedPages = Math.ceil(unassignedLeads.length / leadsPerPage);
@@ -2551,12 +2553,13 @@ const Leads = () => {
                   <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
                 </div>
                 {user.role === "Sales" && (
-                  <div>
+                  <div className="d-flex justify-content-center align-items-center gap-3">
                     <select
                       className="form-select form-select-sm"
                       value={assignedFilters.sortByDate}
                       onChange={(e) => setAssignedFilters({ ...assignedFilters, sortByDate: e.target.value })}
                     >
+                      <option value="">----SORT BY DATE----</option>
                       <option value="desc">Newest to Oldest</option>
                       <option value="asc">Oldest to Newest</option>
                     </select>
