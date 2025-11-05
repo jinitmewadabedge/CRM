@@ -378,6 +378,13 @@ const Leads = () => {
       setBackendFollowUpLeads(res.data.followUpLeads || []);
       setBackendInDiscussionLeads(res.data.inDiscussionLeads || []);
 
+      setSalesLeads([
+        ...(res.data.interestedLeads || []),
+        ...(res.data.followUpLeads || []),
+        ...(res.data.inDiscussionLeads || []),
+        ...(res.data.notInterestedLeads || []),
+      ]);
+
       console.log("Unassigned state (after API):", res.data.unassignedLeads);
       console.log("Assigned state (after API):", res.data.assignedLeads);
       console.log("Enrolled state (after API):", res.data.enrolledLeads);
@@ -1041,7 +1048,7 @@ const Leads = () => {
 
       toast.success(res.data.message);
       setShowEnrollModal(false);
-      fetchBackendLeads();
+      await fetchBackendLeads();
     } catch (error) {
       // console.error("Enrollment error:", error);
       toast.error("Error enrolling candidate");
@@ -3387,9 +3394,9 @@ const Leads = () => {
                             { headers: { Authorization: `Bearer ${token}` } }
                           );
                           toast.success("Call outcome saved successfully!");
-                          fetchBackendLeads();
                           setSelectedLead(res.data.lead);
                           setOutcome(""); setDate(""); setTime(""); setDuration(""); setNotes("");
+                          fetchBackendLeads();
                         } catch (err) {
                           // console.error("Error saving call outcome:", err.response?.data || err);
                           toast.error(err.response?.data?.message || "Failed to save call outcome!");
@@ -3746,7 +3753,7 @@ const Leads = () => {
 
                             <button
                               type="submit"
-                              className={`btn btn-sm w-100 selectFont text-light ${loading ? "btn-secondary" : "btn-primary"
+                              className={`btn btn-sm w-100 text-light ${loading ? "btn-secondary" : "btn-primary"
                                 }`}
                               disabled={loading}
                             >
@@ -4649,7 +4656,7 @@ const Leads = () => {
 
             <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
               <div className="mb-2 mb-md-0">
-                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.backendNotInterested})</h5>
+                <h5 className="text-left leadManagementTitle mt-4">All Enrolled Leads({counts.enrolled})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
 
@@ -4809,7 +4816,6 @@ const Leads = () => {
                           >
                             <i className="bi bi-eye-fill me-2"></i> View Lead
                           </button>
-
                         </td>
                       </tr>
                     ))

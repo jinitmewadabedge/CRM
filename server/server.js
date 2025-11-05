@@ -51,7 +51,7 @@ app.get("/api/ping", (req, res) => {
     res.json({ message: "Pong! CORS is working" });
 });
 
-const uri = process.env.MONGO_URL_PROD;
+const uri = process.env.MONGO_URL_DEV;
 console.log("MONGO_URI:", uri);
 
 mongoose.connect(uri, {
