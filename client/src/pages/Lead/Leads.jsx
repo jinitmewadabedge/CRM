@@ -64,6 +64,11 @@ const Leads = () => {
   const [selectedEnrolledLeads, setSelectedEnrolledLeads] = useState([]);
   const [selectAllEnrolled, setSelectAllEnrolled] = useState(false);
 
+  const [backendInterestedLeads, setBackendInterestedLeads] = useState([]);
+  const [backendNotInterestedLeads, setBackendNotInterestedLeads] = useState([]);
+  const [backendFollowUp, setBackendFollowUpLeads] = useState([]);
+  const [backendInDiscussion, setBackendInDiscussionLeads] = useState([]);
+
   const [selectAll, setSelectAll] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sqaureLoading, setSquareLoading] = useState(false);
