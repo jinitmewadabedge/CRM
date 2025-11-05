@@ -35,7 +35,7 @@ const LeadNavbar = () => {
 
     return (
         <Navbar expand="lg" className="d-flex flex-column justify-content-start align-items-start">
-            <img src={Logo} alt="Logo" className="img-fluid mt-3 mx-auto adminDashboardLogo" />
+            <img src={Logo} alt="Logo" rel="preload" className="img-fluid mt-3 mx-auto adminDashboardLogo" fetchPriority="high" />
             <Navbar.Toggle aria-controls="leadNavbar" className="ms-2 mt-2" />
             <Navbar.Collapse id="leadNavbar">
                 <Nav className="flex-column d-flex align-items-start justify-content-start pt-3 w-100">

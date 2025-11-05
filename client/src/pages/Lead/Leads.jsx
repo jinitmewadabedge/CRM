@@ -119,7 +119,6 @@ const Leads = () => {
     search: "",
   });
 
-  const [allLeadIds, setAllLeadIds] = useState([]);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
   const [counts, setCounts] = useState({
@@ -338,10 +337,7 @@ const Leads = () => {
     fetchBackendLeads();
     fetchTeamMember();
     fetchPermissions();
-    fetchAllLeadIds();
     fetchResumeLeads();
-    // fetchTrainingLeads();
-    // fetchCVLeads();
   }, []);
 
   const fetchBackendLeads = async () => {
@@ -426,18 +422,6 @@ const Leads = () => {
 
     navigate("/");
   }
-
-  const fetchAllLeadIds = async () => {
-    const token = sessionStorage.getItem("token");
-    try {
-      const res = await axios.get(`${BASE_URL}/api/leads/idsOnly`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setAllLeadIds(res.data);
-    } catch (error) {
-      console.error("Error fetching all lead IDs:", error);
-    }
-  };
 
   const handleDelete = async (id) => {
 
@@ -1376,7 +1360,7 @@ const Leads = () => {
         const res = await getLeads()
         console.log("Full API Response:", res.data)
         setLeads(Array.isArray(res.data) ? res.data : [res.data])
-        setSalesLeads(Array.isArray(res.data) ? res.data : [res.data])
+
       } catch (error) {
         console.error("Error fetching leads:", error)
       }
@@ -1407,6 +1391,7 @@ const Leads = () => {
 
         console.log("Role-based API Response:", res.data);
         setLeads(Array.isArray(res.data) ? res.data : [res.data]);
+        setSalesLeads(Array.isArray(res.data) ? res.data : [res.data])
       } catch (error) {
         console.error("Error fetching leads:", error);
       }
@@ -1500,6 +1485,7 @@ const Leads = () => {
             <img
               src={LeadImg}
               alt="Users"
+              loading="lazy"
               className="mb-2"
               style={{
                 width: "40px",
@@ -1518,7 +1504,7 @@ const Leads = () => {
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Total Leads</h6>
                     <h4 className="fw-bold">{counts.total}</h4>
@@ -1537,7 +1523,7 @@ const Leads = () => {
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Unassigned Leads</h6>
                     <h4 className="fw-bold">{counts.unassigned}</h4>
@@ -1556,7 +1542,7 @@ const Leads = () => {
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Assigned Leads</h6>
                     <h4 className="fw-bold">{counts.assigned}</h4>
@@ -1569,13 +1555,13 @@ const Leads = () => {
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Enrolled Leads</h6>
                     <h4 className="fw-bold">{counts.enrolled}</h4>
@@ -1588,13 +1574,13 @@ const Leads = () => {
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Interested Leads</h6>
                     <h4 className="fw-bold">{counts.backendInterested}</h4>
@@ -1607,13 +1593,13 @@ const Leads = () => {
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Not Interested Leads</h6>
                     <h4 className="fw-bold">{counts.backendNotInterested}</h4>
@@ -1626,13 +1612,13 @@ const Leads = () => {
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">In Discussion Leads</h6>
                     <h4 className="fw-bold">{counts.backendInDiscussion}</h4>
@@ -1645,13 +1631,13 @@ const Leads = () => {
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Follow-up Leads</h6>
                     <h4 className="fw-bold">{counts.backendFollowUp}</h4>
@@ -1664,13 +1650,13 @@ const Leads = () => {
         )}
 
         {userRole === "Resume" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Untouched Leads</h6>
                     <h4 className="fw-bold">{counts.untouched}</h4>
@@ -1683,13 +1669,13 @@ const Leads = () => {
         )}
 
         {userRole === "Resume" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Touched Leads</h6>
                     <h4 className="fw-bold">{counts.touched}</h4>
@@ -1702,13 +1688,13 @@ const Leads = () => {
         )}
 
         {userRole === "Resume" && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100">
               {loading ? (
                 <span className="squareLoader"></span>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" className="mb-2 img-fluid" />
+                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
                   <div>
                     <h6 className="mb-1 text-muted">Completed Leads</h6>
                     <h4 className="fw-bold">{counts.completed}</h4>
@@ -3526,8 +3512,8 @@ const Leads = () => {
                                           <td className="tableData">{call.notes}</td>
                                           <td
                                             className={`tableData ${resumeCalls.includes(call)
-                                                ? "text-dark"
-                                                : "text-dark"
+                                              ? "text-dark"
+                                              : "text-dark"
                                               }`}
                                           >
                                             {resumeCalls.includes(call) ? "Resume" : "Sales"}

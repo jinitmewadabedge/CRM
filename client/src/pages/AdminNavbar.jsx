@@ -47,7 +47,7 @@ const AdminNavbar = () => {
 
     return (
         <>
-            <img src={Logo} className='img-fluid mt-3 mx-auto adminDashboardLogo' alt="" />
+            <img src={Logo} className='img-fluid mt-3 mx-auto adminDashboardLogo' fetchPriority="high" alt="" />
             <nav className="navbar navbar-expand-lg w-100">
 
                 <button
@@ -165,8 +165,6 @@ const AdminNavbar = () => {
                             </button>
                         </li>
 
-
-                        {/* <LogoutButton /> */}
                     </ul>
                 </div>
             </nav>

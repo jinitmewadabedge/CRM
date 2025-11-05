@@ -37,7 +37,7 @@ const Login = () => {
       const route = roleRoutes[userRole] || "/";
       navigate(route);
     }
-  }, [navigate]);
+  }, []);
 
 
 

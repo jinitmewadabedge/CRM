@@ -113,24 +113,20 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid Credentials" });
         }
 
-        // Compare role first
         if (user.role.name !== role) {
             return res.status(401).json({ message: "Invalid Role" });
         }
 
-        // Compare password
         const isMatch = await bcrypt.compare(password.trim(), user.password);
         if (!isMatch) {
             return res.status(401).json({ message: "Invalid Password" });
         }
 
-        // Re-fetch latest state and check isLoggedIn again
         const freshUser = await User.findById(user._id);
         if (freshUser.isLoggedIn) {
             return res.status(403).json({ message: "User already logged in." });
         }
 
-        // Mark logged in atomically
         await User.findByIdAndUpdate(
             user._id,
             { $set: { isLoggedIn: true } },
