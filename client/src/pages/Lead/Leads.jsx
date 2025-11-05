@@ -64,11 +64,6 @@ const Leads = () => {
   const [selectedEnrolledLeads, setSelectedEnrolledLeads] = useState([]);
   const [selectAllEnrolled, setSelectAllEnrolled] = useState(false);
 
-  const [backendInterestedLeads, setBackendInterestedLeads] = useState([]);
-  const [backendNotInterestedLeads, setBackendNotInterestedLeads] = useState([]);
-  const [backendFollowUpLeads, setBackendFollowUpLeads] = useState([]);
-  const [backendInDiscussionLeads, setBackendInDiscussionLeads] = useState([]);
-
   const [selectAll, setSelectAll] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sqaureLoading, setSquareLoading] = useState(false);
@@ -117,6 +112,10 @@ const Leads = () => {
 
   const [enrolledFilters, setEnrolledFilters] = useState({
     search: "",
+  });
+
+  const [assignedFilters, setAssignedFilters] = useState({
+    sortByDate: "desc",
   });
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
@@ -767,33 +766,6 @@ const Leads = () => {
     }
   };
 
-  // const fetchTrainingLeads = async () => {
-  //   setTrainingLeads([]);
-  //   const token = sessionStorage.getItem("token");
-  //   try {
-  //     const res = await axios.get(`${BASE_URL}/api/training`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     setTrainingLeads(res.data);
-  //     console.log("Training Leads:", res.data);
-  //   } catch (error) {
-  //     console.error("Error fetching training leads:", error);
-  //   }
-  // };
-
-  // const fetchCVLeads = async () => {
-  //   try {
-  //     const token = sessionStorage.getItem("token");
-  //     const res = await axios.get(`${BASE_URL}/api/cv`, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     setCVLeads(res.data);
-  //     console.log("CV Leads:", res.data);
-  //   } catch (err) {
-  //     console.error("Error fetching CV leads:", err);
-  //   }
-  // };
-
   const updateStage = async (id, stage) => {
     try {
       const token = sessionStorage.getItem("token");
@@ -825,12 +797,8 @@ const Leads = () => {
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       toast.success(res.data.message);
-      // Refresh table after update
-      // fetchEnrolledLeads();
       fetchBackendLeads();
-      await fetchTrainingLeads();
     } catch (error) {
-      // console.error(error);
       toast.error("Failed to move candidate to training");
     }
   };
@@ -843,11 +811,8 @@ const Leads = () => {
       }, { headers: { Authorization: `Bearer ${token}` } });
 
       toast.success(res.data.message);
-      // Refresh table after update
-      // fetchEnrolledLeads();
       fetchBackendLeads();
     } catch (error) {
-      // console.error(error);
       toast.error("Failed to move candidate to CV");
     }
   };
@@ -1329,6 +1294,14 @@ const Leads = () => {
   console.log("Unassigned Leads:", unassignedLeads);
   console.log("Current Unassigned Leads:", currentUnassignedLeads);
 
+  const sortedAssignedLeads = [...assignedLeads].sort((a, b) => {
+    if (assignedFilters.sortByDate === "asc") {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    } else {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+  });
+
   const indexOfLastAssignedLeads = currentAssignedPage * leadsPerPage;
   const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
   const currentAssignedLeads = assignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
@@ -1499,12 +1472,27 @@ const Leads = () => {
 
         {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager"].includes(userRole) && (
           <div className="col-12 col-md-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Total Leads</h6>
                     <h4 className="fw-bold">{counts.total}</h4>
@@ -1518,12 +1506,27 @@ const Leads = () => {
 
         {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager"].includes(userRole) && (
           <div className="col-12 col-md-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Unassigned Leads</h6>
                     <h4 className="fw-bold">{counts.unassigned}</h4>
@@ -1537,12 +1540,27 @@ const Leads = () => {
 
         {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Sales"].includes(userRole) && (
           <div className="col-12 col-md-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Assigned Leads</h6>
                     <h4 className="fw-bold">{counts.assigned}</h4>
@@ -1556,12 +1574,27 @@ const Leads = () => {
 
         {userRole === "Sales" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Enrolled Leads</h6>
                     <h4 className="fw-bold">{counts.enrolled}</h4>
@@ -1575,12 +1608,27 @@ const Leads = () => {
 
         {userRole === "Sales" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Interested Leads</h6>
                     <h4 className="fw-bold">{counts.backendInterested}</h4>
@@ -1594,12 +1642,27 @@ const Leads = () => {
 
         {userRole === "Sales" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Not Interested Leads</h6>
                     <h4 className="fw-bold">{counts.backendNotInterested}</h4>
@@ -1613,12 +1676,27 @@ const Leads = () => {
 
         {userRole === "Sales" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">In Discussion Leads</h6>
                     <h4 className="fw-bold">{counts.backendInDiscussion}</h4>
@@ -1632,14 +1710,29 @@ const Leads = () => {
 
         {userRole === "Sales" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100  d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
-                    <h6 className="mb-1 text-muted">Follow-up Leads</h6>
+                    <h6 className="mb-1 text-muted">Follow Up Leads</h6>
                     <h4 className="fw-bold">{counts.backendFollowUp}</h4>
                     <small className="text-success">16% this month</small>
                   </div>
@@ -1651,12 +1744,27 @@ const Leads = () => {
 
         {userRole === "Resume" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center" style={{ minHeight: "160px" }}>
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Untouched Leads</h6>
                     <h4 className="fw-bold">{counts.untouched}</h4>
@@ -1670,12 +1778,27 @@ const Leads = () => {
 
         {userRole === "Resume" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center" style={{ minHeight: "160px" }}>
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Touched Leads</h6>
                     <h4 className="fw-bold">{counts.touched}</h4>
@@ -1689,12 +1812,27 @@ const Leads = () => {
 
         {userRole === "Resume" && (
           <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100">
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <span className="squareLoader"></span>
+                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img src={LeadImg} alt="" loading="lazy" className="mb-2 img-fluid" />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Untouched Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
                   <div>
                     <h6 className="mb-1 text-muted">Completed Leads</h6>
                     <h4 className="fw-bold">{counts.completed}</h4>
@@ -2401,10 +2539,21 @@ const Leads = () => {
                   <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
                 </div>
                 {user.role === "Sales" && (
-                  <button
-                    className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
-                    <FaSync className="me-1" /> Refresh
-                  </button>
+                  <div>
+                    <select
+                      className="form-select form-select-sm"
+                      value={assignedFilters.sortByDate}
+                      onChange={(e) => setAssignedFilters({ ...assignedFilters, sortByDate: e.target.value })}
+                    >
+                      <option value="desc">Newest to Oldest</option>
+                      <option value="asc">Oldest to Newest</option>
+                    </select>
+
+                    <button
+                      className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
+                      <FaSync className="me-1" /> Refresh
+                    </button>
+                  </div>
                 )}
               </div>
 
@@ -3213,7 +3362,7 @@ const Leads = () => {
             <div className="modal-body p-0">
               <div className="card card-plain">
                 <h3 className="modal-title editUserTitle mt-2 text-center">Lead Details</h3>
-                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" className="btn-close ms-4" data-bs-dismiss="modal" aria-label="Close"></button>
                 <div className="card-body">
                   {selectedLead ? (
                     <form

@@ -575,7 +575,6 @@ td {
 
 .Toastify__toast--error {
   background-color: #dc2626 !important;
-  /* red */
   color: #fff !important;
   font-weight: 600;
   border-left: 6px solid #7f1d1d;
