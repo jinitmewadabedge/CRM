@@ -2,6 +2,7 @@ const Candidate = require("../models/Candidate");
 const Lead = require("../models/Lead");
 const Training = require("../models/Training");
 const CV = require("../models/CV");
+const redisClient = require("../utils/redisClient");
 
 exports.enrollCandidate = async (req, res) => {
 
@@ -85,7 +86,23 @@ exports.enrollCandidate = async (req, res) => {
 
 exports.getAllCandidates = async (req, res) => {
     try {
+
+        const cacheKey = "all_candidate";
+
+        const cachedData = await redisClient.get(cacheKey);
+        if(cachedData){
+            console.log("Server from Redis Cache:", cacheKey);
+            res.setHeader("X-Cache", "HIT");
+            return res.status(200).json(JSON.parse(cachedData));
+        }
+
         const candidates = await Candidate.find().populate("leadId salesPerson TL manager");
+       
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(candidates));
+
+        console.log("Cached new data in Redis:", cacheKey);
+        res.setHeader("X-Cache", "MISS");
+
         res.status(200).json(candidates);
     } catch (error) {
         console.error("Error fetching candidates:", error);

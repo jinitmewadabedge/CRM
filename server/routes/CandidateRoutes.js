@@ -1,6 +1,6 @@
 const express = require('express');
 const { enrollCandidate, getAllCandidates, updateCandidateStage } = require("../controllers/candidateController");
-const { protect, authorizedRoles } = require("../middleware/authMiddleware");
+const { protect } = require("../middleware/authMiddleware");
 const router = express.Router();
 
 router.post("/enroll", protect, enrollCandidate);
