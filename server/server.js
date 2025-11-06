@@ -13,10 +13,12 @@ const resumeRoutes = require("./routes/resumeRoutes");
 const User = require("./models/User");
 const { importUsers } = require("./controllers/authController");
 const responseTime = require("response-time");
+const compression = require("compression");
 
 dotenv.config();
 
 const app = express();
+app.use(compression());
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
