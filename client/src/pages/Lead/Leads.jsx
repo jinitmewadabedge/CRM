@@ -1182,8 +1182,7 @@ const Leads = () => {
     return pageNumbers;
   };
 
-  const filteredLeads = leads
-    .filter((lead) => {
+  const filteredLeads = leads.filter((lead) => {
       const searchMatch =
         lead.candidate_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
         lead.candidate_email?.toLowerCase().includes(filters.search.toLowerCase()) ||
