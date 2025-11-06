@@ -239,6 +239,7 @@ const Leads = () => {
   };
 
   const fetchResumeLeads = async () => {
+
     const token = sessionStorage.getItem("token");
 
     const untouchedRes = await axios.get(`${BASE_URL}/api/resume/untouched`, {
@@ -1182,27 +1183,28 @@ const Leads = () => {
     return pageNumbers;
   };
 
-  const filteredLeads = leads.filter((lead) => {
-      const searchMatch =
-        lead.candidate_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        lead.candidate_email?.toLowerCase().includes(filters.search.toLowerCase()) ||
-        lead.candidate_phone_no?.toString().includes(filters.search)
+  console.log("Leads type:", Array.isArray(leads), leads);
+  const filteredLeads = Array.isArray(leads) ? leads.filter((lead) => {
+    const searchMatch =
+      lead.candidate_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      lead.candidate_email?.toLowerCase().includes(filters.search.toLowerCase()) ||
+      lead.candidate_phone_no?.toString().includes(filters.search)
 
-      const typeMatch = filters.type ? lead.type === filters.type : true
+    const typeMatch = filters.type ? lead.type === filters.type : true
 
-      const statusMatch = filters.status ? lead.status === filters.status : true
-      const visaMatch = filters.visa ? lead.visa === filters.visa : true
+    const statusMatch = filters.status ? lead.status === filters.status : true
+    const visaMatch = filters.visa ? lead.visa === filters.visa : true
 
-      const dateMatch =
-        (!filters.startDate || new Date(lead.createdAt) >= new Date(filters.startDate)) &&
-        (!filters.endDate || new Date(lead.createdAt) <= new Date(filters.endDate))
+    const dateMatch =
+      (!filters.startDate || new Date(lead.createdAt) >= new Date(filters.startDate)) &&
+      (!filters.endDate || new Date(lead.createdAt) <= new Date(filters.endDate))
 
-      const timeMatch =
-        (!filters.startTime || lead.preferred_time_to_talk >= filters.startTime) &&
-        (!filters.endTime || lead.preferred_time_to_talk <= filters.endTime)
+    const timeMatch =
+      (!filters.startTime || lead.preferred_time_to_talk >= filters.startTime) &&
+      (!filters.endTime || lead.preferred_time_to_talk <= filters.endTime)
 
-      return searchMatch && typeMatch && statusMatch && visaMatch && dateMatch && timeMatch
-    })
+    return searchMatch && typeMatch && statusMatch && visaMatch && dateMatch && timeMatch
+  })
     .sort((a, b) => {
       if (filters.dateSort) {
         const dateA = new Date(a.createdAt);
@@ -1231,7 +1233,7 @@ const Leads = () => {
       } else {
         return valA < valB ? 1 : valA > valB ? -1 : 0;
       }
-    });
+    }) : [];
 
   const filteredTouchedLeads = touchedLeads.filter((lead) => {
     const searchTerm = touchedFilters.search.toLowerCase().trim();
