@@ -37,7 +37,7 @@ exports.getLeads = async (req, res) => {
         
         const leads = await Lead.find().populate("owner", "name email");
         
-        await redisClient.set(cachedKey, 120, json.stringify(leads));
+        await redisClient.set(cachedKey, 120, JSON.stringify(leads));
         console.log("Get Lead Cached In The Redis");
         
         res.setHeader("X-Cache", "MISS");
@@ -352,11 +352,11 @@ exports.getLeadState = async (req, res) => {
 
         const user = req.user;
         console.log("req.user for state:", req.user);
-        const cacheKey = `lead_state:${role}:${user}`;
+        const cacheKey = `lead_state:${role}:${user._id}`;
 
         const cached = await redisClient.get(cacheKey);
         if (cached) {
-            console.log("Served from redis cache:", cacheKey);
+            console.log("Served from GetLeadState redis cache:", cacheKey);
             res.setHeader("X-Cache", "HIT");
             return res.status(200).json(JSON.parse(cached));
         }
