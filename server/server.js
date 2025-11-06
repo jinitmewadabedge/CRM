@@ -12,6 +12,7 @@ const cvRoutes = require("./routes/cvRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
 const User = require("./models/User");
 const { importUsers } = require("./controllers/authController");
+const responseTime = require("response-time");
 
 dotenv.config();
 
@@ -36,6 +37,9 @@ app.use(express.json({
     type: ["application/json", "text/plain"]
 }));
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
+app.use(responseTime((req, res, time) => {
+    console.log(`${req.method} ${req.originalUrl} - ${time.toFixed(2)} ms`);
+}));
 
 app.use("/api/auth", authRoutes);
 app.use("/", testRoute);
@@ -47,9 +51,6 @@ app.use("/api/training", trainingRoutes);
 app.use("/api/cv", cvRoutes);
 app.use("/api/resume", resumeRoutes);
 
-app.get("/api/ping", (req, res) => {
-    res.json({ message: "Pong! CORS is working" });
-});
 
 const uri = process.env.MONGO_URL_DEV;
 console.log("MONGO_URI:", uri);

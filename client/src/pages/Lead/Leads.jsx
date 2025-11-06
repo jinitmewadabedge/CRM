@@ -2559,7 +2559,7 @@ const Leads = () => {
                       value={assignedFilters.sortByDate}
                       onChange={(e) => setAssignedFilters({ ...assignedFilters, sortByDate: e.target.value })}
                     >
-                      <option value="">----SORT BY DATE----</option>
+                      <option value="">----Sort By Order----</option>
                       <option value="desc">Newest to Oldest</option>
                       <option value="asc">Oldest to Newest</option>
                     </select>

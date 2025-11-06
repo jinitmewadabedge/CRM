@@ -2,13 +2,18 @@ const { default: mongoose } = require('mongoose');
 const Lead = require('../models/Lead');
 const User = require("../models/User");
 const Role = require("../models/Role");
+const redisClient = require("../utils/redisClient");
 const Candidate = require('../models/Candidate');
+const { removeListener } = require('../models/CV');
+const { invalidateLeadStateCache } = require("../utils/cacheHelper");
 
 exports.createLead = async (req, res) => {
 
     try {
 
         const lead = await Lead.create(req.body);
+        await invalidateLeadStateCache();
+
         res.status(201).json(lead);
 
     } catch (error) {
@@ -45,6 +50,7 @@ exports.updateLead = async (req, res) => {
         if (!lead) {
             res.status(404).json({ message: "Lead not found" });
         }
+        await invalidateLeadStateCache();
         res.status(200).json(lead);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -57,6 +63,8 @@ exports.deleteLead = async (req, res) => {
         if (!lead) {
             return res.status(404).json({ message: "Lead not found" });
         }
+        await invalidateLeadStateCache();
+        
         res.status(200).json({ message: "Lead deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -324,11 +332,21 @@ exports.getLeadState = async (req, res) => {
         }
 
         const role = req.user.role?.name;
-        // console.log("User ID For State:", id);
         console.log("User Role For State:", role);
 
         const user = req.user;
         console.log("req.user for state:", req.user);
+        const cacheKey = `lead_state:${role}:${user}`;
+
+        const cached = await redisClient.get(cacheKey);
+        if (cached) {
+            console.log("Served from redis cache:", cacheKey);
+            res.setHeader("X-Cache", "HIT");
+            return res.status(200).json(JSON.parse(cached));
+        }
+
+        console.log("Cache Miss => Computing lead for state:", cacheKey);
+
         let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
         let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
 
@@ -419,19 +437,13 @@ exports.getLeadState = async (req, res) => {
                 endDate: { $ne: null }
             }).populate("leadId");
             completed = completedLeads.length;
-
-            // trainingLeads = await Candidate.find({ movedToTraining: true }).populate("leadId");
-            // cvLeads = await Candidate.find({ movedToCV: true }).populate("leadId");
-
-            // training = trainingLeads.length;
-            // cv = cvLeads.length;
         }
 
         if (role === "Sr_Lead_Generator") {
             total = await Lead.countDocuments();
         }
 
-        res.status(200).json({
+        const result = ({
             total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
             notInterested,
             followUp,
@@ -441,6 +453,26 @@ exports.getLeadState = async (req, res) => {
             followUpLeads,
             inDiscussionLeads
         });
+        // res.status(200).json({
+        //     total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
+        //     notInterested,
+        //     followUp,
+        //     inDiscussion,
+        //     interestedLeads,
+        //     notInterestedLeads,
+        //     followUpLeads,
+        //     inDiscussionLeads
+        // });
+
+        try {
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            console.log("Cached lead state:", cacheKey);
+        } catch (error) {
+            console.error("Redis setEx failed:", error);
+        }
+
+        res.setHeader("X-Cache", "MISS");
+        return res.status(200).json(result);
 
     } catch (error) {
         console.error("Error fetching lead state:", error);
