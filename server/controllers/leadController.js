@@ -5,14 +5,15 @@ const Role = require("../models/Role");
 const redisClient = require("../utils/redisClient");
 const Candidate = require('../models/Candidate');
 const { removeListener } = require('../models/CV');
-const { invalidateLeadStateCache } = require("../utils/cacheHelper");
+const { invalidLeadStateCache } = require("../utils/cacheHelper");
+const { json } = require('express');
 
 exports.createLead = async (req, res) => {
 
     try {
 
         const lead = await Lead.create(req.body);
-        await invalidateLeadStateCache();
+        await invalidLeadStateCache();
 
         res.status(201).json(lead);
 
@@ -23,11 +24,26 @@ exports.createLead = async (req, res) => {
 
 exports.getLeads = async (req, res) => {
     try {
+
+        const cachedKey = "all_leads";
+
+        const cachedGetLeads = await redisClient.get("all_leads");
+
+        if (cachedGetLeads) {
+            console.log("Serving cachedGetLeads from cache:");
+            res.setHeader("X-Cache", "HIT");
+            return res.status(200).json(cachedGetLeads);
+        }
+        
         const leads = await Lead.find().populate("owner", "name email");
+        
+        await redisClient.set(cachedKey, 120, json.stringify(leads));
+        console.log("Get Lead Cached In The Redis");
+        
+        res.setHeader("X-Cache", "MISS");
         res.status(200).json(leads);
 
     } catch (error) {
-
         res.status(500).json({ message: error.message });
     }
 };
@@ -50,7 +66,7 @@ exports.updateLead = async (req, res) => {
         if (!lead) {
             res.status(404).json({ message: "Lead not found" });
         }
-        await invalidateLeadStateCache();
+        await invalidLeadStateCache();
         res.status(200).json(lead);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -63,8 +79,8 @@ exports.deleteLead = async (req, res) => {
         if (!lead) {
             return res.status(404).json({ message: "Lead not found" });
         }
-        await invalidateLeadStateCache();
-        
+        await invalidLeadStateCache();
+
         res.status(200).json({ message: "Lead deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -453,16 +469,6 @@ exports.getLeadState = async (req, res) => {
             followUpLeads,
             inDiscussionLeads
         });
-        // res.status(200).json({
-        //     total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
-        //     notInterested,
-        //     followUp,
-        //     inDiscussion,
-        //     interestedLeads,
-        //     notInterestedLeads,
-        //     followUpLeads,
-        //     inDiscussionLeads
-        // });
 
         try {
             await redisClient.setEx(cacheKey, 60, JSON.stringify(result));

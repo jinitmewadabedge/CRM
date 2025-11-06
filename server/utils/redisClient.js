@@ -1,4 +1,3 @@
-// redisClient.js
 const redis = require("redis");
 
 const redisClient = redis.createClient({
@@ -10,14 +9,14 @@ const redisClient = redis.createClient({
         return new Error("Redis connection failed");
       }
       console.log(`Redis reconnect attempt #${retries}`);
-      return Math.min(retries * 100, 3000); // backoff delay
+      return Math.min(retries * 100, 3000);
     },
   },
 });
 
-redisClient.on("error", (err) => console.error("❌ Redis Error:", err));
-redisClient.on("connect", () => console.log("✅ Connected to Redis"));
-redisClient.on("reconnecting", () => console.log("♻️ Reconnecting to Redis..."));
+redisClient.on("error", (err) => console.error("Redis Error:", err));
+redisClient.on("connect", () => console.log("Connected to Redis"));
+redisClient.on("reconnecting", () => console.log("Reconnecting to Redis..."));
 
 (async () => {
   try {
