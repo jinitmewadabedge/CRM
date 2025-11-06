@@ -52,7 +52,7 @@ app.use("/api/cv", cvRoutes);
 app.use("/api/resume", resumeRoutes);
 
 
-const uri = process.env.MONGO_URL_DEV;
+const uri = process.env.MONGO_URL_PROD;
 console.log("MONGO_URI:", uri);
 
 mongoose.connect(uri, {
