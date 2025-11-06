@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import axios from "axios";
-import Logo from "../assets/logo.png";
+import Logo from "../assets/logo_webp.webp";
 import "../App.css";
 import { toast } from "react-toastify";
 
