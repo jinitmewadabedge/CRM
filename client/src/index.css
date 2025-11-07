@@ -4,6 +4,11 @@
     font-family: "Poppins", sans-serif !important;
 }
 
+body {
+    height: 100%;
+    background: #0000ff;
+}
+
 .LogoImage {
     position: absolute;
     top: 10px;
@@ -37,3 +42,4 @@
     border: 1px solid #42602E;
     font-size: 12px;
 }
+

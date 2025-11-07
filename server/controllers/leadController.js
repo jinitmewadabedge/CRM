@@ -25,22 +25,8 @@ exports.createLead = async (req, res) => {
 exports.getLeads = async (req, res) => {
     try {
 
-        const cachedKey = "all_leads";
-
-        const cachedGetLeads = await redisClient.get("all_leads");
-
-        if (cachedGetLeads) {
-            console.log("Serving cachedGetLeads from cache:");
-            res.setHeader("X-Cache", "HIT");
-            return res.status(200).json(cachedGetLeads);
-        }
-        
         const leads = await Lead.find().populate("owner", "name email");
-        
-        await redisClient.set(cachedKey, 120, JSON.stringify(leads));
-        console.log("Get Lead Cached In The Redis");
-        
-        res.setHeader("X-Cache", "MISS");
+
         res.status(200).json(leads);
 
     } catch (error) {

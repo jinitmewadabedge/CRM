@@ -133,11 +133,11 @@
 
 // export default App;
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useEffect, lazy, Suspense } from "react";
+import { useEffect, lazy, Suspense, useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-import Logo from "./../public/bedge_logo.png"
+import Logo from "./../public/bedge_logo.png";
 import "./index.css";
 import "./App.css";
 import useHeartbeat from "./hooks/useHeartbeat";
@@ -164,19 +164,53 @@ const Leads = lazy(() => import("./pages/Lead/Leads"));
 const LeadForm = lazy(() => import("./pages/Lead/LeadForm"));
 const LeadDetails = lazy(() => import("./pages/Lead/LeadDetails"));
 
-const Loading = () => (
-  // <div
-  //   className="d-flex justify-content-center align-items-center vh-100 bg-white"
-  //   style={{ flexDirection: "column" }}
-  // >
-  //   <div className="spinner-border text-success mb-3" role="status" />
-  //   <h6 className="text-muted">Loading dashboard...</h6>
-  // </div>
-  <div className="d-flex justify-content-center align-items-center vh-100 bg-white" style={{ flexDirection: "column" }}>
-    <img src={Logo} alt="Loading..." className="logo-loader" />
-    <h6 className="text-muted mt-3">Loading dashboard...</h6>
-  </div>
-);
+const Loading = () => {
+  const loadingMessages = [
+    "Generating qualified leads... hang tight!",
+    "Your next big client might be loading right now...",
+    "Crunching KPIs and brewing opportunities ☕",
+    "Polishing leads until they shine ✨",
+    "Please hold… convincing the leads to cooperate 🕵️‍♂️",
+    "Fetching leads... please don’t hit refresh again 😅",
+    "Loading faster than your Monday motivation 🏃‍♂️💨",
+    "Optimizing your conversion dreams...",
+    "Leads loading... patience is the real sales skill 😅",
+    "Aligning your leads with destiny 💼",
+  ];
+
+  const [messageIndex, setMessageIndex] = useState(() => 
+  Math.floor(Math.random() * loadingMessages.length)
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return (
+    <div className="loading-glass-container">
+      <div
+        className="d-flex justify-content-center align-items-center vh-100 loadingDashboard text-center"
+        style={{ flexDirection: "column" }}
+      >
+        <img
+          src={Logo}
+          alt="Loading..."
+          className="logo-loader mb-1"
+        />
+        <h6
+          key={messageIndex}
+          className="text-muted mt-3 fade-text"
+          style={{ transition: "opacity 0.5s ease-in-out", fontSize: "15px" }}
+        >
+          {loadingMessages[messageIndex]}
+        </h6>
+      </div>
+    </div>
+  );
+};
 
 function App() {
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
