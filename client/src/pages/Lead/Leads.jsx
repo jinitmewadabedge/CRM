@@ -1165,7 +1165,7 @@ const Leads = () => {
       setFinalLead(null);
       setSelectedMember("");
       // fetchUnassignedLeads();
-      fetchBackendLeads();
+      // fetchBackendLeads();
 
       document.getElementById("closeAssignModalBtn").click();
 
