@@ -1138,6 +1138,14 @@ const Leads = () => {
       const managerId = loggedInUser?._id || loggedInUser.id;
       console.log("Manager ID:", managerId);
 
+      setUnassignedLeads((prev) => prev.filter((lead) => lead._id !== selectedLead));
+
+      const assignedLead = unassignedLeads.find((lead) => lead._id === selectedLead);
+
+      if (assignedLead) {
+        setAssignedLeads((prev) => [...prev, { ...assignedLead, assignedTo: selectedMember },]);
+      }
+
       const res = await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
         {
           teamMemberId: selectedMember,
@@ -1160,6 +1168,8 @@ const Leads = () => {
       fetchBackendLeads();
 
       document.getElementById("closeAssignModalBtn").click();
+
+      fetchBackendLeads();
 
     } catch (error) {
       console.error("Error assigning lead:", error.message);

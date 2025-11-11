@@ -2,6 +2,7 @@ const dotenv = require("dotenv");
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const Role = require("./models/Role");
 const authRoutes = require("./routes/authRoutes");
 const testRoute = require("./routes/test");
 const leadRoute = require("./routes/leadRoutes");
@@ -18,7 +19,10 @@ const compression = require("compression");
 dotenv.config();
 
 const app = express();
-app.use(compression());
+app.use((req, res, next) => {
+    if(req.path === "/api/auth/login" || req.path === "/api/auth/logout") return next();
+    compression()(req, res, next);
+});
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
@@ -60,17 +64,25 @@ console.log("MONGO_URI:", uri);
 mongoose.connect(uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    maxPoolSize: 20,
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000
 });
 
 const db = mongoose.connection;
 
 db.on("error", (err) => console.error("MongoDB connection error:", err));
-db.once("open", () => {
+db.once("open", async () => {
+
     console.log("Connected to MongoDB Database:", db.name);
+
+    await Promise.all([
+        User.findOne({}, "_id").lean(),
+        Role.findOne({}, "_id").lean(),
+    ]);
     console.log("MongoDB URI used:", uri);
     console.log("MongoDB");
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
@@ -92,4 +104,4 @@ setInterval(async () => {
     } catch (err) {
         console.error("Cleanup error:", err.message);
     }
-}, 1 * 60 * 1000);
+}, 2 * 60 * 1000);
