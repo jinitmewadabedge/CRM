@@ -910,18 +910,16 @@ const Leads = () => {
         source: "",
         status: ""
       })
-      // fetchUnassignedLeads();
+
       fetchBackendLeads();
 
-      const modalElement = document.getElementById("addNewLead");
-      const modalInstance = bootstrap.Modal.getInstance(modalElement);
-      if(modalInstance){
-        modalElement.hide();
-      } else {
-        const newModal = new bootstrap.Modal(modalElement);
-        newModal.hide();
-      }
-
+      setTimeout(() => {
+        const modalEl = document.getElementById("addNewLead");
+        if (modalEl) {
+          const modalInstance = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+          modalInstance.hide();
+        }
+      }, 300);
 
     } catch (error) {
       console.error("Error adding lead:", error.response?.data || error.message);
