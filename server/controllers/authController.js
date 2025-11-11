@@ -98,49 +98,109 @@ let resetToken = {};
 //     }
 // };
 
+// exports.login = async (req, res) => {
+
+//     const start = Date.now();
+//     console.log("[Login] Started at", new Date(start).toLocaleTimeString());
+
+//     try {
+//         console.log("[Login] Incoming body:", req.body);
+//         const { email, role, password } = req.body;
+//         if (!email || !role || !password) {
+//             return res.status(400).json({ message: "Please enter all fields" });
+//         }
+
+//         const step1 = Date.now();
+//         const user = await User.findOneAndUpdate({ email, isActive: true, isLoggedIn: false }, { $set: { isLoggedIn: true } }, { new: true })
+//             .select("+password")
+//             .populate("role")
+//             .lean();
+//         console.log(`[Step 1] Fetched user in ${Date.now() - step1}ms`);
+
+//         if (!user) return res.status(401).json({ message: "Invalid Credentials" });
+//         if (user.role.name !== role) return res.status(401).json({ message: "Invalid Role" });
+
+//         const step2 = Date.now();
+//         const isMatch = await bcrypt.compare(password.trim(), user.password);
+//         console.log(`[Step 2] Password compared in ${Date.now() - step2}ms`);
+
+//         if (!isMatch) return res.status(401).json({ message: "Invalid Password" });
+
+//         if (user.isLoggedIn) {
+//             return res.status(403).json({ message: "User already logged in." });
+//         }
+
+//         const step3 = Date.now();
+//         await User.updateOne({ _id: user._id }, { $set: { isLoggedIn: true } });
+//         console.log(`[Step 3] Marked logged in in ${Date.now() - step3}ms`);
+
+//         const tokenStart = Date.now();
+//         const token = jwt.sign(
+//             { id: user._id, role: user.role.name },
+//             process.env.JWT_SECRET || "bedge",
+//             { expiresIn: "1d" }
+//         );
+//         console.log(`[Step 4] Token generated in ${Date.now() - tokenStart}ms `);
+
+//         res.status(200).json({
+//             message: "Login Successful",
+//             token,
+//             user: {
+//                 id: user._id,
+//                 name: user.name,
+//                 email: user.email,
+//                 role: user.role.name,
+//                 permission: user.role.permissions,
+//             },
+//         });
+//         console.log(`[Login] Completed in ${Date.now() - start}ms`);
+
+//     } catch (err) {
+//         console.error("Login Error:", err);
+//         return res.status(500).json({ message: "Internal Server Error" });
+//     }
+// };
+
 exports.login = async (req, res) => {
-
-    const start = Date.now();
-    console.log("[Login] Started at", new Date(start).toLocaleTimeString());
-
     try {
-        console.log("[Login] Incoming body:", req.body);
         const { email, role, password } = req.body;
         if (!email || !role || !password) {
             return res.status(400).json({ message: "Please enter all fields" });
         }
 
-        const step1 = Date.now();
-        const user = await User.findOneAndUpdate({ email, isActive: true, isLoggedIn: false }, { $set: { isLoggedIn: true } }, { new: true })
+        const user = await User.findOne({ email, isActive: true })
             .select("+password")
-            .populate("role")
-            .lean();
-        console.log(`[Step 1] Fetched user in ${Date.now() - step1}ms`);
+            .populate("role");
 
-        if (!user) return res.status(401).json({ message: "Invalid Credentials" });
-        if (user.role.name !== role) return res.status(401).json({ message: "Invalid Role" });
+        if (!user) {
+            return res.status(401).json({ message: "Invalid Credentials" });
+        }
 
-        const step2 = Date.now();
+        if (user.role.name !== role) {
+            return res.status(401).json({ message: "Invalid Role" });
+        }
+
         const isMatch = await bcrypt.compare(password.trim(), user.password);
-        console.log(`[Step 2] Password compared in ${Date.now() - step2}ms`);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Invalid Password" });
+        }
 
-        if (!isMatch) return res.status(401).json({ message: "Invalid Password" });
-
-        if (user.isLoggedIn) {
+        const freshUser = await User.findById(user._id);
+        if (freshUser.isLoggedIn) {
             return res.status(403).json({ message: "User already logged in." });
         }
 
-        const step3 = Date.now();
-        await User.updateOne({ _id: user._id }, { $set: { isLoggedIn: true } });
-        console.log(`[Step 3] Marked logged in in ${Date.now() - step3}ms`);
+        await User.findByIdAndUpdate(
+            user._id,
+            { $set: { isLoggedIn: true } },
+            { new: true }
+        );
 
-        const tokenStart = Date.now();
         const token = jwt.sign(
             { id: user._id, role: user.role.name },
             process.env.JWT_SECRET || "bedge",
             { expiresIn: "1d" }
         );
-        console.log(`[Step 4] Token generated in ${Date.now() - tokenStart}ms `);
 
         res.status(200).json({
             message: "Login Successful",
@@ -153,8 +213,6 @@ exports.login = async (req, res) => {
                 permission: user.role.permissions,
             },
         });
-        console.log(`[Login] Completed in ${Date.now() - start}ms`);
-
     } catch (err) {
         console.error("Login Error:", err);
         return res.status(500).json({ message: "Internal Server Error" });
