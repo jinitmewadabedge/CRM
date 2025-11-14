@@ -355,10 +355,10 @@ exports.getLeadState = async (req, res) => {
         if (role === "Lead_Gen_Manager") {
             total = await Lead.countDocuments();
             unassignedLeads = await Lead.find({ assignedTo: null })
-                .populate("assignedTo assignedBy createdBy departmentId teamId");
+                .populate("assignedTo assignedBy createdBy");
             unassigned = unassignedLeads.length;
             assignedLeads = await Lead.find({ assignedTo: { $ne: null } })
-                .populate("assignedTo assignedBy createdBy departmentId teamId");
+                .populate("assignedTo assignedBy createdBy");
             assigned = assignedLeads.length;
         }
 
@@ -369,13 +369,13 @@ exports.getLeadState = async (req, res) => {
             unassignedLeads = await Lead.find({
                 assignedTo: user._id,
                 assignedBy: { $ne: null }
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
 
             unassigned = unassignedLeads.length;
 
             assignedLeads = await Lead.find({
                 assignedBy: user._id
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
             assigned = assignedLeads.length;
         }
 
@@ -384,7 +384,7 @@ exports.getLeadState = async (req, res) => {
             total = await Lead.countDocuments({ assignedTo: user._id });
             assignedLeads = await Lead.find({
                 assignedTo: user._id
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
             assigned = assignedLeads.length;
 
             enrolledLeads = await Candidate.find().populate();
@@ -393,24 +393,24 @@ exports.getLeadState = async (req, res) => {
             interestedLeads = await Lead.find({
                 assignedTo: user._id,
                 status: "Interested"
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
             interested = interestedLeads.length;
 
             notInterestedLeads = await Lead.find({
                 assignedTo: user._id,
                 status: "Not Interested"
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
             notInterested = notInterestedLeads.length;
 
             followUpLeads = await Lead.find({
                 status: "Follow-up"
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
             followUp = followUpLeads.length;
 
             inDiscussionLeads = await Lead.find({
                 assignedTo: user._id,
                 status: "In Discussion"
-            }).populate("assignedTo assignedBy createdBy departmentId teamId");
+            }).populate("assignedTo assignedBy createdBy");
             inDiscussion = inDiscussionLeads.length;
         }
 
@@ -439,6 +439,22 @@ exports.getLeadState = async (req, res) => {
                 endDate: { $ne: null }
             }).populate("leadId");
             completed = completedLeads.length;
+        }
+
+        if (role === "Marketing") {
+            total = await Candidate.countDocuments();
+
+            unassignedLeads = await Candidate.find({
+                movedToMarketing: true,
+                assignedTo: null,
+            }).populate("leadId").populate("assignedTo").populate("assignedBy");
+            unassigned = unassignedLeads.length;
+
+            assignedLeads = await Candidate.find({
+                movedToMarketing: true,
+                assignedTo: { $ne: null }
+            }).populate("leadId").populate("assignedTo").populate("assignedBy");;
+            assigned = assignedLeads.length;
         }
 
         if (role === "Sr_Lead_Generator") {

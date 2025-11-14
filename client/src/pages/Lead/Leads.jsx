@@ -16,6 +16,8 @@ import 'react-loading-skeleton/dist/skeleton.css';
 import MyLoader from '../../components/Lead/MyLoader';
 import { toast } from "react-toastify";
 import { FiLogOut } from 'react-icons/fi'
+import AnimatedNumber from "../../components/Animated_Number/AnimatedNumber";
+import { motion } from "framer-motion";
 
 const Leads = () => {
   const { id } = useParams();
@@ -89,18 +91,22 @@ const Leads = () => {
 
   const [touchedFilters, setTouchedFilters] = useState({
     search: "",
+    sortByDate: "newest",
   });
 
   const [completedFilters, setCompletedFilters] = useState({
     search: "",
+    sortByDate: "newest"
   });
 
   const [untouchedFilters, setUntouchedFilters] = useState({
     search: "",
+    sortByDate: "newest"
   });
 
   const [interestedFilters, setInterestedFilters] = useState({
     search: "",
+    sortByDate: "newest"
   });
 
   const [notInterestedFilters, setNotInterestedFilters] = useState({
@@ -296,7 +302,7 @@ const Leads = () => {
   };
 
   const handleStartWork = async (candidateId) => {
-    const token = sessionStorage.getItem("token");
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     await axios.put(`${BASE_URL}/api/resume/start-work/${candidateId}`, {}, {
       headers: { Authorization: `Bearer ${token}` }
     });
@@ -306,6 +312,19 @@ const Leads = () => {
     fetchResumeLeads();
   };
 
+  const handleMovedToMarketing = async (id) => {
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+    try {
+      await axios.put(`${BASE_URL}/api/resume/movedToMarketing/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      toast.success("Lead moved to Marketing Successfully");
+      fetchResumeLeads();
+    } catch (error) {
+      toast.error("Error moved to marketing");
+      console.error("Error moved to marketing");
+    }
+  }
 
   useEffect(() => {
     async function fetchLead() {
@@ -884,6 +903,7 @@ const Leads = () => {
   };
 
   const handleSubmitNew = async (e) => {
+
     e.preventDefault();
     console.log("Submitting Lead:", newLead);
 
@@ -1254,7 +1274,7 @@ const Leads = () => {
       }
     }) : [];
 
-  const filteredTouchedLeads = touchedLeads.filter((lead) => {
+  let filteredTouchedLeads = touchedLeads.filter((lead) => {
     const searchTerm = touchedFilters.search.toLowerCase().trim();
     return (
       lead.name?.toLowerCase().includes(searchTerm) ||
@@ -1263,7 +1283,18 @@ const Leads = () => {
     );
   });
 
-  const filteredCompletedLeads = completedLeads.filter((lead) => {
+  filteredTouchedLeads = filteredTouchedLeads.sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+
+    if (touchedFilters.sortByDate === "newest") {
+      return dateB - dateA;
+    } else {
+      return dateA - dateB;
+    }
+  });
+
+  let filteredCompletedLeads = completedLeads.filter((lead) => {
     const searchTerm = completedFilters.search.toLowerCase();
     return (
       lead.name?.toLowerCase().includes(searchTerm) ||
@@ -1272,13 +1303,35 @@ const Leads = () => {
     );
   });
 
-  const filteredUntouchedLeads = untouchedLeads.filter((lead) => {
+  filteredCompletedLeads = filteredCompletedLeads.sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+
+    if (completedFilters.sortByDate === "newest") {
+      return dateB - dateA;
+    } else {
+      return dateA - dateB;
+    }
+  });
+
+  let filteredUntouchedLeads = untouchedLeads.filter((lead) => {
     const searchTerm = untouchedFilters.search.toLowerCase();
     return (
       lead.name?.toLowerCase().includes(searchTerm) ||
       lead.email?.toLowerCase().includes(searchTerm) ||
       lead.phone?.toLowerCase().includes(searchTerm)
     );
+  });
+
+  filteredUntouchedLeads = filteredUntouchedLeads.sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+
+    if (untouchedFilters.sortByDate === "newest") {
+      return dateB - dateA;
+    } else {
+      return dateA - dateB;
+    }
   });
 
   const getProgress = (candidate) => {
@@ -1419,7 +1472,7 @@ const Leads = () => {
     fetchActiveLead();
   }, []);
 
-  const filteredInterestedLeads = interestedLeads.filter((lead) => {
+  let filteredInterestedLeads = interestedLeads.filter((lead) => {
     const searchTerm = interestedFilters.search.toLowerCase().trim();
     if (!searchTerm) return true;
 
@@ -1431,7 +1484,18 @@ const Leads = () => {
     );
   });
 
-  const filteredNotInterestedLeads = notInterestedLeads.filter((lead) => {
+  filteredInterestedLeads = filteredInterestedLeads.sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+
+    if (interestedFilters.sortByDate === "newest") {
+      return dateB - dateA;
+    } else {
+      return dateA - dateB;
+    }
+  });
+
+  let filteredNotInterestedLeads = notInterestedLeads.filter((lead) => {
     const searchTerm = notInterestedFilters.search.toLowerCase().trim();
     if (!searchTerm) return true;
 
@@ -1441,6 +1505,17 @@ const Leads = () => {
       lead.candidate_phone_no?.toString().includes(searchTerm) ||
       lead.technology?.toString().toLowerCase().includes(searchTerm)
     );
+  });
+
+  filteredNotInterestedLeads = filteredNotInterestedLeads.sort((a, b) => {
+    const dateA = new Date(a.createdAt);
+    const dateB = new Date(b.createdAt);
+
+    if (notInterestedFilters.sortByDate === "newest") {
+      return dateB - dateA;
+    } else {
+      return dateA - dateB;
+    }
   });
 
   const filteredInDiscussionLeads = inDiscussionLeads.filter((lead) => {
@@ -1504,7 +1579,7 @@ const Leads = () => {
           </h4>
         </div>
 
-        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager"].includes(userRole) && (
+        {/* {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
           <div className="col-12 col-md-4 m-0 mb-2">
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
@@ -1529,20 +1604,74 @@ const Leads = () => {
                   />
                   <div>
                     <h6 className="mb-1 text-muted">Total Leads</h6>
-                    <h4 className="fw-bold">{counts.total}</h4>
+                    <h4 className="fw-bold"><AnimatedNumber value={counts.total} duration={1.5} /></h4>
                     <small className="text-success">16% this month</small>
                   </div>
                 </div>
               )}
             </div>
           </div>
-        )}
+        )} */}
 
-        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager"].includes(userRole) && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            whileHover={{ scale: 1.07, y: -4 }}
+          >
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                <div
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ minHeight: "100px" }}
+                >
+                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
+                </div>
+              ) : (
+                <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
+                  <img
+                    src={LeadImg}
+                    alt="Total Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
+                    style={{ width: "70px", height: "70px" }}
+                  />
+                  <img
+                    src={LeadImg}
+                    alt="Total Leads"
+                    loading="lazy"
+                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
+                    style={{ width: "50px", height: "50px" }}
+                  />
+                  <div>
+                    <h6 className="mb-1 text-muted">Total Leads</h6>
+                    <h4 className="fw-bold">
+                      <AnimatedNumber value={counts.total} duration={1.5} />
+                    </h4>
+                    <small className="text-success">16% this month</small>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            whileHover={{ scale: 1.07, y: -4 }}
+          >
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
+              {loading ? (
+                <div
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ minHeight: "100px" }}
+                >
                   <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
                 </div>
               ) : (
@@ -1563,51 +1692,72 @@ const Leads = () => {
                   />
                   <div>
                     <h6 className="mb-1 text-muted">Unassigned Leads</h6>
-                    <h4 className="fw-bold">{counts.unassigned}</h4>
+                    <h4 className="fw-bold">
+                      <AnimatedNumber value={counts.unassigned} duration={1.5} />
+                    </h4>
                     <small className="text-success">16% this month</small>
                   </div>
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
-        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Sales"].includes(userRole) && (
-          <div className="col-12 col-md-4 m-0 mb-2">
+        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Sales", "Marketing"].includes(userRole) && (
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
-                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
+                <div
+                  className="d-flex align-items-center justify-content-center"
+                  style={{ minHeight: "100px" }}
+                >
                   <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
                 </div>
               ) : (
                 <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
                   <img
                     src={LeadImg}
-                    alt="Untouched Leads"
+                    alt="Assigned Leads"
                     loading="lazy"
                     className="mb-2 rounded-circle img-fluid d-none d-md-block"
                     style={{ width: "70px", height: "70px" }}
                   />
                   <img
                     src={LeadImg}
-                    alt="Untouched Leads"
+                    alt="Assigned Leads"
                     loading="lazy"
                     className="mb-2 rounded-circle img-fluid d-block d-md-none"
                     style={{ width: "50px", height: "50px" }}
                   />
                   <div>
                     <h6 className="mb-1 text-muted">Assigned Leads</h6>
-                    <h4 className="fw-bold">{counts.assigned}</h4>
+                    <h4 className="fw-bold">
+                      <AnimatedNumber value={counts.assigned} duration={1.5} />
+                    </h4>
                     <small className="text-success">16% this month</small>
                   </div>
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
+
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
+            {/* <div className="col-12 col-md-4 col-lg-4 m-0 mb-2"> */}
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1637,11 +1787,19 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+            {/* </div> */}
+          </motion.div>
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
+            {/* <div className="col-12 col-md-4 col-lg-4 m-0 mb-2"> */}
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1671,11 +1829,19 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+            {/* </div> */}
+          </motion.div>
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
+            {/* <div className="col-12 col-md-4 col-lg-4 m-0 mb-2"> */}
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1705,11 +1871,19 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+            {/* </div> */}
+          </motion.div>
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
+            {/* <div className="col-12 col-md-4 col-lg-4 m-0 mb-2"> */}
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1739,11 +1913,19 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+            {/* </div> */}
+          </motion.div>
         )}
 
         {userRole === "Sales" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
+            {/* <div className="col-12 col-md-4 col-lg-4 m-0 mb-2"> */}
             <div className="rounded-4 bg-white shadow-sm py-4 h-100  d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1773,12 +1955,18 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+            {/* </div> */}
+          </motion.div>
         )}
 
         {userRole === "Resume" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center" style={{ minHeight: "160px" }}>
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}>
+            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
                   <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
@@ -1807,11 +1995,16 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {userRole === "Resume" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}>
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center" style={{ minHeight: "160px" }}>
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1841,11 +2034,17 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {userRole === "Resume" && (
-          <div className="col-12 col-md-4 col-lg-4 m-0 mb-2">
+          <motion.div
+            className="col-12 col-md-4 m-0 mb-2"
+            initial={{ opacity: 0, y: 40, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            whileHover={{ scale: 1.03, y: -4 }}
+          >
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
                 <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
@@ -1875,11 +2074,11 @@ const Leads = () => {
                 </div>
               )}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* All Lead Main Table */}
-        {user.role !== "Resume" && user.role !== "Sales" && (
+        {user.role !== "Resume" && user.role !== "Sales" && user.role !== "Marketing" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
               <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -2434,16 +2633,16 @@ const Leads = () => {
                             />
                           </td>
                           <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                            <p className="mb-0 text-left tableData">{a.candidate_name || a.name}</p>
                           </td>
                           <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                            <p className="mb-0 text-left tableData">{a.candidate_email || a.email}</p>
                           </td>
                           {/* <td>
                         <p className="mb-0 text-left tableData">{a.type}</p>
                       </td> */}
                           <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                            <p className="mb-0 text-left tableData">{a.candidate_phone_no || a.phone}</p>
                           </td>
                           <td>
                             {permissions?.lead?.assignToSales && (
@@ -2455,6 +2654,20 @@ const Leads = () => {
                                 Assign
                               </button>
                             )}
+                            <button
+                              className="btn btn-sm btn-success ms-2"
+                              data-bs-toggle="modal"
+                              data-bs-target="#viewLead"
+                              onClick={() => {
+                                setTimeout(() => {
+                                  console.log("Selected Lead in modal", a);
+                                  setSelectedLead(a);
+                                  setModalSource("unassigned");
+                                }, 600);
+                              }}
+                            >
+                              View Lead
+                            </button>
                           </td>
 
                           {/* <td className="text-left tableData">
@@ -2575,10 +2788,9 @@ const Leads = () => {
                 {user.role === "Sales" && (
                   <div className="d-flex justify-content-center align-items-center gap-3">
                     <select
-                      className="form-select form-select-sm"
+                      className="form-select form-select-sm selectFont"
                       value={assignedFilters.sortByDate}
-                      onChange={(e) => setAssignedFilters({ ...assignedFilters, sortByDate: e.target.value })}
-                    >
+                      onChange={(e) => setAssignedFilters({ ...assignedFilters, sortByDate: e.target.value })}>
                       <option value="">----Sort By Order----</option>
                       <option value="desc">Newest to Oldest</option>
                       <option value="asc">Oldest to Newest</option>
@@ -2957,7 +3169,7 @@ const Leads = () => {
                             type="text"
                             name="technology"
                             className="form-control form-control-sm w-100 selectFont"
-                            value={selectedLead?.technology}
+                            value={selectedLead?.technology || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, technology: e.target.value })}
                             placeholder="e.g React, Node, Angular"
                           />
@@ -3387,7 +3599,7 @@ const Leads = () => {
             </div>
           </div>
         </div>
-      </div >
+      </div>
 
       {console.log("Selected Lead in modal:", selectedLead)}
       {/* View Lead Modal */}
@@ -3434,7 +3646,7 @@ const Leads = () => {
                           <tbody>
                             <tr>
                               <th className="tableHeader">Name</th>
-                              <td className="tableData" colSpan="5">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || "N/A"}</td>
+                              <td className="tableData" colSpan="5">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Email</th>
@@ -3857,8 +4069,8 @@ const Leads = () => {
         </div >
       </div>
 
-
       {/* Interested Leads */}
+
       {user.role == "Sales" && (
         <div className="col-12 col-md-8 col-lg-12 mt-2">
           <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
@@ -3871,6 +4083,14 @@ const Leads = () => {
 
               <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                 <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <select
+                    className="form-select form-select-sm mx-2 selectFont"
+                    value={interestedFilters.sortByDate}
+                    onChange={(e) => setInterestedFilters({ ...interestedFilters, sortByDate: e.target.value })}>
+                    <option value="">----Sort By Order----</option>
+                    <option value="desc">Newest to Oldest</option>
+                    <option value="asc">Oldest to Newest</option>
+                  </select>
                   <span className="input-group-text bg-white border-end-0">
                     <i className="bi bi-search"></i>
                   </span>
@@ -4092,6 +4312,14 @@ const Leads = () => {
 
               <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                 <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                  <select
+                    className="form-select form-select-sm selectFont"
+                    value={assignedFilters.sortByDate}
+                    onChange={(e) => setAssignedFilters({ ...assignedFilters, sortByDate: e.target.value })}>
+                    <option value="">----Sort By Order----</option>
+                    <option value="desc">Newest to Oldest</option>
+                    <option value="asc">Oldest to Newest</option>
+                  </select>
                   <span className="input-group-text bg-white border-end-0">
                     <i className="bi bi-search"></i>
                   </span>
@@ -4958,6 +5186,7 @@ const Leads = () => {
       )} */}
 
       {/* All Untouched Leads */}
+
       {
         user.role === "Resume" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
@@ -4970,6 +5199,11 @@ const Leads = () => {
 
                 <div className="d-flex flex-wrap align-items-center gap-2">
                   <div className="input-group input-group-sm search w-auto">
+                    <select className="form-select form-select-sm me-2 selectFont" value={untouchedFilters.sortByDate} onChange={(e) => setUntouchedFilters({ ...untouchedFilters, sortByDate: e.target.value })}>
+                      <option value="">---Sort By Date---</option>
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                    </select>
                     <span className="input-group-text bg-white border-end-0">
                       <i className="bi bi-search"></i>
                     </span>
@@ -5128,6 +5362,11 @@ const Leads = () => {
 
                 <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                   <div className="input-group input-group-sm search flex-nowrap w-md-auto">
+                    <select className="form-select form-select-sm me-2 selectFont" value={touchedFilters.sortByDate} onChange={(e) => setTouchedFilters({ ...touchedFilters, sortByDate: e.target.value })}>
+                      <option value="">---Sort By Date---</option>
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                    </select>
                     <span className="input-group-text bg-white border-end-0">
                       <i className="bi bi-search"></i>
                     </span>
@@ -5299,6 +5538,11 @@ const Leads = () => {
                 </div>
                 <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                   <div className="input-group input-group-sm search flex-nowrap w-md-auto w-100">
+                    <select className="form-select form-select-sm me-2 selectFont" value={completedFilters.sortByDate} onChange={(e) => setCompletedFilters({ ...completedFilters, sortByDate: e.target.value })}>
+                      <option value="">---Sort By Date---</option>
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                    </select>
                     <span className="input-group-text bg-white border-end-0">
                       <i className="bi bi-search"></i>
                     </span>
@@ -5379,10 +5623,20 @@ const Leads = () => {
                             {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
                           </td>
                           <td className="mb-0 text-left tableData">
+                            {!t.movedToMarketing ? (
+                              <button
+                                className="btn btn-sm btn-warning fw-semibold"
+                                onClick={() => handleMovedToMarketing(t._id)}
+                              >
+                                Move to Marketing
+                              </button>
+                            ) : (
+                              <span className="badge bg-success">Moved to Marketing</span>
+                            )}
                             {t.startDate ? (
                               t.endDate ? (
                                 <button
-                                  className="btn btn-sm btn-bg-muted"
+                                  className="btn btn-sm btn-bg-muted ms-2"
                                   disabled>
                                   Done
                                 </button>

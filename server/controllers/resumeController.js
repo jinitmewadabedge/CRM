@@ -216,3 +216,24 @@ exports.startWork = async (req, res) => {
     }
 };
 
+exports.movedToMarketing = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const updated = await Candidate.findByIdAndUpdate(id,
+            {
+                movedToMarketing: true
+            },
+            { new: true }
+        );
+
+        if (!updated) return res.status(404).json({ message: "Lead is not found" });
+
+        res.status(200).json({ message: "Lead moved to marketing successfully", candidate: updated });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error to moved to Marketing" });
+    }
+};
+

@@ -3,7 +3,18 @@ import { useNavigate, NavLink } from "react-router-dom";
 import axios from "axios";
 import Logo from "../assets/logo_webp.webp";
 import "../App.css";
+"use client";
+import { TextAnimate } from "../registry/magicui/text-animate";
 import { toast } from "react-toastify";
+import Lead_Hero from "../assets/lead_hero_image.jpg"
+import lead_hero_img from "../assets/lead_img.jpg"
+import lead_img_1 from "../assets/lead_img_1.png"
+import lead_img_1_BR from "../assets/lead_img_1_BR.png"
+import lead_img_2 from "../assets/lead_img_2.png"
+import hero_video from "../assets/Animated.mp4"
+import Lottie from "lottie-react"
+import heroAnimation from "../assets/hero_json.json"
+import {DotLottieReact} from '@lottiefiles/dotlottie-react'
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -19,7 +30,7 @@ const Login = () => {
   const roleRoutes = {
     Admin: "/admin-dashboard",
     Sales: "/leads",
-    Marketing: "/marketing-dashboard",
+    Marketing: "/leads",
     Technical: "/technical-dashboard",
     Lead_Gen_Manager: "/leads",
     Sr_Lead_Generator: "/leads",
@@ -38,8 +49,6 @@ const Login = () => {
       navigate(route);
     }
   }, []);
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -88,10 +97,10 @@ const Login = () => {
     <div className="container-fluid">
       <div className="row">
 
-        <div className="col-12 col-md-12 col-lg-6 d-flex align-items-center justify-content-center flex-column vh-100 border">
-          <img src={Logo} className="img-fluid LogoImage" alt="Logo" />
+        <div className="col-12 col-md-12 col-lg-6 d-flex align-items-center justify-content-center flex-column vh-100 position-relative">
+          <img src={Logo} className="img-fluid LogoImage logo-top" alt="Logo" />
           <h1 className="display-1 fw-bold">Hello!</h1>
-          <p>Welcome back to the community</p>
+          <p className="greenColor">Welcome back to the community</p>
 
           <form onSubmit={handleSubmit} className="w-75">
 
@@ -171,7 +180,6 @@ const Login = () => {
 
                 <div className="d-flex align-items-center">
                   {loading && <span className="loader"></span>}
-                  {/* <span class="loader">Load&nbsp;ng</span> */}
                   <h6 className="mb-0">{loading ? "" : "Login"}</h6>
                 </div>
               </button>
@@ -180,20 +188,107 @@ const Login = () => {
               <h6 className="alert alert-danger mt-3 forgot-password text-center"><strong><i class="bi-exclamation-octagon-fill"></i> {errorMessage}</strong></h6>
             )}
           </form>
+
         </div>
 
-        <div className="col-12 col-md-12 col-lg-6 d-flex justify-content-center align-items-center flex-column gap-4 vh-100 border secondBox">
-          <h1 className="text-white text-center display-3">
-            <span className="fw-bold Empowering">Empowering </span> Teams, <br /> Driving{" "}
-            <span className="fw-bold Success">Success</span>.
-          </h1>
-          <p className="text-white">
-            Together is beginning, Together is progress, Together is success.
-          </p>
+        <div className="col-12 col-md-12 col-lg-6 d-none d-lg-flex justify-content-start align-items-center flex-column vh-100 position-relative overflow-hidden secondDiv">
+         
+          <img
+            src={lead_img_1}
+            className="img-fluid lead-img-animate"
+            alt="Lead Background"
+            style={{
+              width: "60%",
+              height: "60%",
+              objectFit: "cover",
+              top: -50,
+              left: 130,
+              zIndex: 0,
+              opacity: 0.9,
+            }}
+          />
+
+          <div className="text-center text-white position-relative px-3" style={{ zIndex: 1, marginTop: "0%" }}>
+            <p className="lead display-3 text-animate-wrapper mb-3">
+              <TextAnimate
+                highlightWords={["Empowering", "Teams", "Driving", "Success"]}
+                highlightStyle={{ fontWeight: 700, color: "#42602E" }}
+                animation={["slideUp", "blurIn"]}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: (i) => ({
+                    opacity: 1,
+                    y: 0,
+                    transition: { delay: i * 0.03, duration: 0.6 },
+                  }),
+                }}
+                by="character">
+                Empowering Teams, Driving Success.
+              </TextAnimate>
+            </p>
+
+            <p className="lead fs-5">
+              <TextAnimate
+                animation={["slideUp", "blurIn"]}
+                highlightWords={["Together", "is", "beginning", "progress", "Success"]}
+                highlightStyle={{ fontWeight: 500, color: "#000000ff" }}
+                variants={{
+                  hidden: { opacity: 0, y: 20 },
+                  show: (i) => ({
+                    opacity: 1,
+                    y: 0,
+                    transition: { delay: i * 0.03, duration: 0.9 },
+                  }),
+                }}
+                by="character">
+                Together is beginning, Together is progress, Together is success.
+              </TextAnimate>
+            </p>
+          </div>
         </div>
+
       </div>
-    </div>
+    </div >
   );
 };
 
 export default Login;
+
+{/* <div className="col-12 col-md-12 col-lg-7 d-flex justify-content-center align-items-center flex-column gap-4 vh-100">
+          <img src={lead_img_1} className="img-fluid" style={{position: "absolate"}} alt="" />
+          <p className="text-white lead display-3 text-center text-animate-wrapper" style={{position:"relative"}}>
+            <TextAnimate
+              highlightWords={["Empowering", "Success"]}
+              highlightStyle={{ fontWeight: 700, color: "#6dc532ff" }}
+              animation={["slideUp", "blurIn"]}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: (i) => ({
+                  opacity: 1,
+                  y: 0,
+                  transition: { delay: i * 0.03, duration: 0.6 },
+                }),
+              }}
+              by="character"
+            >
+              Empowering Teams, Driving Success.
+            </TextAnimate>
+          </p>
+
+          <p className="text-white lead text-center">
+            <TextAnimate
+              animation={["slideUp", "blurIn"]}
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                show: (i) => ({
+                  opacity: 1,
+                  y: 0,
+                  transition: { delay: i * 0.03, duration: 0.9 },
+                }),
+              }}
+              by="character"
+            >
+              Together is beginning, Together is progress, Together is success.
+            </TextAnimate>
+          </p>
+        </div> */}

@@ -14,10 +14,16 @@
   "dependencies": {
     "@fortawesome/fontawesome-free": "^7.1.0",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@lottiefiles/dotlottie-react": "^0.17.7",
     "@rbnd/react-dark-mode": "^2.0.2",
+    "@tabler/icons-react": "^3.35.0",
     "axios": "^1.11.0",
     "bootstrap": "^5.3.8",
     "bootstrap-icons": "^1.13.1",
+    "clsx": "^2.1.1",
+    "framer-motion": "^12.23.24",
+    "lottie-react": "^2.4.1",
+    "motion": "^12.23.24",
     "react": "^19.1.1",
     "react-bootstrap": "^2.10.10",
     "react-collapse": "^5.1.1",
@@ -29,6 +35,8 @@
     "react-router-dom": "^7.9.3",
     "react-toastify": "^11.0.5",
     "styled-components": "^6.1.19",
+    "tailwind-merge": "^3.4.0",
+    "tailwind-variants": "^3.1.1",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {

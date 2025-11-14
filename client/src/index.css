@@ -10,10 +10,41 @@ body {
 }
 
 .LogoImage {
+    width: 150px;
+}
+
+.logo-top {
     position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 12%;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.lead-img-animate {
+    animation: fadeSlideIn 1.0s ease-out forwards;
+}
+
+@keyframes fadeSlideIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    50% {
+        opacity: 0.1;
+        transform: scale(0.60);
+    }
+
+    100% {
+        opacity: 0.9;
+        transform: scale(1);
+    }
+}
+
+@media (max-width: 1428px) {
+    div.secondDiv{
+        display: none !important;
+    }
 }
 
 .secondBox {
@@ -42,4 +73,3 @@ body {
     border: 1px solid #42602E;
     font-size: 12px;
 }
-

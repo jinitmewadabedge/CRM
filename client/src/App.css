@@ -612,3 +612,35 @@ td {
   box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
   text-align: center;
 }
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+h1 span:first-child {
+  font-weight: 700;
+}
+@media (min-width: 992px) {
+  .text-animate-wrapper {
+    max-width: 660px; /* adjust as needed */
+    margin: 0 auto;
+    white-space: normal;
+    text-align: center;
+  }
+}
+
+@media (max-width: 991px) {
+  .text-animate-wrapper {
+    white-space: normal;
+  }
+}
+.greenColor{
+  color: #42602E;
+}
