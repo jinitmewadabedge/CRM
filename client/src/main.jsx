@@ -5,10 +5,13 @@ import './index.css'
 import App from './App.jsx'
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
+import { ThemeProvider } from './components/themeProvider.js';
 
 
 createRoot(document.getElementById('root')).render(
   // <StrictMode>
-  <App />
+  <ThemeProvider defaultTheme='dark' storageKey='vite-ui-theme'>
+    <App />
+  </ThemeProvider>
   /* </StrictMode> */
 )

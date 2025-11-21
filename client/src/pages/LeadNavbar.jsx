@@ -2,7 +2,8 @@ import React from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import Logo from "../../assets/logo.png"
 import { FaHome, FaUser, FaUserShield, FaChartBar, FaFileAlt, FaBullhorn, FaCog } from 'react-icons/fa'
-import {FiLogOut} from 'react-icons/fi'
+import { FiLogOut } from 'react-icons/fi'
+import { ModeToggle } from '../components/mode-toggle'
 const LeadNavbar = () => {
 
     const navigate = useNavigate();
@@ -57,6 +58,7 @@ const LeadNavbar = () => {
                                 Logout
                             </button>
                         </li>
+                     
                     </ul>
                 </div>
             </nav >

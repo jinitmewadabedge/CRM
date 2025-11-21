@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useRef } from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
@@ -10,7 +10,6 @@ import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
 import * as XLSX from 'xlsx';
 import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, FaThumbsDown, FaArrowUp, FaThumbsUp, FaComments, FaRedo, FaGraduationCap, FaMoneyBillWave, FaClock } from "react-icons/fa";
-// import LinuxCard from "../../components/LinuxCard";
 import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import MyLoader from '../../components/Lead/MyLoader';
@@ -18,6 +17,8 @@ import { toast } from "react-toastify";
 import { FiLogOut } from 'react-icons/fi'
 import AnimatedNumber from "../../components/Animated_Number/AnimatedNumber";
 import { motion } from "framer-motion";
+import { ModeToggle } from "../../components/mode-toggle";
+import AnnouncementModal from "../../components/DarkModeModal/AnnouncementModal";
 
 const Leads = () => {
   const { id } = useParams();
@@ -40,6 +41,9 @@ const Leads = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentUnassignedPage, setCurrentUnassignedPage] = useState(1);
   const [currentAssignedPage, setCurrentAssignedPage] = useState(1);
+  const [currentFollowUpPage, setCurrentFollowUpPage] = useState(1);
+  const [currentInDiscussionPage, setCurrentInDiscussionPage] = useState(1);
+  const [currentEnrolledPage, setCurrentEnrolledPage] = useState(1);
   const [modalSource, setModalSource] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [trainingLeads, setTrainingLeads] = useState([]);
@@ -59,6 +63,9 @@ const Leads = () => {
 
   const [selectedTouchedLeads, setSelectedTouchedLeads] = useState([]);
   const [selectAllTouched, setSelectAllTouched] = useState(false);
+
+  const [selectedUntouchedLeads, setSelectedUntouchedLeads] = useState([]);
+  const [selectAllUntouched, setSelectAllUntouched] = useState(false);
 
   const [selectedCompletedLeads, setSelectedCompletedLeads] = useState([]);
   const [selectAllCompleted, setSelectAllCompleted] = useState(false);
@@ -183,8 +190,11 @@ const Leads = () => {
   });
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const [enrollLead, setEnrollLead] = useState(null);
+  const today = new Date();
+  const formattedToday = today.toISOString().split("T")[0];
+
   const [enrollmentData, setEnrollmentData] = useState({
-    enrollmentDate: new Date().toISOString().slice(0.10),
+    enrollmentDate: formattedToday,
     plan: "",
     upfront: "",
     contracted: "",
@@ -210,6 +220,13 @@ const Leads = () => {
   const [candidates, setCandidates] = useState([]);
   const [cvLeads, setCVLeads] = useState([]);
 
+  const [FollowUpLeads, setFollowUpLeads] = useState([]);
+  const [inDiscussionLeads, setInDiscussionLeads] = useState([]);
+
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+
+  const hasRunRef = useRef(false);
+
   // useEffect(() => {
   //   const fetchState = async () => {
   //     try {
@@ -229,8 +246,30 @@ const Leads = () => {
   // }, []);
 
   useEffect(() => {
+    if (hasRunRef.current) return;
+    hasRunRef.current = true;
+
+    const seen = localStorage.getItem("AnnouncementModal");
+
+    if (!seen) {
+      setShowAnnouncement(true);
+      localStorage.setItem("AnnouncementModal", "yes");
+    }
+  }, []);
+
+  useEffect(() => {
     fetchCandidates();
   }, [])
+
+  useEffect(() => {
+    setShowAnnouncement(true);
+  }, []);
+
+  const formatDateOnly = (dateString) => {
+    if (!dateString) return "";
+    const [year, month, day] = dateString.split("-");
+    return `${day}/${month}/${year}`;
+  };
 
   const fetchCandidates = async () => {
     try {
@@ -547,6 +586,21 @@ const Leads = () => {
     }
   };
 
+  const handleSelectAllUntouched = () => {
+    if (selectAllUntouched) {
+      setSelectedUntouchedLeads([]);
+      setSelectedLead([]);
+      setSelectAllUntouched(false);
+      console.log("Deselected all 'Assigned Leads'");
+    } else {
+      const ids = untouchedLeads.map(l => l._id);
+      setSelectedUntouchedLeads(ids);
+      setSelectedLead(ids);
+      setSelectAllUntouched(true);
+      console.log(`Selected all 'Assigned Leads': ${ids.length}`);
+    }
+  };
+
   const handleSelectAllCompleted = () => {
     if (selectAllCompleted) {
       setSelectedCompletedLeads([]);
@@ -645,6 +699,20 @@ const Leads = () => {
           } else {
             updated = [...prev, id];
             if (updated.length === touchedLeads.length) setSelectAllTouched(true);
+          }
+          return updated;
+        });
+        break;
+
+      case "untouched":
+        setSelectedUntouchedLeads(prev => {
+          let updated;
+          if (prev.includes(id)) {
+            updated = prev.filter(l => l !== id);
+            setSelectAllUntouched(false);
+          } else {
+            updated = [...prev, id];
+            if (updated.length === untouchedLeads.length) setSelectAllUntouched(true);
           }
           return updated;
         });
@@ -1389,18 +1457,68 @@ const Leads = () => {
     });
   }, [assignedLeads, assignedFilters.sortByDate]);
 
+  const sortedEnrolledLeads = useMemo(() => {
+    return [...enrolledLeads].sort((a, b) => {
+      if (enrolledFilters.sortByDate === "desc") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+    });
+  }, [enrolledLeads, enrolledFilters.sortByDate]);
+
+  const sortedInDiscussionLeads = useMemo(() => {
+    return [...inDiscussionLeads].sort((a, b) => {
+      if (inDiscussionFilters.sortByDate === "desc") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+    });
+  }, [inDiscussionLeads, inDiscussionFilters.sortByDate]);
+
   const indexOfLastAssignedLeads = currentAssignedPage * leadsPerPage;
   const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
   const currentAssignedLeads = sortedAssignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
 
+  const indexOfLastEnrolledLeads = currentEnrolledPage * leadsPerPage;
+  const indexOfFirstEnrolledLeads = indexOfLastEnrolledLeads - leadsPerPage;
+  const currentEnrolledLeads = sortedEnrolledLeads.slice(indexOfFirstEnrolledLeads, indexOfLastEnrolledLeads);
+
+  const indexOfLastInDiscussionLeads = currentInDiscussionPage * leadsPerPage;
+  const indexOfFirstInDiscussionLeads = indexOfLastInDiscussionLeads - leadsPerPage;
+  const currentInDiscussionLeads = sortedInDiscussionLeads.slice(indexOfFirstInDiscussionLeads, indexOfLastInDiscussionLeads);
+
   const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
   const totalUnassignedPages = Math.ceil(unassignedLeads.length / leadsPerPage);
   const totalAssignedPages = Math.ceil(assignedLeads.length / leadsPerPage);
+  const totalInDiscussionPages = Math.ceil(inDiscussionLeads.length / leadsPerPage);
+  const totalEnrolledPages = Math.ceil(enrolledLeads.length / leadsPerPage);
+
+  const sortedFollowUpLeads = useMemo(() => {
+    return [...FollowUpLeads].sort((a, b) => {
+      if (followUpFilters.sortByDate === "desc") {
+        return new Date(b.createdAt) - new Date(a.createdAt);
+      } else {
+        return new Date(a.createdAt) - new Date(b.createdAt);
+      }
+    });
+  }, [FollowUpLeads, followUpFilters.sortByDate]);
+
+  const indexOfLastFollowUpLeads = currentFollowUpPage * leadsPerPage;
+  const indexOfFirstFollowUpLeads = indexOfLastFollowUpLeads - leadsPerPage;
+  const currentFollowUpLeads = sortedFollowUpLeads.slice(indexOfFirstFollowUpLeads, indexOfLastFollowUpLeads);
+
+  const totalFollowUpPages = Math.ceil(FollowUpLeads.length / leadsPerPage);
+
+  console.log("Unassigned state(render):", unassignedLeads);
+  console.log("Assigned state(render):", assignedLeads);
 
   const interestedLeads = salesLeads.filter(l => l.status === "Interested");
   const notInterestedLeads = salesLeads.filter(l => l.status === "Not Interested");
   const followUpLeads = salesLeads.filter(l => l.status === "Follow-up");
-  const inDiscussionLeads = salesLeads.filter(l => l.status === "In Discussion");
+  const indiscussionLeads = salesLeads.filter(l => l.status === "In Discussion");
+  const enrolledLead = salesLeads.filter(l => l.status === "Enrolled");
 
   useEffect(() => {
     const interestedLeads = salesLeads.filter(l => l.status === "Interested");
@@ -1411,8 +1529,14 @@ const Leads = () => {
 
     const followUpLeads = salesLeads.filter(l => l.status === "Follow-up");
     console.log("Follow Up Leads:", followUpLeads);
-  }, [salesLeads]);
 
+    const inDiscussionLeads = salesLeads.filter(l => l.status === "In Discussion");
+    console.log("In Discussion Leads:", inDiscussionLeads);
+
+    const enrolledLeads = salesLeads.filter(l => l.status === "Enrolled");
+    console.log("Enrolled Leads:", enrolledLeads);
+
+  }, [salesLeads]);
 
   useEffect(() => {
     async function fetchLeads() {
@@ -1458,6 +1582,17 @@ const Leads = () => {
     }
     fetchLeads();
   }, [])
+
+
+  // useEffect(() => {
+  //   const seen = localStorage.getItem("AnnouncementModal");
+
+  //   if (!seen) {
+  //     setShowAnnouncement(true);
+
+  //     localStorage.setItem("AnnouncementModal", "yes")
+  //   }
+  // }, [])
 
   useEffect(() => {
     const fetchActiveLead = async () => {
@@ -1554,9 +1689,6 @@ const Leads = () => {
     );
   });
 
-  console.log("Unassigned state(render):", unassignedLeads);
-  console.log("Assigned state(render):", assignedLeads);
-
   return (
 
     <div className="container-fluid mt-5 px-5">
@@ -1577,6 +1709,9 @@ const Leads = () => {
             />
             ,
           </h4>
+          <ModeToggle />
+          {/* <AnnouncementModal show={showAnnouncement} /> */}
+          {showAnnouncement && <AnnouncementModal show={showAnnouncement} />}
         </div>
 
         {/* {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
@@ -2059,6 +2194,7 @@ const Leads = () => {
                     className="mb-2 rounded-circle img-fluid d-none d-md-block"
                     style={{ width: "70px", height: "70px" }}
                   />
+
                   <img
                     src={LeadImg}
                     alt="Untouched Leads"
@@ -2323,7 +2459,7 @@ const Leads = () => {
                   columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
               ) : (
                 <div className="table-container">
-                  <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
                     <thead className="bg-light">
                       <tr>
                         <th className="text-center tableHeader">
@@ -2592,7 +2728,7 @@ const Leads = () => {
                   columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
               ) : (
                 <div className="table-container">
-                  <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
                     <thead className="bg-light">
                       <tr>
                         <th className="text-left tableHeader">
@@ -2647,6 +2783,7 @@ const Leads = () => {
                           <td>
                             {permissions?.lead?.assignToSales && (
                               <button
+                                id="assign"
                                 className="btn btn-sm btn-success"
                                 onClick={() => setSelectedLead(a._id)}
                                 data-bs-toggle="modal"
@@ -2655,6 +2792,7 @@ const Leads = () => {
                               </button>
                             )}
                             <button
+                              id="viewLead"
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
                               data-bs-target="#viewLead"
@@ -2846,7 +2984,7 @@ const Leads = () => {
                   columnWidths={["90", "140", "110", "110", "200", "130", "130", "110", "130"]} />
               ) : (
                 <div className="table-container">
-                  <table className="table table-hover table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                  <table className="table table-hover table-responsive align-middle rounded-5 mb-0 bg-white">
                     <thead className="bg-light">
                       <tr>
                         <th className="text-left tableHeader">
@@ -2996,12 +3134,11 @@ const Leads = () => {
                         </tr>
                       ))}
                     </tbody>
-
                   </table>
 
-                  <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
+                  <div className="d-flex justify-content-center justify-content-md-center flex-wrap align-items-center gap-1 py-2 assignLeadsTableBackground">
                     <button
-                      className="btn btn-sm btn-outline-primary me-2"
+                      className="btn btn-sm btn-outline-primary me-1 previousDark"
                       disabled={currentAssignedPage === 1}
                       onClick={() => setCurrentAssignedPage(currentAssignedPage - 1)}
                     >
@@ -3011,7 +3148,7 @@ const Leads = () => {
                     {[...Array(totalAssignedPages)].map((_, index) => (
                       <button
                         key={index}
-                        className={`btn btn-sm me-1 ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                        className={`btn btn-sm me-1 numberDark ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
                         onClick={() => setCurrentAssignedPage(index + 1)}
                       >
                         {index + 1}
@@ -3019,7 +3156,7 @@ const Leads = () => {
                     ))}
 
                     <button
-                      className="btn btn-sm btn-outline-primary ms-2"
+                      className="btn btn-sm btn-outline-primary ms-2 nextDark"
                       disabled={currentAssignedPage === totalAssignedPages}
                       onClick={() => setCurrentAssignedPage(currentAssignedPage + 1)}
                     >
@@ -3027,12 +3164,12 @@ const Leads = () => {
                     </button>
                   </div>
 
+
                   <div
                     className="modal fade"
                     id="assignLeadModal"
                     tabIndex="-1"
-                    aria-hidden="true"
-                  >
+                    aria-hidden="true">
                     <div className="modal-dialog modal-dialog-centered modal-md" role="document">
                       <div className="modal-content">
                         <div className="modal-body p-0">
@@ -3097,8 +3234,9 @@ const Leads = () => {
                   </div>
                 </div >
               )}
-            </div >
-          </div >
+
+            </div>
+          </div>
         )}
 
       </div >
@@ -3302,131 +3440,278 @@ const Leads = () => {
         </div>
       </div>
 
-      {/* Enrollment Modal */}
       {showEnrollModal && (
         <div className="modal show d-block" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
+          <div className="modal-dialog modal-xl">
             <div className="modal-content">
               <div className="modal-header">
-                <h5 className="modal-title">Enroll Candidate</h5>
+                <h5 className="modal-title text-center">Enroll Candidate</h5>
                 <button type="button" className="btn-close" onClick={() => setShowEnrollModal(false)}></button>
               </div>
+
               <div className="modal-body">
-                <div className="row g-2">
-                  <div className="col-md-6">
-                    <label>Enrollment Date</label>
-                    <input type="date" className="form-control form-control-sm"
-                      value={enrollmentData.enrollmentDate}
-                      onChange={e => setEnrollmentData({ ...enrollmentData, enrollmentDate: e.target.value })}
-                    />
-                  </div>
-                  <div className="col-md-6">
-                    <label>Candidate Name</label>
-                    <input type="text" className="form-control form-control-sm" value={enrollLead?.candidate_name} disabled />
-                  </div>
-                  <div className="col-md-6">
-                    <label>Email</label>
-                    <input type="email" className="form-control form-control-sm" value={enrollLead?.candidate_email} disabled />
-                  </div>
-                  <div className="col-md-6">
-                    <label>Number</label>
-                    <input type="text" className="form-control form-control-sm" value={enrollLead?.candidate_phone_no} disabled />
-                  </div>
-                  <div className="col-md-6">
-                    <label>Upfront</label>
-                    <input type="number" className="form-control form-control-sm" value={enrollmentData.upfront} onChange={e => setEnrollmentData({ ...enrollmentData, upfront: e.target.value })} />
-                  </div>
-                  <div className="col-md-6">
-                    <label>Contracted</label>
-                    <input type="number" className="form-control form-control-sm" value={enrollmentData.contracted} onChange={e => setEnrollmentData({ ...enrollmentData, contracted: e.target.value })} />
-                  </div>
-                  {enrollmentData.collectedPayments.map((payment, index) => (
-                    <React.Fragment key={index}>
+
+                <div className="row">
+
+                  <div className="col-lg-6 col-md-12">
+                    <div className="row g-2">
+
                       <div className="col-md-6">
-                        <label>Collected Amount {index + 1}</label>
-                        <input
-                          type="number"
-                          className="form-control form-control-sm"
-                          value={payment.amount}
-                          onChange={(e) => {
-                            const newPayments = [...enrollmentData.collectedPayments];
-                            newPayments[index].amount = e.target.value;
-                            setEnrollmentData({ ...enrollmentData, collectedPayments: newPayments });
-                          }}
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <label>Collected Date {index + 1}</label>
+                        <label className="tableData">Enrollment Date</label>
                         <input
                           type="date"
-                          className="form-control form-control-sm"
-                          value={payment.date}
-                          onChange={(e) => {
-                            const newPayments = [...enrollmentData.collectedPayments];
-                            newPayments[index].date = e.target.value;
-                            setEnrollmentData({ ...enrollmentData, collectedPayments: newPayments });
-                          }}
+                          className="form-control form-control-sm tableData"
+                          value={enrollmentData.enrollmentDate}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, enrollmentDate: e.target.value })}
                         />
                       </div>
-                    </React.Fragment>
-                  ))}
-                  <div className="col-md-6">
-                    <label>Percentage</label>
-                    <input type="number" className="form-control form-control-sm" value={enrollmentData.percentage} onChange={e => setEnrollmentData({ ...enrollmentData, percentage: e.target.value })} />
-                  </div>
-                  <div className="col-md-6">
-                    <label>Job Guarantee</label>
-                    {/* <input type="text" className="form-control form-control-sm" value={enrollmentData.jobGuarantee} onChange={e => setEnrollmentData({ ...enrollmentData, jobGuarantee: e.target.value })} /> */}
-                    <select name="" id="" className="form-select form-select-sm" value={enrollmentData.jobGuarantee}
-                      onChange={e => setEnrollmentData({ ...enrollmentData, jobGuarantee: e.target.value })}>
-                      <option value="">-----Select---</option>
-                      <option value="true">Yes</option>
-                      <option value="false">No</option>
-                    </select>
-                  </div>
-                  <div className="col-md-6">
-                    <label>Technology</label>
-                    <input type="text" className="form-control form-control-sm" value={enrollLead?.technology} disabled />
+
+                      <div className="col-md-6">
+                        <label className="tableData">Candidate Name</label>
+                        <input type="text" className="form-control form-control-sm tableData" value={enrollLead?.candidate_name} disabled />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Email</label>
+                        <input type="email" className="form-control form-control-sm tableData" value={enrollLead?.candidate_email} disabled />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Number</label>
+                        <input type="text" className="form-control form-control-sm tableData" value={enrollLead?.candidate_phone_no} disabled />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Upfront</label>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm tableData"
+                          value={enrollmentData.upfront}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, upfront: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Contracted</label>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm tableData"
+                          value={enrollmentData.contracted}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, contracted: e.target.value })}
+                        />
+                      </div>
+
+                      {enrollmentData.collectedPayments.map((payment, index) => (
+                        <React.Fragment key={index}>
+                          <div className="col-md-6">
+                            <label className="tableData">Collected Amount {index + 1}</label>
+                            <input
+                              type="number"
+                              className="form-control form-control-sm tableData"
+                              value={payment.amount}
+                              onChange={(e) => {
+                                const newPayments = [...enrollmentData.collectedPayments];
+                                newPayments[index].amount = e.target.value;
+                                setEnrollmentData({ ...enrollmentData, collectedPayments: newPayments });
+                              }}
+                            />
+                          </div>
+
+                          <div className="col-md-6">
+                            <label className="tableData">Collected Date {index + 1}</label>
+                            <input
+                              type="date"
+                              className="form-control form-control-sm tableData"
+                              value={payment.date}
+                              onChange={(e) => {
+                                const newPayments = [...enrollmentData.collectedPayments];
+                                newPayments[index].date = e.target.value;
+                                setEnrollmentData({ ...enrollmentData, collectedPayments: newPayments });
+                              }}
+                            />
+                          </div>
+                        </React.Fragment>
+                      ))}
+
+                      <div className="col-md-6">
+                        <label className="tableData">Percentage</label>
+                        <input
+                          type="number"
+                          className="form-control form-control-sm tableData"
+                          value={enrollmentData.percentage}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, percentage: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Job Guarantee</label>
+                        <select
+                          className="form-select form-select-sm tableData"
+                          value={enrollmentData.jobGuarantee}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, jobGuarantee: e.target.value })}
+                        >
+                          <option value="">-----Select---</option>
+                          <option value="true">Yes</option>
+                          <option value="false">No</option>
+                        </select>
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Technology</label>
+                        <input type="text" className="form-control form-control-sm tableData" value={enrollLead?.technology} disabled />
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Plan</label>
+                        <select
+                          className="form-select form-select-sm tableData"
+                          value={enrollmentData.plan}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, plan: e.target.value })}
+                        >
+                          <option value="">Select Plan</option>
+                          <option value="Basic">Basic</option>
+                          <option value="Standard">Standard</option>
+                          <option value="Premium">Premium</option>
+                        </select>
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="tableData">Payment Gateway</label>
+                        <select
+                          className="form-select form-select-sm tableData"
+                          value={enrollmentData.paymentGateway}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, paymentGateway: e.target.value })}
+                        >
+                          <option value="">Select Gateway</option>
+                          <option value="Razorpay">Razorpay</option>
+                          <option value="Cashfree">Cashfree</option>
+                          <option value="Manual">Manual</option>
+                        </select>
+                      </div>
+
+                      <div className="col-md-6">
+                        <label className="form-label form-label-sm tableData">Payment Status</label>
+                        <select
+                          className="form-select form-select-sm tableData"
+                          value={enrollmentData.paymentStatus}
+                          onChange={e => setEnrollmentData({ ...enrollmentData, paymentStatus: e.target.value })}
+                        >
+                          <option value="">Select Payment Status</option>
+                          <option value="pending">Pending</option>
+                          <option value="paid">Paid</option>
+                        </select>
+                      </div>
+
+                    </div>
                   </div>
 
-                  <div className="col-md-6">
-                    <label>Plan</label>
-                    <select className="form-select form-select-sm" value={enrollmentData.plan}
-                      onChange={e => setEnrollmentData({ ...enrollmentData, plan: e.target.value })}>
-                      <option value="">Select Plan</option>
-                      <option value="Basic">Basic</option>
-                      <option value="Standard">Standard</option>
-                      <option value="Premium">Premium</option>
-                    </select>
-                  </div>
+                  <div className="col-lg-6 col-md-12 mt-3 mt-lg-0">
+                    <h5 className="mb-3 text-center modal-title">Preview</h5>
 
-                  <div className="col-md-6">
-                    <label>Payment Gateway</label>
-                    <select className="form-select form-select-sm" value={enrollmentData.paymentGateway}
-                      onChange={e => setEnrollmentData({ ...enrollmentData, paymentGateway: e.target.value })}>
-                      <option value="">Select Gateway</option>
-                      <option value="Razorpay">Razorpay</option>
-                      <option value="Cashfree">Cashfree</option>
-                      <option value="Manual">Manual</option>
-                    </select>
-                  </div>
+                    <div className="table-responsive">
+                      <table className="table table-bordered table-striped">
+                        <tbody>
 
-                  <div className="col-md-6">
-                    <label className="form-label form-label-sm">Payment Status</label>
-                    <select className="form-select form-select-sm" value={enrollmentData.paymentStatus}
-                      onChange={e => setEnrollmentData({ ...enrollmentData, paymentStatus: e.target.value })}>
-                      <option value="">Select Payment Status</option>
-                      <option value="pending">Pending</option>
-                      <option value="paid">Paid</option>
-                    </select>
+                          <tr>
+                            <th className="tableData fw-bold">Enrollment Date</th>
+                            <td className="tableData">{formatDateOnly(enrollmentData.enrollmentDate)} (DD-MM-YYYY)</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Candidate Name</th>
+                            <td className="tableData">{enrollLead?.candidate_name}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Email</th>
+                            <td className="tableData">{enrollLead?.candidate_email}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Phone</th>
+                            <td className="tableData">{enrollLead?.candidate_phone_no}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Upfront</th>
+                            <td className="tableData">{enrollmentData.upfront || "-"}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Contracted</th>
+                            <td className="tableData">{enrollmentData.contracted || "-"}</td>
+                          </tr>
+
+                          <tr>
+                            <td colSpan="2" className="bg-light fw-bold text-center tableData">
+                              Collected Payments
+                            </td>
+                          </tr>
+
+                          {enrollmentData.collectedPayments.map((p, i) => (
+                            <React.Fragment key={i}>
+                              <tr>
+                                <th className="tableData fw-bold">Amount {i + 1}</th>
+                                <td className="tableData">{p.amount || "-"}</td>
+                              </tr>
+
+                              <tr>
+                                <th className="tableData fw-bold">Date {i + 1}</th>
+                                <td className="tableData">{formatDateOnly(p.date)} (DD-MM-YYYY)</td>
+                              </tr>
+                            </React.Fragment>
+                          ))}
+
+                          <tr>
+                            <td colSpan="2" className="bg-light fw-bold text-center tableData">
+                              Additional Info
+                            </td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Percentage</th>
+                            <td className="tableData">{enrollmentData.percentage || "-"}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Job Guarantee</th>
+                            <td className="tableData">{enrollmentData.jobGuarantee === "true" ? "Yes" : "No"}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Technology</th>
+                            <td className="tableData">{enrollLead?.technology || "-"}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Plan</th>
+                            <td className="tableData">{enrollmentData.plan || "-"}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Payment Gateway</th>
+                            <td className="tableData">{enrollmentData.paymentGateway || "-"}</td>
+                          </tr>
+
+                          <tr>
+                            <th className="tableData fw-bold">Payment Status</th>
+                            <td className="tableData">{enrollmentData.paymentStatus || "-"}</td>
+                          </tr>
+
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
 
                 </div>
+
               </div>
+
               <div className="modal-footer">
-                <button className="btn btn-secondary" onClick={() => setShowEnrollModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleSubmitEnrollment}>Enroll</button>
+                <button className="btn btn-secondary btn-sm" id="cancelButton" onClick={() => setShowEnrollModal(false)}>Cancel</button>
+                <button className="btn btn-primary btn-sm" id="enrollButton" onClick={handleSubmitEnrollment}>Enroll</button>
               </div>
+
             </div>
           </div>
         </div>
@@ -3603,17 +3888,20 @@ const Leads = () => {
 
       {console.log("Selected Lead in modal:", selectedLead)}
       {/* View Lead Modal */}
-      <div className="modal fade" id="viewLead" tabIndex="-1" >
+
+      <div className="modal fade global-modal" id="viewLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
           <div className="modal-content">
-            <div className="modal-body p-0">
-              <div className="card card-plain">
-                <h3 className="modal-title editUserTitle mt-2 text-center">Lead Details</h3>
-                <button type="button" className="btn-close ms-4" data-bs-dismiss="modal" aria-label="Close"></button>
+            {/* <div className="modal-header"> */}
+              <div className="modal-body p-0">
+                <div className="card card-plain cardDark">
+                  <h3 className="modal-title editUserTitle mt-2 text-center leadDetailsDark">Lead Details</h3>
+                  <button type="button" className="btn-close ms-4" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
                 <div className="card-body">
                   {selectedLead ? (
                     <form
-                      className="card p-3 shadow-sm"
+                      className="card p-3 shadow-sm LogcallOutcome"
                       onSubmit={async (e) => {
                         e.preventDefault();
                         console.log("Submitting call for Lead ID:", selectedLead?._id);
@@ -3638,27 +3926,26 @@ const Leads = () => {
                         } finally {
                           setLoading(false);
                         }
-                      }}
-                    >
+                      }}>
 
                       <div className="mb-0 table-responsive">
-                        <table className="table table-bordered table-sm">
+                        <table className="table table-sm">
                           <tbody>
                             <tr>
                               <th className="tableHeader">Name</th>
-                              <td className="tableData" colSpan="5">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A"}</td>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Email</th>
-                              <td className="tableData" colSpan="5">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A"}</td>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Phone</th>
-                              <td className="tableData" colSpan="5">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A"}</td>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A"}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Technology</th>
-                              <td className="tableData" colSpan="5">
+                              <td className="tableData" colSpan="6">
                                 {Array.isArray(selectedLead.technology)
                                   ? selectedLead.technology.join(", ")
                                   : selectedLead.technology}
@@ -3667,37 +3954,37 @@ const Leads = () => {
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">LinkedIn</th>
-                                <td className="tableData" colSpan="5">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A"}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A"}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Visa</th>
-                                <td className="tableData" colSpan="5">{selectedLead.visa || selectedLead?.leadId?.visa}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.visa || selectedLead?.leadId?.visa}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Lead Type</th>
-                                <td className="tableData" colSpan="5">{selectedLead.type || selectedLead?.leadId?.type}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.type || selectedLead?.leadId?.type}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">University</th>
-                                <td className="tableData" colSpan="5">{selectedLead.university || selectedLead?.leadId?.university}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.university || selectedLead?.leadId?.university}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Preferred Time to Talk</th>
-                                <td className="tableData" colSpan="5">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Source</th>
-                                <td className="tableData" colSpan="5">{selectedLead.source || selectedLead?.leadId?.source}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.source || selectedLead?.leadId?.source}</td>
                               </tr>
                             )}
                             {modalSource === "assigned" && selectedLead.assignedTo && (
@@ -3821,7 +4108,7 @@ const Leads = () => {
                             )}
                             <tr>
                               <th className="tableHeader">Status</th>
-                              <td colSpan="5">
+                              <td colSpan="6">
                                 <span
                                   className="badge px-2 d-flex align-items-center justify-content-center gap-2"
                                   style={{
@@ -3865,7 +4152,6 @@ const Leads = () => {
 
                                   return allCalls.length > 0 ? (
                                     <>
-
                                       <tr>
                                         <th colSpan="12" className="text-center tableHeader bg-success text-white">
                                           Call Log Outcomes
@@ -3941,7 +4227,7 @@ const Leads = () => {
 
                       {user.role === "Sales" && (modalSource === "interested" || modalSource === "Not Interested" || modalSource === "inDiscussion" || modalSource === "follow-up" || modalSource === "assigned") && modalSource !== "enrolled" && (
                         <>
-                          <div className="card p-3 shadow-sm mb-3">
+                          <div className="card p-3 mb- LogCallOutcome">
                             <h6 className="text-center mb-3">Log Call Outcome</h6>
                             <select
                               value={outcome}
@@ -3999,7 +4285,7 @@ const Leads = () => {
                           <h5 className="mt-3">Call History</h5>
                           {selectedLead?.callHistory && selectedLead.callHistory.length > 0 ? (
                             <div className="table-responsive">
-                              <table className="table table-striped table-bordered">
+                              <table className="table table-striped">
                                 <thead>
                                   <tr>
                                     <th className="tableHeader">#</th>
@@ -4051,7 +4337,7 @@ const Leads = () => {
                       <div className="text-center">
                         <button
                           type="button"
-                          className="btn btn-danger btn-sm"
+                          className="btn btn-danger btn-sm closeDark"
                           data-bs-dismiss="modal"
                           onClick={() => setSelectedLead(null)}
                         >
@@ -4064,7 +4350,7 @@ const Leads = () => {
                   )}
                 </div>
               </div>
-            </div>
+            {/* </div> */}
           </div>
         </div >
       </div>
@@ -4108,7 +4394,7 @@ const Leads = () => {
             </div>
 
             <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                 <thead className="bg-light">
                   <tr>
                     <th className="text-left tableHeader">#</th>
@@ -4288,7 +4574,7 @@ const Leads = () => {
                   ) : (
                     <tr>
                       <td colSpan="11" className="mb-0 text-center tableData">
-                        No enrolled candidates found
+                        No interested candidates found
                       </td>
                     </tr>
                   )}
@@ -4337,7 +4623,7 @@ const Leads = () => {
             </div>
 
             <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                 <thead className="bg-light">
                   <tr>
                     <th className="text-left tableHeader">#</th>
@@ -4519,7 +4805,7 @@ const Leads = () => {
 
             <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
               <div className="mb-2 mb-md-0">
-                <h5 className="text-left leadManagementTitle mt-4">In Discussion Leads({counts.backendNotInterested})</h5>
+                <h5 className="text-left leadManagementTitle mt-4">In Discussion Leads({counts.backendInDiscussion})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
 
@@ -4542,7 +4828,7 @@ const Leads = () => {
             </div>
 
             <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                 <thead className="bg-light">
                   <tr>
                     <th className="text-left tableHeader">#</th>
@@ -4714,7 +5000,7 @@ const Leads = () => {
 
             <div className="d-flex flex-wrap justify-content-between align-items-center px-3 mt-2 mb-3">
               <div className="mb-2 mb-md-0">
-                <h5 className="text-left leadManagementTitle mt-4">Follow Up Leads({counts.backendNotInterested})</h5>
+                <h5 className="text-left leadManagementTitle mt-4">Follow Up Leads({counts.backendFollowUp})</h5>
                 <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
               </div>
 
@@ -4737,7 +5023,7 @@ const Leads = () => {
             </div>
 
             <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                 <thead className="bg-light">
                   <tr>
                     <th className="text-left tableHeader">#</th>
@@ -4763,8 +5049,8 @@ const Leads = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredFollowUpLeads.length > 0 ? (
-                    filteredFollowUpLeads.map((c, index) => (
+                  {currentFollowUpLeads.length > 0 ? (
+                    currentFollowUpLeads.map((c, index) => (
                       <tr key={c._id}>
                         <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
@@ -4895,6 +5181,35 @@ const Leads = () => {
                   )}
                 </tbody>
               </table>
+
+              <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
+                <button
+                  className="btn btn-sm btn-outline-primary me-2"
+                  disabled={currentFollowUpPage === 1}
+                  onClick={() => setCurrentFollowUpPage(currentFollowUpPage - 1)}
+                >
+                  Previous
+                </button>
+
+                {[...Array(totalFollowUpPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    className={`btn btn-sm me-1 ${currentFollowUpPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setCurrentFollowUpPage(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button
+                  className="btn btn-sm btn-outline-primary ms-2"
+                  disabled={currentFollowUpPage === totalFollowUpPages}
+                  onClick={() => setCurrentFollowUpPage(currentFollowUpPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
@@ -4930,7 +5245,7 @@ const Leads = () => {
             </div>
 
             <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+              <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                 <thead className="bg-light">
                   <tr>
                     <th className="text-left tableHeader">
@@ -4965,8 +5280,8 @@ const Leads = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredEnrolledLeads.length > 0 ? (
-                    filteredEnrolledLeads.map((c, index) => (
+                  {currentEnrolledLeads.length > 0 ? (
+                    currentEnrolledLeads.map((c, index) => (
                       <tr key={c._id}>
                         <td>
                           <input
@@ -5079,6 +5394,35 @@ const Leads = () => {
                   )}
                 </tbody>
               </table>
+
+              <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
+                <button
+                  className="btn btn-sm btn-outline-primary me-2"
+                  disabled={currentEnrolledPage === 1}
+                  onClick={() => setCurrentEnrolledPage(currentEnrolledPage - 1)}
+                >
+                  Previous
+                </button>
+
+                {[...Array(totalEnrolledPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    className={`btn btn-sm me-1 ${currentEnrolledPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setCurrentEnrolledPage(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button
+                  className="btn btn-sm btn-outline-primary ms-2"
+                  disabled={currentEnrolledPage === totalEnrolledPages}
+                  onClick={() => setCurrentEnrolledPage(currentEnrolledPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
+
             </div>
           </div>
         </div>
@@ -5195,6 +5539,11 @@ const Leads = () => {
                 <div className="mb-2 mb-md-0">
                   <h5 className="text-left leadManagementTitle mt-4">Untouched Leads({counts.untouched})</h5>
                   <h6 className="leadManagementSubtitle mb-3">Active Untouched Leads</h6>
+                  {selectedUntouchedLeads.length > 0 && (
+                    <h6 className="tableHeader">
+                      Selected Leads : {selectedUntouchedLeads.length}
+                    </h6>
+                  )}
                 </div>
 
                 <div className="d-flex flex-wrap align-items-center gap-2">
@@ -5225,9 +5574,21 @@ const Leads = () => {
               </div>
 
               <div className="table-container table-responsive">
-                <table className="table table-hover table-striped table-bordered align-middle rounded-5 mb-0 bg-white">
+                <table className="table table-hover table-striped align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
+                      <th className="text-left tableHeader">
+                        <div className="d-flex align-items-start justify-content-center flex-column">
+                          <label htmlFor="selectAllUntouchedCheckbox" className="form-label">
+                            Select All
+                          </label>
+                          <input
+                            type="checkbox"
+                            checked={selectAllUntouched}
+                            onChange={(e) => handleSelectAllUntouched(e, "untouched")}
+                          />
+                        </div>
+                      </th>
                       <th className="text-left tableHeader">#</th>
                       <th className="text-left tableHeader">Name</th>
                       <th className="text-left tableHeader">Email</th>
@@ -5242,13 +5603,21 @@ const Leads = () => {
                     {filteredUntouchedLeads.length > 0 ? (
                       filteredUntouchedLeads.map((t, i) => (
                         <tr key={t._id}>
+                          <td>
+                            <input
+                              type="checkbox"
+                              checked={selectedUntouchedLeads.includes(t._id)}
+                              onChange={() => toggleLeadSelection(t._id, "untouched")}
+                            />
+                          </td>
                           <td className="mb-0 text-left tableData">{i + 1}</td>
                           <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
                           <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
                           <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
                           <td>
-                            <button className="btn btn-sm btn-success" onClick={() => handleStart(t._id)}>Start Work</button>
+                            <button className="btn btn-sm btn-success" id="startWork" onClick={() => handleStart(t._id)}>Start Work</button>
                             <button
+                              id="viewLead"
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
                               data-bs-target="#viewLead"
@@ -5293,7 +5662,7 @@ const Leads = () => {
           }}
         >
           <div
-            className="bg-white p-4 rounded shadow"
+            className="bg-white p-4 rounded shadow LogcallOutcome"
             style={{ width: "400px", maxWidth: "90%" }}
           >
             <h5 className="text-center mb-3">Log Call Outcome</h5>
@@ -5335,12 +5704,12 @@ const Leads = () => {
 
             <div className="d-flex justify-content-end gap-2">
               <button
-                className="btn btn-secondary btn-sm"
+                className="btn btn-secondary btn-sm cancelDark"
                 onClick={() => setShowOutcomeModal(false)}
               >
                 Cancel
               </button>
-              <button className="btn btn-primary btn-sm" onClick={handleSaveOutcome}>
+              <button className="btn btn-primary btn-sm saveOutcomeDark" onClick={handleSaveOutcome}>
                 Save Outcome
               </button>
             </div>
@@ -5358,6 +5727,11 @@ const Leads = () => {
                 <div className="mb-2 mb-md-0">
                   <h5 className="text-left leadManagementTitle mt-4">Touched Leads({counts.touched})</h5>
                   <h6 className="leadManagementSubtitle mb-3">Active Touched Leads</h6>
+                  {selectedTouchedLeads.length > 0 && (
+                    <h6 className="tableHeader">
+                      Selected Leads : {selectedTouchedLeads.length}
+                    </h6>
+                  )}
                 </div>
 
                 <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
@@ -5385,7 +5759,7 @@ const Leads = () => {
               </div>
 
               <div className="table-container">
-                <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
                       <th className="text-left tableHeader">
@@ -5467,12 +5841,12 @@ const Leads = () => {
                                   Done
                                 </button>
                               ) : (
-                                <button className="btn btn-sm btn-primary" onClick={() => handleDone(t._id)}>
+                                <button className="btn btn-sm btn-primary" id="done" onClick={() => handleDone(t._id)}>
                                   Done
                                 </button>
                               )
                             ) : (
-                              <button className="btn btn-sm btn-success" onClick={() => handleStartWork(t._id)}>
+                              <button className="btn btn-sm btn-success" id="start" onClick={() => handleStartWork(t._id)}>
                                 Start
                               </button>
                             )}
@@ -5488,6 +5862,7 @@ const Leads = () => {
                               View Lead
                             </button> */}
                             <button
+                              id="viewLead"
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
                               data-bs-target="#viewLead"
@@ -5558,7 +5933,7 @@ const Leads = () => {
               </div>
 
               <div className="table-container">
-                <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
+                <table className="table table-hover table-striped table-responsive align-middle rounded-5 mb-0 bg-white">
                   <thead className="bg-light">
                     <tr>
                       <th className="text-left tableHeader">
@@ -5625,23 +6000,26 @@ const Leads = () => {
                           <td className="mb-0 text-left tableData">
                             {!t.movedToMarketing ? (
                               <button
+                                id="moveToMarketing"
                                 className="btn btn-sm btn-warning fw-semibold"
                                 onClick={() => handleMovedToMarketing(t._id)}
                               >
                                 Move to Marketing
                               </button>
                             ) : (
-                              <span className="badge bg-success">Moved to Marketing</span>
+                              <span className="badge bg-success" id="movedToMarketing">Moved to Marketing</span>
                             )}
                             {t.startDate ? (
                               t.endDate ? (
                                 <button
+
                                   className="btn btn-sm btn-bg-muted ms-2"
                                   disabled>
-                                  Done
+                                  Doned
                                 </button>
                               ) : (
                                 <button
+                                  id="done"
                                   className="btn btn-sm btn-primary"
                                   onClick={() => handleDone(t._id)}
                                 >
@@ -5657,7 +6035,7 @@ const Leads = () => {
                               </button>
 
                             )}
-                            <button className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => {
+                            <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => {
                               setSelectedLead(t);
                               setModalSource("completed");
                             }}>View Lead</button>
@@ -5671,7 +6049,6 @@ const Leads = () => {
           </div>
         )
       }
-
     </div >
   )
 }

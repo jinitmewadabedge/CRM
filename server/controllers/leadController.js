@@ -268,11 +268,9 @@ exports.importLeads = async (req, res) => {
         for (const lead of leads) {
             console.log("➡️ Importing Lead:", lead);
 
-            // normalize fields
             const candidate_email = String(lead.Email).toLowerCase().trim();
             const candidate_phone_no = String(lead["Phone No"]).trim();
 
-            // check duplicates using schema fields
             console.log("🔍 Checking duplicates for:", { candidate_email, candidate_phone_no });
             const existingLead = await Lead.findOne({
                 $or: [
@@ -287,7 +285,28 @@ exports.importLeads = async (req, res) => {
                 continue;
             }
 
-            // create new lead object
+            const parseExcelDate = (value) => {
+                if (!value) return new Date();
+
+                if (!isNaN(value)) {
+                    const excelEpoch = new Date((value - 25569) * 86400 * 1000);
+                    return excelEpoch;
+                }
+
+                const parts = value.split("/");
+                if (parts.length === 3) {
+                    const day = parseInt(parts[0]);
+                    const month = parseInt(parts[1]) - 1;
+                    const year = parseInt(parts[2]);
+                    return new Date(year, month, day);
+                }
+
+                const parsed = new Date(value);
+                if (!isNaN(parsed.getTime())) return parsed;
+
+                return new Date();
+            };
+
             const newLead = new Lead({
                 type: lead["Lead Type"],
                 candidate_name: lead.Name,
@@ -300,8 +319,8 @@ exports.importLeads = async (req, res) => {
                 preferred_time_to_talk: lead["Preferred Time"],
                 source: lead.Source || "N/A",
                 status: lead.Status || "New",
-                createdAt: new Date(lead["Created At"]),
-                updatedAt: new Date(lead["Updated At"])
+                createdAt: parseExcelDate(lead["Created At"]),
+                updatedAt: parseExcelDate(lead["Updated At"])
             });
 
             await newLead.save();

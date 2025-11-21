@@ -11,10 +11,8 @@ import lead_hero_img from "../assets/lead_img.jpg"
 import lead_img_1 from "../assets/lead_img_1.png"
 import lead_img_1_BR from "../assets/lead_img_1_BR.png"
 import lead_img_2 from "../assets/lead_img_2.png"
-import hero_video from "../assets/Animated.mp4"
-import Lottie from "lottie-react"
-import heroAnimation from "../assets/hero_json.json"
-import {DotLottieReact} from '@lottiefiles/dotlottie-react'
+import { ModeToggle } from "../components/mode-toggle";
+import { useTheme } from "../components/themeProvider";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -26,6 +24,8 @@ const Login = () => {
 
   const navigate = useNavigate();
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
+
+  const { setTheme } = useTheme();
 
   const roleRoutes = {
     Admin: "/admin-dashboard",
@@ -39,6 +39,10 @@ const Login = () => {
     Sales_Manager: "/leads",
     Resume: "/leads"
   };
+
+  useEffect(() => {
+    setTheme("light");
+  }, []);
 
   useEffect(() => {
     const token = sessionStorage.getItem("token") || localStorage.getItem("token");
@@ -94,7 +98,7 @@ const Login = () => {
   };
 
   return (
-    <div className="container-fluid">
+    <div className="container-fluid loginPage">
       <div className="row">
 
         <div className="col-12 col-md-12 col-lg-6 d-flex align-items-center justify-content-center flex-column vh-100 position-relative">
@@ -106,7 +110,7 @@ const Login = () => {
 
             <div className="form-floating mb-3">
               <select
-                className="form-select"
+                className="form-select loginPageForm"
                 id="role"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
@@ -130,7 +134,7 @@ const Login = () => {
             <div className="form-floating mb-3 mt-3">
               <input
                 type="email"
-                className="form-control h-50"
+                className="form-control h-50 loginPageForm"
                 id="email"
                 placeholder="Enter email"
                 value={email}
@@ -143,7 +147,7 @@ const Login = () => {
             <div className="form-floating mt-3 mb-3">
               <input
                 type="password"
-                className="form-control"
+                className="form-control loginPageForm"
                 id="pwd"
                 placeholder="Enter password"
                 value={password}
@@ -156,7 +160,7 @@ const Login = () => {
             <div className="form-check mb-3 d-flex justify-content-between">
               <label className="form-check-label">
                 <input
-                  className="form-check-input"
+                  className="form-check-input loginCheckbox"
                   type="checkbox"
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />{" "}
@@ -192,7 +196,7 @@ const Login = () => {
         </div>
 
         <div className="col-12 col-md-12 col-lg-6 d-none d-lg-flex justify-content-start align-items-center flex-column vh-100 position-relative overflow-hidden secondDiv">
-         
+
           <img
             src={lead_img_1}
             className="img-fluid lead-img-animate"
@@ -208,7 +212,7 @@ const Login = () => {
             }}
           />
 
-          <div className="text-center text-white position-relative px-3" style={{ zIndex: 1, marginTop: "0%" }}>
+          <div className="text-center text-white position-relative px-3 textHeading" style={{ zIndex: 1, marginTop: "0%" }}>
             <p className="lead display-3 text-animate-wrapper mb-3">
               <TextAnimate
                 highlightWords={["Empowering", "Teams", "Driving", "Success"]}
@@ -244,6 +248,7 @@ const Login = () => {
                 Together is beginning, Together is progress, Together is success.
               </TextAnimate>
             </p>
+
           </div>
         </div>
 
