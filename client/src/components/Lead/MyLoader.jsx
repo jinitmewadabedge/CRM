@@ -8,16 +8,19 @@ const MyLoader = ({
     rowSpacing = 10,
     columnWidths = ["100%"]
 }) => {
+    
+    const isDark = localStorage.getItem("darkModeModalShown") === "yes";
+
+    const backgroundColor = isDark ? "#c5c3c3ff" : "#f3f3f3";
+
     return (
         <ContentLoader
             speed={2}
             width="100%"
             height={rowCount * (rowHeight + rowSpacing)}
             viewBox={`0 0 1200 ${rowCount * (rowHeight + rowSpacing)}`}
-            backgroundColor="#f3f3f3"
-            foregroundColor="#cac1c1ff"
-            preserveAspectRatio="none"
-        >
+            backgroundColor={backgroundColor}
+            preserveAspectRatio="none">
             {Array.from({ length: rowCount }).map((_, rowIndex) => {
                 let xOffset = 0;
                 return columnWidths.map((colWidth, colIndex) => {

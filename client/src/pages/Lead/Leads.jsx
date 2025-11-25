@@ -4,17 +4,13 @@ import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
 import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaArrowRight } from "react-icons/fa";
 import "bootstrap-icons/font/bootstrap-icons.css";
-import "bootstrap/dist/css/bootstrap.min.css";
-import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
 import * as XLSX from 'xlsx';
 import { FaLink, FaCheckCircle, FaSync, FaStar, FaHourglassHalf, FaTimesCircle, FaThumbsDown, FaArrowUp, FaThumbsUp, FaComments, FaRedo, FaGraduationCap, FaMoneyBillWave, FaClock } from "react-icons/fa";
-import Skeleton from 'react-loading-skeleton';
 import 'react-loading-skeleton/dist/skeleton.css';
 import MyLoader from '../../components/Lead/MyLoader';
 import { toast } from "react-toastify";
-import { FiLogOut } from 'react-icons/fi'
 import AnimatedNumber from "../../components/Animated_Number/AnimatedNumber";
 import { motion } from "framer-motion";
 import { ModeToggle } from "../../components/mode-toggle";
@@ -245,17 +241,17 @@ const Leads = () => {
   //   fetchState();
   // }, []);
 
-  useEffect(() => {
-    if (hasRunRef.current) return;
-    hasRunRef.current = true;
+  // useEffect(() => {
+  //   if (hasRunRef.current) return;
+  //   hasRunRef.current = true;
 
-    const seen = localStorage.getItem("AnnouncementModal");
+  //   const seen = localStorage.getItem("AnnouncementModal");
 
-    if (!seen) {
-      setShowAnnouncement(true);
-      localStorage.setItem("AnnouncementModal", "yes");
-    }
-  }, []);
+  //   if (!seen) {
+  //     setShowAnnouncement(true);
+  //     localStorage.setItem("AnnouncementModal", "yes");
+  //   }
+  // }, []);
 
   useEffect(() => {
     fetchCandidates();
@@ -523,7 +519,7 @@ const Leads = () => {
       setSelectAllAll(false);
       console.log("Deselected all 'All Leads'");
     } else {
-      const ids = leads.map(l => l._id);
+      const ids = filteredLeads.map(l => l._id);
       setSelectedAllLeads(ids);
       setSelectedLead(ids);
       setSelectAllAll(true);
@@ -1714,40 +1710,6 @@ const Leads = () => {
           {showAnnouncement && <AnnouncementModal show={showAnnouncement} />}
         </div>
 
-        {/* {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
-          <div className="col-12 col-md-4 m-0 mb-2">
-            <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
-              {loading ? (
-                <div className="d-flex align-items-center justify-content-center" style={{ minHeight: "100px" }}>
-                  <span className="squareLoader" style={{ width: "2rem", height: "2rem" }}></span>
-                </div>
-              ) : (
-                <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">
-                  <img
-                    src={LeadImg}
-                    alt="Untouched Leads"
-                    loading="lazy"
-                    className="mb-2 rounded-circle img-fluid d-none d-md-block"
-                    style={{ width: "70px", height: "70px" }}
-                  />
-                  <img
-                    src={LeadImg}
-                    alt="Untouched Leads"
-                    loading="lazy"
-                    className="mb-2 rounded-circle img-fluid d-block d-md-none"
-                    style={{ width: "50px", height: "50px" }}
-                  />
-                  <div>
-                    <h6 className="mb-1 text-muted">Total Leads</h6>
-                    <h4 className="fw-bold"><AnimatedNumber value={counts.total} duration={1.5} /></h4>
-                    <small className="text-success">16% this month</small>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )} */}
-
         {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
           <motion.div
             className="col-12 col-md-4 m-0 mb-2"
@@ -2599,10 +2561,16 @@ const Leads = () => {
                             <button
                               className="btn btn-outline-warning btn-sm btn-rounded me-2"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setSelectedLead(lead);
                                 setModalSource("all");
+
+                                // setTimeout(() => {
+                                //   const el = document.getElementById("viewLead");
+                                //   if(!el) return;
+                                //   bootstrap.Modal.getInstance(el).show();
+                                // }, 100);
                               }}>
                               View
                             </button>
@@ -2795,7 +2763,7 @@ const Leads = () => {
                               id="viewLead"
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setTimeout(() => {
                                   console.log("Selected Lead in modal", a);
@@ -2817,7 +2785,7 @@ const Leads = () => {
                           View
                         </button> */}
 
-                          {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => setSelectedLead(lead)}>View</button> */}
+                          {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => setSelectedLead(lead)}>View</button> */}
 
                           {/* <button
                         type="button"
@@ -3066,7 +3034,7 @@ const Leads = () => {
                                 textTransform: "capitalize",
                               }}
                             >
-                              {/* Icons same as before */}
+
                               {a.status === "New" && <FaLink />}
                               {a.status === "Connected" && <FaCheckCircle />}
                               {a.status === "In Progress" && <FaHourglassHalf />}
@@ -3100,7 +3068,7 @@ const Leads = () => {
                             <button
                               className="btn btn-outline-warning btn-sm btn-rounded me-2"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setSelectedLead(a);
                                 setModalSource("assigned")
@@ -3178,9 +3146,9 @@ const Leads = () => {
 
                             <div className="card-body">
                               {selectedLead ? (
-                                <form className="card p-3 shadow-sm border-0">
+                                <form className="card p-3 shadow-sm border-0 card-plain">
                                   {/* Dropdown */}
-                                  <label className="form-label form-label-sm fw-bold">Select Team Member</label>
+                                  <label className="form-label form-label-sm fw-bold darkFormLabel">Select Team Member</label>
                                   <div className="input-group mb-3">
                                     <select
                                       className="form-select form-select-sm"
@@ -3255,12 +3223,12 @@ const Leads = () => {
 
                         <label htmlFor="" className="form-check-label">Candidate Name</label>
                         <div className="input-group mb-3">
-                          <input name="candidate_name" type="text" value={selectedLead?.candidate_name} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_name: e.target.value })} className="form-control form-control-sm selectFont" placeholder="Email" required />
+                          <input name="candidate_name" type="text" value={selectedLead?.candidate_name || ""} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_name: e.target.value })} className="form-control form-control-sm selectFont" placeholder="Email" required />
                         </div>
 
                         <label htmlFor="" className="form-check-label">Email</label>
                         <div className="input-group mb-3">
-                          <input name="candidate_email" type="email" value={selectedLead?.candidate_email} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_email: e.target.value })} className="form-control form-control-sm selectFont" placeholder="Password" />
+                          <input name="candidate_email" type="email" value={selectedLead?.candidate_email || ""} onChange={(e) => setSelectedLead({ ...selectedLead, candidate_email: e.target.value })} className="form-control form-control-sm selectFont" placeholder="Password" />
                         </div>
 
                         <label htmlFor="" className="form-check-label">Phone</label>
@@ -3271,7 +3239,7 @@ const Leads = () => {
                             maxLength="10"
                             placeholder="Phone No"
                             className="form-control form-control-sm selectFont"
-                            value={selectedLead?.candidate_phone_no}
+                            value={selectedLead?.candidate_phone_no || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, candidate_phone_no: e.target.value })}
                             required
                           />
@@ -3284,7 +3252,7 @@ const Leads = () => {
                             name="linked_in_url"
                             className="form-control form-control-sm selectFont"
                             placeholder="LinkedIn URL"
-                            value={selectedLead?.linked_in_url}
+                            value={selectedLead?.linked_in_url || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, linked_in_url: e.target.value })}
                           />
                         </div>
@@ -3296,7 +3264,7 @@ const Leads = () => {
                             name="university"
                             className="form-control form-control-sm selectFont"
                             placeholder="University"
-                            value={selectedLead?.university}
+                            value={selectedLead?.university || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, university: e.target.value })}
                           />
                         </div>
@@ -3319,7 +3287,7 @@ const Leads = () => {
                           <select
                             name="visa"
                             className="form-control form-control-sm selectFont"
-                            value={selectedLead?.visa}
+                            value={selectedLead?.visa || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, visa: e.target.value })}
                             required
                           >
@@ -3341,7 +3309,7 @@ const Leads = () => {
                           <select
                             name="preferred_time_to_talk"
                             className="form-control form-control-sm selectFont"
-                            value={selectedLead?.preferred_time_to_talk}
+                            value={selectedLead?.preferred_time_to_talk || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, preferred_time_to_talk: e.target.value })}
                             required
                           >
@@ -3359,7 +3327,7 @@ const Leads = () => {
                             name="source"
                             className="form-control form-control-sm selectFont"
                             placeholder="Source"
-                            value={selectedLead?.source}
+                            value={selectedLead?.source || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, source: e.target.value })}
                           />
                         </div>
@@ -3377,7 +3345,7 @@ const Leads = () => {
                           <select
                             name="status"
                             className="form-control form-control-sm selectFont"
-                            value={selectedLead?.status}
+                            value={selectedLead?.status || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, status: e.target.value })}
                             required
                           >
@@ -3396,7 +3364,7 @@ const Leads = () => {
                           <select
                             name="type"
                             className="form-control form-control-sm selectFont"
-                            value={selectedLead?.type}
+                            value={selectedLead?.type || ""}
                             onChange={(e) => setSelectedLead({ ...selectedLead, type: e.target.value })}
                             required
                           >
@@ -3724,8 +3692,9 @@ const Leads = () => {
             <div className="modal-body p-0">
               <div className="card card-plain">
                 <h3 className="modal-title editUserTitle mt-2">Add New Lead</h3>
+                <button type="button" className="btn-close ms-4" data-bs-dismiss="modal" aria-label="Close"></button>
                 <div className="card-body">
-                  <form action="" onSubmit={handleSubmitNew} className="card p-3 shadow-sm" role="form text-left">
+                  <form action="" onSubmit={handleSubmitNew} className="card p-3 shadow-sm darkForm" role="form text-left">
 
                     <label htmlFor="" className="form-check-label">Candidate Name</label>
                     <div className="input-group mb-3">
@@ -3889,10 +3858,10 @@ const Leads = () => {
       {console.log("Selected Lead in modal:", selectedLead)}
       {/* View Lead Modal */}
 
-      <div className="modal fade global-modal" id="viewLead" tabIndex="-1" >
+      {/* <div className="modal fade global-modal" id="viewLead" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
           <div className="modal-content">
-            {/* <div className="modal-header"> */}
+            <div className="modal-header">
               <div className="modal-body p-0">
                 <div className="card card-plain cardDark">
                   <h3 className="modal-title editUserTitle mt-2 text-center leadDetailsDark">Lead Details</h3>
@@ -3933,95 +3902,95 @@ const Leads = () => {
                           <tbody>
                             <tr>
                               <th className="tableHeader">Name</th>
-                              <td className="tableData" colSpan="6">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A"}</td>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A" || ""}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Email</th>
-                              <td className="tableData" colSpan="6">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A"}</td>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A" || ""}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Phone</th>
-                              <td className="tableData" colSpan="6">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A"}</td>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A" || ""}</td>
                             </tr>
                             <tr>
                               <th className="tableHeader">Technology</th>
                               <td className="tableData" colSpan="6">
                                 {Array.isArray(selectedLead.technology)
                                   ? selectedLead.technology.join(", ")
-                                  : selectedLead.technology}
+                                  : selectedLead.technology || ""}
                               </td>
                             </tr>
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">LinkedIn</th>
-                                <td className="tableData" colSpan="6">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A"}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A" || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Visa</th>
-                                <td className="tableData" colSpan="6">{selectedLead.visa || selectedLead?.leadId?.visa}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.visa || selectedLead?.leadId?.visa || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Lead Type</th>
-                                <td className="tableData" colSpan="6">{selectedLead.type || selectedLead?.leadId?.type}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.type || selectedLead?.leadId?.type || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">University</th>
-                                <td className="tableData" colSpan="6">{selectedLead.university || selectedLead?.leadId?.university}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.university || selectedLead?.leadId?.university || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Preferred Time to Talk</th>
-                                <td className="tableData" colSpan="6">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Source</th>
-                                <td className="tableData" colSpan="6">{selectedLead.source || selectedLead?.leadId?.source}</td>
+                                <td className="tableData" colSpan="6">{selectedLead.source || selectedLead?.leadId?.source || ""}</td>
                               </tr>
                             )}
                             {modalSource === "assigned" && selectedLead.assignedTo && (
                               <tr>
                                 <th className="tableHeader">Assigned To</th>
-                                <td className="tableData">{selectedLead.assignedTo.name}</td>
+                                <td className="tableData">{selectedLead.assignedTo.name || ""}</td>
                               </tr>
                             )}
                             {modalSource === "assigned" && selectedLead.assignedBy && (
                               <tr>
                                 <th className="tableHeader">Assigned By</th>
-                                <td className="tableData">{selectedLead.assignedBy.name}</td>
+                                <td className="tableData">{selectedLead.assignedBy.name || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "touched" && modalSource !== "completed" && modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Created At</th>
-                                <td className="tableData">{formatDateTimeIST(selectedLead.createdAt)}</td>
+                                <td className="tableData">{formatDateTimeIST(selectedLead.createdAt) || ""}</td>
                               </tr>
                             )}
                             {modalSource !== "touched" && modalSource !== "completed" && modalSource !== "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Updated At</th>
-                                <td className="tableData">{formatDateTimeIST(selectedLead.updatedAt)}</td>
+                                <td className="tableData">{formatDateTimeIST(selectedLead.updatedAt) || ""}</td>
                               </tr>
                             )}
 
                             {modalSource === "completed" && (
                               <tr>
                                 <th className="tableHeader">Lead Work Start Date</th>
-                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.startDate)}</td>
+                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.startDate) || ""}</td>
                               </tr>
                             )}
                             {modalSource === "completed" && (
                               <tr>
                                 <th className="tableHeader">Lead Work End Date</th>
-                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.endDate)}</td>
+                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.endDate || "")}</td>
                               </tr>
                             )}
                             {modalSource === "enrolled" && (
@@ -4032,7 +4001,7 @@ const Leads = () => {
                                         ${selectedLead.paymentStatus === "pending"
                                       ? "bg-warning text-dark fw-bold" : "bg-success"
                                     }`}>
-                                    {selectedLead.paymentStatus}
+                                    {selectedLead.paymentStatus || ""}
                                   </span>
                                 </td>
                               </tr>
@@ -4041,13 +4010,13 @@ const Leads = () => {
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Upfront</th>
-                                <td className="tableData">{selectedLead.upfront && selectedLead.upfront}</td>
+                                <td className="tableData">{selectedLead.upfront && selectedLead.upfront || ""}</td>
                               </tr>
                             )}
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Contracted</th>
-                                <td className="tableData">{selectedLead.contracted}</td>
+                                <td className="tableData">{selectedLead.contracted || ""}</td>
                               </tr>
                             )}
                             {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
@@ -4078,32 +4047,32 @@ const Leads = () => {
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Percentage</th>
-                                <td className="tableData">{selectedLead.percentage}</td>
+                                <td className="tableData">{selectedLead.percentage || ""}</td>
                               </tr>
                             )}
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Job Guarantee</th>
-                                <td className="tableData">{selectedLead.jobGuarantee ? "Yes" : "No"}</td>
+                                <td className="tableData">{selectedLead.jobGuarantee ? "Yes" : "No" || ""}</td>
                               </tr>
                             )}
 
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Payment Gateway</th>
-                                <td className="tableData">{selectedLead.paymentGateway}</td>
+                                <td className="tableData">{selectedLead.paymentGateway || ""}</td>
                               </tr>
                             )}
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Enrollment Date</th>
-                                <td><p className="mb-0 text-left tableData">{formatDateTimeIST(selectedLead.createdAt)}</p></td>
+                                <td><p className="mb-0 text-left tableData">{formatDateTimeIST(selectedLead.createdAt) || ""}</p></td>
                               </tr>
                             )}
                             {modalSource === "enrolled" && (
                               <tr>
                                 <th className="tableHeader">Plan</th>
-                                <td className="tableData mb-0">{selectedLead.plan}</td>
+                                <td className="tableData mb-0">{selectedLead.plan || ""}</td>
                               </tr>
                             )}
                             <tr>
@@ -4133,7 +4102,7 @@ const Leads = () => {
                                   {selectedLead.status === "In Discussion" && <FaComments />}
                                   {selectedLead.status === "completed" && <FaComments />}
 
-                                  {selectedLead.status}
+                                  {selectedLead.status || ""}
                                 </span>
                               </td>
                             </tr>
@@ -4350,10 +4319,479 @@ const Leads = () => {
                   )}
                 </div>
               </div>
-            {/* </div> */}
+            </div>
+          </div>
+        </div >
+      </div> */}
+
+      <div className="modal fade global-modal" id="myLeadModal" tabIndex="-1" >
+        <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
+          <div className="modal-content">
+
+            <div className="modal-header">
+              <h3 className="modal-title editUserTitle mt-2 text-center leadDetailsDark">Lead Details</h3>
+              <button type="button" className="btn-close ms-4" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div className="modal-body p-0">
+              <div className="card card-plain cardDark">
+                <div className="card-body">
+                  {selectedLead ? (
+                    <form
+                      className="card p-3 shadow-sm LogcallOutcome"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        console.log("Submitting call for Lead ID:", selectedLead?._id);
+                        console.log("Payload:", { outcome, date, time, duration, notes });
+                        console.log("Token:", sessionStorage.getItem("token"));
+
+                        setLoading(true);
+                        try {
+                          const token = sessionStorage.getItem("token");
+                          const res = await axios.post(
+                            `${BASE_URL}/api/leads/${selectedLead._id}/call`,
+                            { outcome, date, time, duration, notes },
+                            { headers: { Authorization: `Bearer ${token}` } }
+                          );
+                          toast.success("Call outcome saved successfully!");
+                          setSelectedLead(res.data.lead);
+                          setOutcome(""); setDate(""); setTime(""); setDuration(""); setNotes("");
+                          fetchBackendLeads();
+                        } catch (err) {
+                          // console.error("Error saving call outcome:", err.response?.data || err);
+                          toast.error(err.response?.data?.message || "Failed to save call outcome!");
+                        } finally {
+                          setLoading(false);
+                        }
+                      }}>
+
+                      <div className="mb-0 table-responsive">
+                        <table className="table table-sm">
+                          <tbody>
+                            <tr>
+                              <th className="tableHeader">Name</th>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A" || ""}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Email</th>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A" || ""}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Phone</th>
+                              <td className="tableData" colSpan="6">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A" || ""}</td>
+                            </tr>
+                            <tr>
+                              <th className="tableHeader">Technology</th>
+                              <td className="tableData" colSpan="6">
+                                {Array.isArray(selectedLead.technology)
+                                  ? selectedLead.technology.join(", ")
+                                  : selectedLead.technology || ""}
+                              </td>
+                            </tr>
+                            {modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">LinkedIn</th>
+                                <td className="tableData" colSpan="6">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A" || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Visa</th>
+                                <td className="tableData" colSpan="6">{selectedLead.visa || selectedLead?.leadId?.visa || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Lead Type</th>
+                                <td className="tableData" colSpan="6">{selectedLead.type || selectedLead?.leadId?.type || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">University</th>
+                                <td className="tableData" colSpan="6">{selectedLead.university || selectedLead?.leadId?.university || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Preferred Time to Talk</th>
+                                <td className="tableData" colSpan="6">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Source</th>
+                                <td className="tableData" colSpan="6">{selectedLead.source || selectedLead?.leadId?.source || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "assigned" && selectedLead.assignedTo && (
+                              <tr>
+                                <th className="tableHeader">Assigned To</th>
+                                <td className="tableData">{selectedLead.assignedTo.name || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "assigned" && selectedLead.assignedBy && (
+                              <tr>
+                                <th className="tableHeader">Assigned By</th>
+                                <td className="tableData">{selectedLead.assignedBy.name || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "touched" && modalSource !== "completed" && modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Created At</th>
+                                <td className="tableData">{formatDateTimeIST(selectedLead.createdAt) || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource !== "touched" && modalSource !== "completed" && modalSource !== "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Updated At</th>
+                                <td className="tableData">{formatDateTimeIST(selectedLead.updatedAt) || ""}</td>
+                              </tr>
+                            )}
+
+                            {modalSource === "completed" && (
+                              <tr>
+                                <th className="tableHeader">Lead Work Start Date</th>
+                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.startDate) || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "completed" && (
+                              <tr>
+                                <th className="tableHeader">Lead Work End Date</th>
+                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.endDate || "")}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Payment Status</th>
+                                <td className="tableData">
+                                  <span className={`badge px-3 py-2 rounded-pill fw-normal 
+                                  ${selectedLead.paymentStatus === "pending"
+                                      ? "bg-warning text-dark fw-bold" : "bg-success"
+                                    }`}>
+                                    {selectedLead.paymentStatus || ""}
+                                  </span>
+                                </td>
+                              </tr>
+                            )}
+
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Upfront</th>
+                                <td className="tableData">{selectedLead.upfront && selectedLead.upfront || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Contracted</th>
+                                <td className="tableData">{selectedLead.contracted || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
+                              <tr>
+                                <th className="tableHeader">Payment 1</th>
+                                <td className="tableData">
+                                  {selectedLead.collectedPayments[0].amount} ({new Date(selectedLead.collectedPayments[0].date).toLocaleDateString("en-IN")})
+                                </td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
+                              <tr>
+                                <th className="tableHeader">Payment 2</th>
+                                <td className="tableData">
+                                  {selectedLead.collectedPayments[1].amount} ({new Date(selectedLead.collectedPayments[1].date).toLocaleDateString("en-IN")})
+                                </td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
+                              <tr>
+                                <th className="tableHeader">Payment 2</th>
+                                <td className="tableData">
+                                  {selectedLead.collectedPayments[2].amount} ({new Date(selectedLead.collectedPayments[2].date).toLocaleDateString("en-IN")})
+                                </td>
+                              </tr>
+                            )}
+
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Percentage</th>
+                                <td className="tableData">{selectedLead.percentage || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Job Guarantee</th>
+                                <td className="tableData">{selectedLead.jobGuarantee ? "Yes" : "No" || ""}</td>
+                              </tr>
+                            )}
+
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Payment Gateway</th>
+                                <td className="tableData">{selectedLead.paymentGateway || ""}</td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Enrollment Date</th>
+                                <td><p className="mb-0 text-left tableData">{formatDateTimeIST(selectedLead.createdAt) || ""}</p></td>
+                              </tr>
+                            )}
+                            {modalSource === "enrolled" && (
+                              <tr>
+                                <th className="tableHeader">Plan</th>
+                                <td className="tableData mb-0">{selectedLead.plan || ""}</td>
+                              </tr>
+                            )}
+                            <tr>
+                              <th className="tableHeader">Status</th>
+                              <td colSpan="6">
+                                <span
+                                  className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                                  style={{
+                                    backgroundColor: statusColors[selectedLead.status] || "#d1d5db",
+                                    color: "white",
+                                    borderRadius: "12px",
+                                    fontWeight: "normal",
+                                    textTransform: "capitalize",
+                                    maxWidth: "100px"
+                                  }}
+                                >
+                                  {selectedLead.status === "New" && <FaLink />}
+                                  {selectedLead.status === "Connected" && <FaCheckCircle />}
+                                  {selectedLead.status === "In Progress" && <FaHourglassHalf />}
+                                  {selectedLead.status === "Shortlisted" && <FaStar />}
+                                  {selectedLead.status === "Rejected" && <FaTimesCircle />}
+                                  {selectedLead.status === "Assigned" && <FaCheckCircle />}
+                                  {selectedLead.status === "Converted" && <FaUserCheck />}
+                                  {selectedLead.status === "Interested" && <FaThumbsUp />}
+                                  {selectedLead.status === "Not Interested" && <FaThumbsDown />}
+                                  {selectedLead.status === "Follow-up" && <FaRedo />}
+                                  {selectedLead.status === "In Discussion" && <FaComments />}
+                                  {selectedLead.status === "completed" && <FaComments />}
+
+                                  {selectedLead.status || ""}
+                                </span>
+                              </td>
+                            </tr>
+
+                            {modalSource === "completed" || modalSource === "touched" && (
+                              <>
+                                {(() => {
+
+                                  const resumeCalls = selectedLead?.callHistory || [];
+                                  const salesCalls = selectedLead?.leadId?.callHistory || [];
+
+                                  const allCalls = [...resumeCalls, ...salesCalls]
+                                    .filter(call => call.source !== "Resume" || modalSource !== "assigned")
+                                    .sort((a, b) => new Date(b.date) - new Date(a.date)
+                                    );
+
+                                  return allCalls.length > 0 ? (
+                                    <>
+                                      <tr>
+                                        <th colSpan="12" className="text-center tableHeader bg-success text-white">
+                                          Call Log Outcomes
+                                        </th>
+                                      </tr>
+
+                                      <tr className="table-light">
+                                        <th className="tableHeader">Index</th>
+                                        <th className="tableHeader">Outcome</th>
+                                        <th className="tableHeader">Date</th>
+                                        <th className="tableHeader">Time</th>
+                                        <th className="tableHeader">Duration</th>
+                                        <th className="tableHeader">Notes</th>
+                                        <th className="tableHeader">Source</th>
+                                      </tr>
+
+                                      {allCalls.map((call, index) => (
+                                        <tr key={index}>
+                                          <td className="tableData">{index + 1}</td>
+                                          <td className="tableData">{call.outcome || "—"}</td>
+                                          <td className="tableData">
+                                            {call.date
+                                              ? new Date(call.date).toLocaleDateString("en-IN", {
+                                                day: "2-digit",
+                                                month: "2-digit",
+                                                year: "numeric",
+                                              })
+                                              : "N/A"}
+                                          </td>
+                                          <td className="tableData">
+                                            {call.date
+                                              ? new Date(call.date).toLocaleTimeString("en-IN", {
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                                hour12: true,
+                                              })
+                                              : "N/A"}
+                                          </td>
+                                          <td className="tableData">{call.duration}</td>
+                                          <td className="tableData">{call.notes}</td>
+                                          <td
+                                            className={`tableData ${resumeCalls.includes(call)
+                                              ? "text-dark"
+                                              : "text-dark"
+                                              }`}
+                                          >
+                                            {resumeCalls.includes(call) ? "Resume" : "Sales"}
+                                          </td>
+                                        </tr>
+                                      ))}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <tr>
+                                        <th colSpan="14" className="text-center tableHeader bg-secondary text-white">
+                                          Call Log Outcomes
+                                        </th>
+                                      </tr>
+                                      <tr>
+                                        <td colSpan="14" className="text-center text-muted py-2 tableData">
+                                          No outcome history found
+                                        </td>
+                                      </tr>
+                                    </>
+                                  );
+                                })()}
+                              </>
+                            )}
+
+                          </tbody>
+                        </table>
+                      </div>
+
+                      {user.role === "Sales" && (modalSource === "interested" || modalSource === "Not Interested" || modalSource === "inDiscussion" || modalSource === "follow-up" || modalSource === "assigned") && modalSource !== "enrolled" && (
+                        <>
+                          <div className="card p-3 mb- LogCallOutcome">
+                            <h6 className="text-center mb-3">Log Call Outcome</h6>
+                            <select
+                              value={outcome}
+                              onChange={(e) => setOutcome(e.target.value)}
+                              required
+                              className="form-select form-select-sm mb-2 selectFont"
+                            >
+                              <option value="">Select Outcome</option>
+                              <option value="Not Interested">Not Interested</option>
+                              <option value="Interested">Interested</option>
+                              <option value="In Discussion">In Discussion</option>
+                              <option value="Follow-up">Follow-Up</option>
+                            </select>
+
+                            <input
+                              type="date"
+                              value={date}
+                              onChange={(e) => setDate(e.target.value)}
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                            />
+                            <input
+                              type="time"
+                              value={time}
+                              onChange={(e) => setTime(e.target.value)}
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                            />
+                            <input
+                              type="text"
+                              value={duration}
+                              onChange={(e) => setDuration(e.target.value)}
+                              placeholder="Enter Duration (Mins)"
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                            />
+                            <textarea
+                              value={notes}
+                              onChange={(e) => setNotes(e.target.value)}
+                              required
+                              className="form-control form-control-sm mb-2 selectFont"
+                              placeholder="Enter notes..."
+                            />
+
+                            <button
+                              type="submit"
+                              className={`btn btn-sm w-100 text-light ${loading ? "btn-secondary" : "btn-primary"
+                                }`}
+                              disabled={loading}
+                            >
+                              {loading ? "Saving..." : "Save Outcome"}
+                            </button>
+                          </div>
+
+                          <h5 className="mt-3">Call History</h5>
+                          {selectedLead?.callHistory && selectedLead.callHistory.length > 0 ? (
+                            <div className="table-responsive">
+                              <table className="table table-striped">
+                                <thead>
+                                  <tr>
+                                    <th className="tableHeader">#</th>
+                                    <th className="tableHeader">Outcome</th>
+                                    <th className="tableHeader">Date</th>
+                                    <th className="tableHeader">Time</th>
+                                    <th className="tableHeader">Duration</th>
+                                    <th className="tableHeader">Notes</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {selectedLead.callHistory.map((call, index) => {
+                                    const date = new Date(call.date);
+                                    const formattedDate = date.toLocaleDateString("en-IN", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                    });
+
+                                    const [hours, minutes] = call.time.split(":");
+                                    const timeDate = new Date();
+                                    timeDate.setHours(hours, minutes);
+                                    const formattedTime = timeDate.toLocaleTimeString("en-IN", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    });
+
+                                    return (
+                                      <tr key={index}>
+                                        <td className="tableData">{index + 1}</td>
+                                        <td className="tableData">{call.outcome}</td>
+                                        <td className="tableData">{formattedDate}</td>
+                                        <td className="tableData">{formattedTime}</td>
+                                        <td className="tableData">{call.duration}</td>
+                                        <td className="tableData">{call.notes}</td>
+                                      </tr>
+                                    );
+                                  })}
+
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <p className="text-muted">No call history yet.</p>
+                          )}
+                        </>
+                      )}
+                      <div className="text-center">
+                        <button
+                          type="button"
+                          className="btn btn-danger btn-sm closeDark"
+                          data-bs-dismiss="modal"
+                          onClick={() => setSelectedLead(null)}
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <h2 className="text-center my-3">Loading...</h2>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </div >
       </div>
+
 
       {/* Interested Leads */}
 
@@ -4559,7 +4997,7 @@ const Leads = () => {
                               onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                               onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setSelectedLead(c);
                                 setModalSource("interested");
@@ -4772,7 +5210,7 @@ const Leads = () => {
                             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                             data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
+                            data-bs-target="#myLeadModal"
                             onClick={() => {
                               setSelectedLead(c);
                               setModalSource("Not Interested");
@@ -4946,7 +5384,7 @@ const Leads = () => {
                           {/* <button
                             className="btn btn-sm btn-success ms-2"
                             data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
+                            data-bs-target="#myLeadModal"
                             onClick={() => {
                               setSelectedLead(c);
                               setModalSource("inDiscussion");
@@ -4968,7 +5406,7 @@ const Leads = () => {
                             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                             data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
+                            data-bs-target="#myLeadModal"
                             onClick={() => {
                               setSelectedLead(c);
                               setModalSource("inDiscussion");
@@ -5139,7 +5577,7 @@ const Leads = () => {
                           {/* <button
                             className="btn btn-sm btn-success ms-2"
                             data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
+                            data-bs-target="#myLeadModal"
                             onClick={() => {
                               setSelectedLead(c);
                               setModalSource("enrolled");
@@ -5161,7 +5599,7 @@ const Leads = () => {
                             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                             data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
+                            data-bs-target="#myLeadModal"
                             onClick={() => {
                               setSelectedLead(c);
                               setModalSource("follow-up");
@@ -5374,7 +5812,7 @@ const Leads = () => {
                             onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.9")}
                             onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
                             data-bs-toggle="modal"
-                            data-bs-target="#viewLead"
+                            data-bs-target="#myLeadModal"
                             onClick={() => {
                               setSelectedLead(c);
                               setModalSource("enrolled");
@@ -5428,106 +5866,6 @@ const Leads = () => {
         </div>
       )
       }
-
-      {/* All Training Leads */}
-      {/* {user.role === "Resume" && (
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">All Untouched Leads({counts.training})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
-              </div>
-            </div>
-
-            <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader">#</th>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    <th className="text-left tableHeader">Phone</th>
-                    <th className="text-left tableHeader">Start Date</th>
-                    <th className="text-left tableHeader">Training Progress</th>
-                    <th className="text-left tableHeader">Training Status</th>
-                    <th className="text-left tableHeader">Start</th>
-                    <th className="text-left tableHeader">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {trainingLeads.map((t, i) => (
-                    <tr key={t._id}>
-                      <td className="mb-0 text-left tableData">{i + 1}</td>
-                      <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{formatDateTimeIST(t.startDate) || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.progress || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.status || "N/A"}</td>
-                      <td>
-                        <button className="btn btn-sm btn-success">Start</button>
-                        <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(t._id, "cv")}>Start</button>
-                        <button className="btn btn-sm btn-danger" onClick={() => handleDelete(t._id)}>Delete</button>
-                      </td>
-                      <td>
-                        <button className="btn btn-sm btn-success">View Lead</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )} */}
-
-      {/* All Cvs Table */}
-      {/* {user.role === "Resume" && (
-        <div className="col-12 col-md-8 col-lg-12 mt-2">
-          <div className="rounded-4 bg-white shadow-sm p-4 table-reponsive h-100">
-            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
-              <div>
-                <h5 className="text-left leadManagementTitle mt-4">CVs({counts.cv})</h5>
-                <h6 className="leadManagementSubtitle mb-3">Active cvs</h6>
-              </div>
-            </div>
-
-            <div className="table-container">
-              <table className="table table-hover table-striped table-bordered table-responsive align-middle rounded-5 mb-0 bg-white">
-                <thead className="bg-light">
-                  <tr>
-                    <th className="text-left tableHeader">#</th>
-                    <th className="text-left tableHeader">Name</th>
-                    <th className="text-left tableHeader">Email</th>
-                    <th className="text-left tableHeader">Phone</th>
-                    <th className="text-left tableHeader">Start Date</th>
-                    <th className="text-left tableHeader">CV Progress</th>
-                    <th className="text-left tableHeader">CV Status</th>
-                    <th className="text-left tableHeader">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cvLeads.map((t, i) => (
-                    <tr key={t._id}>
-                      <td className="mb-0 text-left tableData">{i + 1}</td>
-                      <td className="mb-0 text-left tableData">{t.candidateId?.name || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.candidateId?.email || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.candidateId?.phone || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{formatDateTimeIST(t.startDate) || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.progress || "N/A"}</td>
-                      <td className="mb-0 text-left tableData">{t.status || "N/A"}</td>
-                      <td>
-                        <button className="btn btn-sm btn-success">View Lead</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )} */}
 
       {/* All Untouched Leads */}
 
@@ -5620,7 +5958,7 @@ const Leads = () => {
                               id="viewLead"
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setTimeout(() => {
                                   setSelectedLead(t);
@@ -5853,7 +6191,7 @@ const Leads = () => {
                             {/* <button
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setSelectedLead(t);
                                 setModalSource("touched");
@@ -5865,7 +6203,7 @@ const Leads = () => {
                               id="viewLead"
                               className="btn btn-sm btn-success ms-2"
                               data-bs-toggle="modal"
-                              data-bs-target="#viewLead"
+                              data-bs-target="#myLeadModal"
                               onClick={() => {
                                 setTimeout(() => {
                                   console.log("Selected Lead in modal", t);
@@ -6035,7 +6373,7 @@ const Leads = () => {
                               </button>
 
                             )}
-                            <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#viewLead" onClick={() => {
+                            <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => {
                               setSelectedLead(t);
                               setModalSource("completed");
                             }}>View Lead</button>

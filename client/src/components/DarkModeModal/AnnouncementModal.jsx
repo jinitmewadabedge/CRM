@@ -3,21 +3,35 @@ import { Modal } from "bootstrap";
 import Lottie from "lottie-react";
 import darkModeAnimation from "../../assets/Day-Night.json"
 
-export default function AnnouncementModal({ show }) {
-  useEffect(() => {
-    if (show) {
-      const modal = new Modal(document.getElementById("announcementModal"));
-      modal.show();
+export default function AnnouncementModal({ }) {
+  // useEffect(() => {
+  //   if (show) {
+  //     const modal = new Modal(document.getElementById("announcementModal"));
+  //     modal.show();
+  //   }
+  // }, [show]);
+
+useEffect(() => {
+
+    const alreadyShown = localStorage.getItem("darkModeModalShown");
+
+    if (!alreadyShown) {
+      const modalElement = document.getElementById("announcementModal");
+      if (modalElement) {
+        const modal = new Modal(modalElement);
+        modal.show();
+
+        localStorage.setItem("darkModeModalShown", "yes");
+      }
     }
-  }, [show]);
+  }, []);
 
   return (
     <div
       className="modal fade announcementDarkModal"
       id="announcementModal"
       tabIndex="-1"
-      aria-hidden="true"
-    >
+      aria-hidden="true">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content p-3 text-center">
           <div className="modal-header border-0 d-flex justify-content-end">

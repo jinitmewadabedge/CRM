@@ -97,7 +97,12 @@ html.dark .table-container table.table-hover tbody tr:hover {
 }
 
 html.dark input {
-    background-color: #1D2A35;
+    background-color: #1b1b1b;
+    color: #c9d1d9 !important;
+}
+
+html.dark select.form-control {
+    background-color: #1b1b1b;
     color: #c9d1d9 !important;
 }
 
@@ -154,6 +159,30 @@ html.dark #cancelButton{
 
 html.dark .assignLeadsTableBackground{
     background-color: #000000;
+}
+
+html.dark .technologyFont{
+    color: #c9d1d9 !important;
+}
+
+html.dark .darkFormLabel{
+    color: #d9d2c9 !important;
+}
+
+
+/* html.dark select{
+    background-color: #1b1b1b !important;
+    color: #c9d1d9 !important;
+} */
+
+html.dark .darkForm{
+    background-color: #1b1b1b !important;
+    color: #c9d1d9 !important;
+    border: 1px solid #30363d !important;
+}
+
+html.dark .card-plain{
+    background-color: #30363d !important;
 }
 
 .LogcallOutcome {
