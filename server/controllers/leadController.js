@@ -345,381 +345,381 @@ exports.importLeads = async (req, res) => {
 };
 
 
-// exports.getLeadState = async (req, res) => {
-//     try {
-
-//         if (!req.user) {
-//             return res.status(401).json({ message: "Unauthorized: User not found" });
-//         }
-
-//         const role = req.user.role?.name;
-//         console.log("User Role For State:", role);
-
-//         const user = req.user;
-//         console.log("req.user for state:", req.user);
-//         const cacheKey = `lead_state:${role}:${user._id}`;
-
-//         const cached = await redisClient.get(cacheKey);
-//         if (cached) {
-//             console.log("Served from GetLeadState redis cache:", cacheKey);
-//             res.setHeader("X-Cache", "HIT");
-//             return res.status(200).json(JSON.parse(cached));
-//         }
-
-//         console.log("Cache Miss => Computing lead for state:", cacheKey);
-
-//         let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
-//         let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
-
-//         if (role === "Lead_Gen_Manager") {
-//             total = await Lead.countDocuments();
-//             unassignedLeads = await Lead.find({ assignedTo: null })
-//                 .populate("assignedTo assignedBy createdBy");
-//             unassigned = unassignedLeads.length;
-//             assignedLeads = await Lead.find({ assignedTo: { $ne: null } })
-//                 .populate("assignedTo assignedBy createdBy");
-//             assigned = assignedLeads.length;
-//         }
-
-//         if (role === "Sales_Manager") {
-
-//             total = await Lead.countDocuments();
-
-//             unassignedLeads = await Lead.find({
-//                 assignedTo: user._id,
-//                 assignedBy: { $ne: null }
-//             }).populate("assignedTo assignedBy createdBy");
-
-//             unassigned = unassignedLeads.length;
-
-//             assignedLeads = await Lead.find({
-//                 assignedBy: user._id
-//             }).populate("assignedTo assignedBy createdBy");
-//             assigned = assignedLeads.length;
-//         }
-
-//         if (role === "Sales") {
-
-//             total = await Lead.countDocuments({ assignedTo: user._id });
-//             assignedLeads = await Lead.find({
-//                 assignedTo: user._id
-//             }).populate("assignedTo assignedBy createdBy");
-//             assigned = assignedLeads.length;
-
-//             enrolledLeads = await Candidate.find().populate();
-//             enrolled = enrolledLeads.length;
-
-//             interestedLeads = await Lead.find({
-//                 assignedTo: user._id,
-//                 status: "Interested"
-//             }).populate("assignedTo assignedBy createdBy");
-//             interested = interestedLeads.length;
-
-//             notInterestedLeads = await Lead.find({
-//                 assignedTo: user._id,
-//                 status: "Not Interested"
-//             }).populate("assignedTo assignedBy createdBy");
-//             notInterested = notInterestedLeads.length;
-
-//             followUpLeads = await Lead.find({
-//                 status: "Follow-up"
-//             }).populate("assignedTo assignedBy createdBy");
-//             followUp = followUpLeads.length;
-
-//             inDiscussionLeads = await Lead.find({
-//                 assignedTo: user._id,
-//                 status: "In Discussion"
-//             }).populate("assignedTo assignedBy createdBy");
-//             inDiscussion = inDiscussionLeads.length;
-//         }
-
-//         if (role === "Resume") {
-
-//             total = await Lead.countDocuments();
-
-//             untouchedLeads = await Candidate.find({
-//                 movedToTraining: true,
-//                 movedToCV: false,
-//                 touchedByResume: false
-//             }).populate("leadId");
-//             untouched = untouchedLeads.length;
-
-//             touchedLeads = await Candidate.find({
-//                 movedToTraining: true,
-//                 touchedByResume: true,
-//                 endDate: null
-//             }).populate("leadId");
-//             touched = touchedLeads.length;
-
-//             completedLeads = await Candidate.find({
-//                 movedToTraining: true,
-//                 movedToCV: false,
-//                 touchedByResume: true,
-//                 endDate: { $ne: null }
-//             }).populate("leadId");
-//             completed = completedLeads.length;
-//         }
-
-//         if (role === "Marketing") {
-//             total = await Candidate.countDocuments();
-
-//             unassignedLeads = await Candidate.find({
-//                 movedToMarketing: true,
-//                 assignedTo: null,
-//             }).populate("leadId").populate("assignedTo").populate("assignedBy");
-//             unassigned = unassignedLeads.length;
-
-//             assignedLeads = await Candidate.find({
-//                 movedToMarketing: true,
-//                 assignedTo: { $ne: null }
-//             }).populate("leadId").populate("assignedTo").populate("assignedBy");;
-//             assigned = assignedLeads.length;
-//         }
-
-//         if (role === "Sr_Lead_Generator") {
-//             total = await Lead.countDocuments();
-//         }
-
-//         const result = ({
-//             total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
-//             notInterested,
-//             followUp,
-//             inDiscussion,
-//             interestedLeads,
-//             notInterestedLeads,
-//             followUpLeads,
-//             inDiscussionLeads
-//         });
-
-//         try {
-//             await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-//             console.log("Cached lead state:", cacheKey);
-//         } catch (error) {
-//             console.error("Redis setEx failed:", error);
-//         }
-
-//         res.setHeader("X-Cache", "MISS");
-//         return res.status(200).json(result);
-
-//     } catch (error) {
-//         console.error("Error fetching lead state:", error);
-//         res.status(500).json({ message: "Error fetching stats" });
-//     }
-// }
-
 exports.getLeadState = async (req, res) => {
     try {
+
         if (!req.user) {
-            return res.status(401).json({ message: "Unauthorized" });
+            return res.status(401).json({ message: "Unauthorized: User not found" });
         }
 
         const role = req.user.role?.name;
-        const userId = req.user._id;
+        console.log("User Role For State:", role);
 
-        const cacheKey = `lead_state:${role}:${userId}`;
+        const user = req.user;
+        console.log("req.user for state:", req.user);
+        const cacheKey = `lead_state:${role}:${user._id}`;
+
         const cached = await redisClient.get(cacheKey);
-
         if (cached) {
-            console.log("🔥 Served from Redis:", cacheKey);
+            console.log("Served from GetLeadState redis cache:", cacheKey);
             res.setHeader("X-Cache", "HIT");
             return res.status(200).json(JSON.parse(cached));
         }
 
-        console.log("⚠ Cache MISS — Computing:", cacheKey);
+        console.log("Cache Miss => Computing lead for state:", cacheKey);
 
-        let result = {};
+        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
+        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
 
-        // ============================================
-        // 1️⃣ ROLE : LEAD GEN MANAGER
-        // ============================================
         if (role === "Lead_Gen_Manager") {
-            const [total, unassignedLeads, assignedLeads] = await Promise.all([
-                Lead.countDocuments(),
-                Lead.find({ assignedTo: null }).select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
-                Lead.find({ assignedTo: { $ne: null } }).select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
-            ]);
-
-            result = {
-                total,
-                unassigned: unassignedLeads.length,
-                assigned: assignedLeads.length,
-                unassignedLeads,
-                assignedLeads
-            };
+            total = await Lead.countDocuments();
+            unassignedLeads = await Lead.find({ assignedTo: null })
+                .populate("assignedTo assignedBy createdBy");
+            unassigned = unassignedLeads.length;
+            assignedLeads = await Lead.find({ assignedTo: { $ne: null } })
+                .populate("assignedTo assignedBy createdBy");
+            assigned = assignedLeads.length;
         }
 
-        // ============================================
-        // 2️⃣ ROLE : SALES MANAGER
-        // ============================================
         if (role === "Sales_Manager") {
-            const [total, unassignedLeads, assignedLeads] = await Promise.all([
-                Lead.countDocuments(),
-                Lead.find({
-                    assignedTo: userId,
-                    assignedBy: { $ne: null }
-                }).select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
 
-                Lead.find({
-                    assignedBy: userId
-                }).select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
-            ]);
+            total = await Lead.countDocuments();
 
-            result = {
-                total,
-                unassigned: unassignedLeads.length,
-                assigned: assignedLeads.length,
-                unassignedLeads,
-                assignedLeads
-            };
+            unassignedLeads = await Lead.find({
+                assignedTo: user._id,
+                assignedBy: { $ne: null }
+            }).populate("assignedTo assignedBy createdBy");
+
+            unassigned = unassignedLeads.length;
+
+            assignedLeads = await Lead.find({
+                assignedBy: user._id
+            }).populate("assignedTo assignedBy createdBy");
+            assigned = assignedLeads.length;
         }
 
-        // ============================================
-        // 3️⃣ ROLE : SALES
-        // ============================================
         if (role === "Sales") {
-            const [
-                total,
-                assignedLeads,
-                enrolledLeads,
-                interestedLeads,
-                notInterestedLeads,
-                followUpLeads,
-                inDiscussionLeads
-            ] = await Promise.all([
-                Lead.countDocuments({ assignedTo: userId }),
 
-                Lead.find({ assignedTo: userId })
-                    .select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
+            total = await Lead.countDocuments({ assignedTo: user._id });
+            assignedLeads = await Lead.find({
+                assignedTo: user._id
+            }).populate("assignedTo assignedBy createdBy");
+            assigned = assignedLeads.length;
 
-                Candidate.find().select("_id"),
+            enrolledLeads = await Candidate.find().populate();
+            enrolled = enrolledLeads.length;
 
-                Lead.find({ assignedTo: userId, status: "Interested" })
-                    .select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
+            interestedLeads = await Lead.find({
+                assignedTo: user._id,
+                status: "Interested"
+            }).populate("assignedTo assignedBy createdBy");
+            interested = interestedLeads.length;
 
-                Lead.find({ assignedTo: userId, status: "Not Interested" })
-                    .select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
+            notInterestedLeads = await Lead.find({
+                assignedTo: user._id,
+                status: "Not Interested"
+            }).populate("assignedTo assignedBy createdBy");
+            notInterested = notInterestedLeads.length;
 
-                Lead.find({ status: "Follow-up" })
-                    .select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
+            followUpLeads = await Lead.find({
+                status: "Follow-up"
+            }).populate("assignedTo assignedBy createdBy");
+            followUp = followUpLeads.length;
 
-                Lead.find({ assignedTo: userId, status: "In Discussion" })
-                    .select("_id assignedTo assignedBy createdBy")
-                    .populate("assignedTo assignedBy createdBy"),
-            ]);
-
-            result = {
-                total,
-                assigned: assignedLeads.length,
-                enrolled: enrolledLeads.length,
-                interested: interestedLeads.length,
-                notInterested: notInterestedLeads.length,
-                followUp: followUpLeads.length,
-                inDiscussion: inDiscussionLeads.length,
-
-                assignedLeads,
-                enrolledLeads,
-                interestedLeads,
-                notInterestedLeads,
-                followUpLeads,
-                inDiscussionLeads
-            };
+            inDiscussionLeads = await Lead.find({
+                assignedTo: user._id,
+                status: "In Discussion"
+            }).populate("assignedTo assignedBy createdBy");
+            inDiscussion = inDiscussionLeads.length;
         }
 
-        // ============================================
-        // 4️⃣ ROLE : RESUME TEAM
-        // ============================================
         if (role === "Resume") {
-            const [total, untouched, touched, completed] = await Promise.all([
-                Lead.countDocuments(),
 
-                Candidate.find({
-                    movedToTraining: true,
-                    movedToCV: false,
-                    touchedByResume: false
-                }).populate("leadId"),
+            total = await Lead.countDocuments();
 
-                Candidate.find({
-                    movedToTraining: true,
-                    touchedByResume: true,
-                    endDate: null
-                }).populate("leadId"),
+            untouchedLeads = await Candidate.find({
+                movedToTraining: true,
+                movedToCV: false,
+                touchedByResume: false
+            }).populate("leadId");
+            untouched = untouchedLeads.length;
 
-                Candidate.find({
-                    movedToTraining: true,
-                    movedToCV: false,
-                    touchedByResume: true,
-                    endDate: { $ne: null }
-                }).populate("leadId")
-            ]);
+            touchedLeads = await Candidate.find({
+                movedToTraining: true,
+                touchedByResume: true,
+                endDate: null
+            }).populate("leadId");
+            touched = touchedLeads.length;
 
-            result = {
-                total,
-                untouched: untouched.length,
-                touched: touched.length,
-                completed: completed.length,
-                untouchedLeads: untouched,
-                touchedLeads: touched,
-                completedLeads: completed
-            };
+            completedLeads = await Candidate.find({
+                movedToTraining: true,
+                movedToCV: false,
+                touchedByResume: true,
+                endDate: { $ne: null }
+            }).populate("leadId");
+            completed = completedLeads.length;
         }
 
-        // ============================================
-        // 5️⃣ ROLE : MARKETING
-        // ============================================
         if (role === "Marketing") {
-            const [total, unassigned, assigned] = await Promise.all([
-                Candidate.countDocuments(),
+            total = await Candidate.countDocuments();
 
-                Candidate.find({
-                    movedToMarketing: true,
-                    assignedTo: null,
-                }).populate("leadId assignedTo assignedBy"),
+            unassignedLeads = await Candidate.find({
+                movedToMarketing: true,
+                assignedTo: null,
+            }).populate("leadId").populate("assignedTo").populate("assignedBy");
+            unassigned = unassignedLeads.length;
 
-                Candidate.find({
-                    movedToMarketing: true,
-                    assignedTo: { $ne: null },
-                }).populate("leadId assignedTo assignedBy")
-            ]);
-
-            result = {
-                total,
-                unassigned: unassigned.length,
-                assigned: assigned.length,
-                unassignedLeads: unassigned,
-                assignedLeads: assigned
-            };
+            assignedLeads = await Candidate.find({
+                movedToMarketing: true,
+                assignedTo: { $ne: null }
+            }).populate("leadId").populate("assignedTo").populate("assignedBy");;
+            assigned = assignedLeads.length;
         }
 
-        // ============================================
-        // 6️⃣ ROLE : Sr Lead Generator
-        // ============================================
         if (role === "Sr_Lead_Generator") {
-            const total = await Lead.countDocuments();
-            result = { total };
+            total = await Lead.countDocuments();
         }
 
-        // ============================================
-        // Save in Redis
-        // ============================================
-        await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-        console.log("📌 Cached:", cacheKey);
+        const result = ({
+            total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
+            notInterested,
+            followUp,
+            inDiscussion,
+            interestedLeads,
+            notInterestedLeads,
+            followUpLeads,
+            inDiscussionLeads
+        });
+
+        try {
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            console.log("Cached lead state:", cacheKey);
+        } catch (error) {
+            console.error("Redis setEx failed:", error);
+        }
 
         res.setHeader("X-Cache", "MISS");
         return res.status(200).json(result);
 
     } catch (error) {
-        console.error("Error getLeadState:", error);
+        console.error("Error fetching lead state:", error);
         res.status(500).json({ message: "Error fetching stats" });
     }
-};
+}
+
+// exports.getLeadState = async (req, res) => {
+//     try {
+//         if (!req.user) {
+//             return res.status(401).json({ message: "Unauthorized" });
+//         }
+
+//         const role = req.user.role?.name;
+//         const userId = req.user._id;
+
+//         const cacheKey = `lead_state:${role}:${userId}`;
+//         const cached = await redisClient.get(cacheKey);
+
+//         if (cached) {
+//             console.log("🔥 Served from Redis:", cacheKey);
+//             res.setHeader("X-Cache", "HIT");
+//             return res.status(200).json(JSON.parse(cached));
+//         }
+
+//         console.log("⚠ Cache MISS — Computing:", cacheKey);
+
+//         let result = {};
+
+//         // ============================================
+//         // 1️⃣ ROLE : LEAD GEN MANAGER
+//         // ============================================
+//         if (role === "Lead_Gen_Manager") {
+//             const [total, unassignedLeads, assignedLeads] = await Promise.all([
+//                 Lead.countDocuments(),
+//                 Lead.find({ assignedTo: null }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//                 Lead.find({ assignedTo: { $ne: null } }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//             ]);
+
+//             result = {
+//                 total,
+//                 unassigned: unassignedLeads.length,
+//                 assigned: assignedLeads.length,
+//                 unassignedLeads,
+//                 assignedLeads
+//             };
+//         }
+
+//         // ============================================
+//         // 2️⃣ ROLE : SALES MANAGER
+//         // ============================================
+//         if (role === "Sales_Manager") {
+//             const [total, unassignedLeads, assignedLeads] = await Promise.all([
+//                 Lead.countDocuments(),
+//                 Lead.find({
+//                     assignedTo: userId,
+//                     assignedBy: { $ne: null }
+//                 }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({
+//                     assignedBy: userId
+//                 }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//             ]);
+
+//             result = {
+//                 total,
+//                 unassigned: unassignedLeads.length,
+//                 assigned: assignedLeads.length,
+//                 unassignedLeads,
+//                 assignedLeads
+//             };
+//         }
+
+//         // ============================================
+//         // 3️⃣ ROLE : SALES
+//         // ============================================
+//         if (role === "Sales") {
+//             const [
+//                 total,
+//                 assignedLeads,
+//                 enrolledLeads,
+//                 interestedLeads,
+//                 notInterestedLeads,
+//                 followUpLeads,
+//                 inDiscussionLeads
+//             ] = await Promise.all([
+//                 Lead.countDocuments({ assignedTo: userId }),
+
+//                 Lead.find({ assignedTo: userId })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Candidate.find().select("_id"),
+
+//                 Lead.find({ assignedTo: userId, status: "Interested" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({ assignedTo: userId, status: "Not Interested" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({ status: "Follow-up" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({ assignedTo: userId, status: "In Discussion" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//             ]);
+
+//             result = {
+//                 total,
+//                 assigned: assignedLeads.length,
+//                 enrolled: enrolledLeads.length,
+//                 interested: interestedLeads.length,
+//                 notInterested: notInterestedLeads.length,
+//                 followUp: followUpLeads.length,
+//                 inDiscussion: inDiscussionLeads.length,
+
+//                 assignedLeads,
+//                 enrolledLeads,
+//                 interestedLeads,
+//                 notInterestedLeads,
+//                 followUpLeads,
+//                 inDiscussionLeads
+//             };
+//         }
+
+//         // ============================================
+//         // 4️⃣ ROLE : RESUME TEAM
+//         // ============================================
+//         if (role === "Resume") {
+//             const [total, untouched, touched, completed] = await Promise.all([
+//                 Lead.countDocuments(),
+
+//                 Candidate.find({
+//                     movedToTraining: true,
+//                     movedToCV: false,
+//                     touchedByResume: false
+//                 }).populate("leadId"),
+
+//                 Candidate.find({
+//                     movedToTraining: true,
+//                     touchedByResume: true,
+//                     endDate: null
+//                 }).populate("leadId"),
+
+//                 Candidate.find({
+//                     movedToTraining: true,
+//                     movedToCV: false,
+//                     touchedByResume: true,
+//                     endDate: { $ne: null }
+//                 }).populate("leadId")
+//             ]);
+
+//             result = {
+//                 total,
+//                 untouched: untouched.length,
+//                 touched: touched.length,
+//                 completed: completed.length,
+//                 untouchedLeads: untouched,
+//                 touchedLeads: touched,
+//                 completedLeads: completed
+//             };
+//         }
+
+//         // ============================================
+//         // 5️⃣ ROLE : MARKETING
+//         // ============================================
+//         if (role === "Marketing") {
+//             const [total, unassigned, assigned] = await Promise.all([
+//                 Candidate.countDocuments(),
+
+//                 Candidate.find({
+//                     movedToMarketing: true,
+//                     assignedTo: null,
+//                 }).populate("leadId assignedTo assignedBy"),
+
+//                 Candidate.find({
+//                     movedToMarketing: true,
+//                     assignedTo: { $ne: null },
+//                 }).populate("leadId assignedTo assignedBy")
+//             ]);
+
+//             result = {
+//                 total,
+//                 unassigned: unassigned.length,
+//                 assigned: assigned.length,
+//                 unassignedLeads: unassigned,
+//                 assignedLeads: assigned
+//             };
+//         }
+
+//         // ============================================
+//         // 6️⃣ ROLE : Sr Lead Generator
+//         // ============================================
+//         if (role === "Sr_Lead_Generator") {
+//             const total = await Lead.countDocuments();
+//             result = { total };
+//         }
+
+//         // ============================================
+//         // Save in Redis
+//         // ============================================
+//         await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+//         console.log("📌 Cached:", cacheKey);
+
+//         res.setHeader("X-Cache", "MISS");
+//         return res.status(200).json(result);
+
+//     } catch (error) {
+//         console.error("Error getLeadState:", error);
+//         res.status(500).json({ message: "Error fetching stats" });
+//     }
+// };
 
 exports.LeadIdOnly = async (req, res) => {
     try {
