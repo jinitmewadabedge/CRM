@@ -125,8 +125,38 @@ const leadSchema = new mongoose.Schema({
     timestamps: true
 });
 
+// =======================
+// 🔥 High Performance Indexes
+// =======================
+
+// Unique fields
+leadSchema.index({ candidate_email: 1 }, { unique: true });
+leadSchema.index({ candidate_phone_no: 1 });
+
+// Status based (for filtering)
+leadSchema.index({ status: 1 });
+
+// Assignment-based (MOST USED)
+leadSchema.index({ assignedTo: 1 });
+leadSchema.index({ assignedBy: 1 });
+leadSchema.index({ assignToSales: 1 });
+
+// Filtering by owners
+leadSchema.index({ owner: 1 });
+leadSchema.index({ createdBy: 1 });
+
+// Department / team
 leadSchema.index({ departmentId: 1 });
 leadSchema.index({ teamId: 1 });
-leadSchema.index({ createdBy: 1 });
+
+// Compound Index (BEST for sorting + filtering)
+leadSchema.index({ assignedTo: 1, createdAt: -1 });
+
+// Technology filter
+leadSchema.index({ technology: 1 });
+
+// Priority
+leadSchema.index({ priority: 1 });
+
 
 module.exports = mongoose.model('Lead', leadSchema);
