@@ -2737,16 +2737,16 @@ const Leads = () => {
                             />
                           </td>
                           <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_name }</p>
+                            <p className="mb-0 text-left tableData">{a.candidate_name || a.name}</p>
                           </td>
                           <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                            <p className="mb-0 text-left tableData">{a.candidate_email || a.email}</p>
                           </td>
                           {/* <td>
                         <p className="mb-0 text-left tableData">{a.type}</p>
                       </td> */}
                           <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                            <p className="mb-0 text-left tableData">{a.candidate_phone_no || a.phone}</p>
                           </td>
                           <td>
                             {permissions?.lead?.assignToSales && (

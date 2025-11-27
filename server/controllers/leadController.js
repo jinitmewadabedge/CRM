@@ -507,220 +507,6 @@ exports.importLeads = async (req, res) => {
 //     }
 // }
 
-// exports.getLeadState = async (req, res) => {
-//     try {
-//         if (!req.user) {
-//             return res.status(401).json({ message: "Unauthorized" });
-//         }
-
-//         const role = req.user.role?.name;
-//         const userId = req.user._id;
-
-//         const cacheKey = `lead_state:${role}:${userId}`;
-//         const cached = await redisClient.get(cacheKey);
-
-//         if (cached) {
-//             console.log("🔥 Served from Redis:", cacheKey);
-//             res.setHeader("X-Cache", "HIT");
-//             return res.status(200).json(JSON.parse(cached));
-//         }
-
-//         console.log("⚠ Cache MISS — Computing:", cacheKey);
-
-//         let result = {};
-
-//         // ============================================
-//         // 1️⃣ ROLE : LEAD GEN MANAGER
-//         // ============================================
-//         if (role === "Lead_Gen_Manager") {
-//             const [total, unassignedLeads, assignedLeads] = await Promise.all([
-//                 Lead.countDocuments(),
-//                 Lead.find({ assignedTo: null }).select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-//                 Lead.find({ assignedTo: { $ne: null } }).select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-//             ]);
-
-//             result = {
-//                 total,
-//                 unassigned: unassignedLeads.length,
-//                 assigned: assignedLeads.length,
-//                 unassignedLeads,
-//                 assignedLeads
-//             };
-//         }
-
-//         // ============================================
-//         // 2️⃣ ROLE : SALES MANAGER
-//         // ============================================
-//         if (role === "Sales_Manager") {
-//             const [total, unassignedLeads, assignedLeads] = await Promise.all([
-//                 Lead.countDocuments(),
-//                 Lead.find({
-//                     assignedTo: userId,
-//                     assignedBy: { $ne: null }
-//                 }).select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-
-//                 Lead.find({
-//                     assignedBy: userId
-//                 }).select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-//             ]);
-
-//             result = {
-//                 total,
-//                 unassigned: unassignedLeads.length,
-//                 assigned: assignedLeads.length,
-//                 unassignedLeads,
-//                 assignedLeads
-//             };
-//         }
-
-//         // ============================================
-//         // 3️⃣ ROLE : SALES
-//         // ============================================
-//         if (role === "Sales") {
-//             const [
-//                 total,
-//                 assignedLeads,
-//                 enrolledLeads,
-//                 interestedLeads,
-//                 notInterestedLeads,
-//                 followUpLeads,
-//                 inDiscussionLeads
-//             ] = await Promise.all([
-//                 Lead.countDocuments({ assignedTo: userId }),
-
-//                 Lead.find({ assignedTo: userId })
-//                     .select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-
-//                 Candidate.find().select("_id"),
-
-//                 Lead.find({ assignedTo: userId, status: "Interested" })
-//                     .select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-
-//                 Lead.find({ assignedTo: userId, status: "Not Interested" })
-//                     .select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-
-//                 Lead.find({ status: "Follow-up" })
-//                     .select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-
-//                 Lead.find({ assignedTo: userId, status: "In Discussion" })
-//                     .select("_id assignedTo assignedBy createdBy")
-//                     .populate("assignedTo assignedBy createdBy"),
-//             ]);
-
-//             result = {
-//                 total,
-//                 assigned: assignedLeads.length,
-//                 enrolled: enrolledLeads.length,
-//                 interested: interestedLeads.length,
-//                 notInterested: notInterestedLeads.length,
-//                 followUp: followUpLeads.length,
-//                 inDiscussion: inDiscussionLeads.length,
-
-//                 assignedLeads,
-//                 enrolledLeads,
-//                 interestedLeads,
-//                 notInterestedLeads,
-//                 followUpLeads,
-//                 inDiscussionLeads
-//             };
-//         }
-
-//         // ============================================
-//         // 4️⃣ ROLE : RESUME TEAM
-//         // ============================================
-//         if (role === "Resume") {
-//             const [total, untouched, touched, completed] = await Promise.all([
-//                 Lead.countDocuments(),
-
-//                 Candidate.find({
-//                     movedToTraining: true,
-//                     movedToCV: false,
-//                     touchedByResume: false
-//                 }).populate("leadId"),
-
-//                 Candidate.find({
-//                     movedToTraining: true,
-//                     touchedByResume: true,
-//                     endDate: null
-//                 }).populate("leadId"),
-
-//                 Candidate.find({
-//                     movedToTraining: true,
-//                     movedToCV: false,
-//                     touchedByResume: true,
-//                     endDate: { $ne: null }
-//                 }).populate("leadId")
-//             ]);
-
-//             result = {
-//                 total,
-//                 untouched: untouched.length,
-//                 touched: touched.length,
-//                 completed: completed.length,
-//                 untouchedLeads: untouched,
-//                 touchedLeads: touched,
-//                 completedLeads: completed
-//             };
-//         }
-
-//         // ============================================
-//         // 5️⃣ ROLE : MARKETING
-//         // ============================================
-//         if (role === "Marketing") {
-//             const [total, unassigned, assigned] = await Promise.all([
-//                 Candidate.countDocuments(),
-
-//                 Candidate.find({
-//                     movedToMarketing: true,
-//                     assignedTo: null,
-//                 }).populate("leadId assignedTo assignedBy"),
-
-//                 Candidate.find({
-//                     movedToMarketing: true,
-//                     assignedTo: { $ne: null },
-//                 }).populate("leadId assignedTo assignedBy")
-//             ]);
-
-//             result = {
-//                 total,
-//                 unassigned: unassigned.length,
-//                 assigned: assigned.length,
-//                 unassignedLeads: unassigned,
-//                 assignedLeads: assigned
-//             };
-//         }
-
-//         // ============================================
-//         // 6️⃣ ROLE : Sr Lead Generator
-//         // ============================================
-//         if (role === "Sr_Lead_Generator") {
-//             const total = await Lead.countDocuments();
-//             result = { total };
-//         }
-
-//         // ============================================
-//         // Save in Redis
-//         // ============================================
-//         await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-//         console.log("📌 Cached:", cacheKey);
-
-//         res.setHeader("X-Cache", "MISS");
-//         return res.status(200).json(result);
-
-//     } catch (error) {
-//         console.error("Error getLeadState:", error);
-//         res.status(500).json({ message: "Error fetching stats" });
-//     }
-// };
-
 exports.getLeadState = async (req, res) => {
     try {
         if (!req.user) {
@@ -734,297 +520,203 @@ exports.getLeadState = async (req, res) => {
         const cached = await redisClient.get(cacheKey);
 
         if (cached) {
+            console.log("🔥 Served from Redis:", cacheKey);
             res.setHeader("X-Cache", "HIT");
             return res.status(200).json(JSON.parse(cached));
         }
 
-        res.setHeader("X-Cache", "MISS");
+        console.log("⚠ Cache MISS — Computing:", cacheKey);
 
         let result = {};
 
-        // -------------------------------------------------------------------
-        // ⭐ 1️⃣ LEAD GEN MANAGER (All Leads)
-        // -------------------------------------------------------------------
+        // ============================================
+        // 1️⃣ ROLE : LEAD GEN MANAGER
+        // ============================================
         if (role === "Lead_Gen_Manager") {
-            const data = await Lead.aggregate([
-                {
-                    $facet: {
-                        total: [{ $count: "count" }],
-
-                        unassigned: [
-                            { $match: { assignedTo: null } },
-                            {
-                                $project: {
-                                    assignedTo: 1,
-                                    assignedBy: 1,
-                                    createdBy: 1
-                                }
-                            }
-                        ],
-
-                        assigned: [
-                            { $match: { assignedTo: { $ne: null } } },
-                            {
-                                $project: {
-                                    assignedTo: 1,
-                                    assignedBy: 1,
-                                    createdBy: 1
-                                }
-                            }
-                        ]
-                    }
-                }
+            const [total, unassignedLeads, assignedLeads] = await Promise.all([
+                Lead.countDocuments(),
+                Lead.find({ assignedTo: null }).select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
+                Lead.find({ assignedTo: { $ne: null } }).select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
             ]);
 
-            const doc = data[0];
-
             result = {
-                total: doc.total[0]?.count || 0,
-                unassigned: doc.unassigned.length,
-                assigned: doc.assigned.length,
-                unassignedLeads: doc.unassigned,
-                assignedLeads: doc.assigned
+                total,
+                unassigned: unassignedLeads.length,
+                assigned: assignedLeads.length,
+                unassignedLeads,
+                assignedLeads
             };
-
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            return res.status(200).json(result);
         }
 
-        // -------------------------------------------------------------------
-        // ⭐ 2️⃣ SALES MANAGER
-        // -------------------------------------------------------------------
+        // ============================================
+        // 2️⃣ ROLE : SALES MANAGER
+        // ============================================
         if (role === "Sales_Manager") {
-            const data = await Lead.aggregate([
-                {
-                    $facet: {
-                        total: [{ $count: "count" }],
+            const [total, unassignedLeads, assignedLeads] = await Promise.all([
+                Lead.countDocuments(),
+                Lead.find({
+                    assignedTo: userId,
+                    assignedBy: { $ne: null }
+                }).select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
 
-                        unassigned: [
-                            {
-                                $match: {
-                                    assignedTo: userId,
-                                    assignedBy: { $ne: null }
-                                }
-                            },
-                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
-                        ],
-
-                        assigned: [
-                            {
-                                $match: { assignedBy: userId }
-                            },
-                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
-                        ]
-                    }
-                }
+                Lead.find({
+                    assignedBy: userId
+                }).select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
             ]);
 
-            const doc = data[0];
-
             result = {
-                total: doc.total[0]?.count || 0,
-                unassigned: doc.unassigned.length,
-                assigned: doc.assigned.length,
-                unassignedLeads: doc.unassigned,
-                assignedLeads: doc.assigned
+                total,
+                unassigned: unassignedLeads.length,
+                assigned: assignedLeads.length,
+                unassignedLeads,
+                assignedLeads
             };
-
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            return res.status(200).json(result);
         }
 
-        // -------------------------------------------------------------------
-        // ⭐ 3️⃣ SALES
-        // -------------------------------------------------------------------
+        // ============================================
+        // 3️⃣ ROLE : SALES
+        // ============================================
         if (role === "Sales") {
-            const data = await Lead.aggregate([
-                {
-                    $facet: {
-                        total: [
-                            { $match: { assignedTo: userId } },
-                            { $count: "count" }
-                        ],
+            const [
+                total,
+                assignedLeads,
+                enrolledLeads,
+                interestedLeads,
+                notInterestedLeads,
+                followUpLeads,
+                inDiscussionLeads
+            ] = await Promise.all([
+                Lead.countDocuments({ assignedTo: userId }),
 
-                        assigned: [
-                            { $match: { assignedTo: userId } },
-                            {
-                                $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 }
-                            }
-                        ],
+                Lead.find({ assignedTo: userId })
+                    .select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
 
-                        interested: [
-                            { $match: { assignedTo: userId, status: "Interested" } },
-                            {
-                                $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 }
-                            }
-                        ],
+                Candidate.find().select("_id"),
 
-                        notInterested: [
-                            { $match: { assignedTo: userId, status: "Not Interested" } },
-                            {
-                                $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 }
-                            }
-                        ],
+                Lead.find({ assignedTo: userId, status: "Interested" })
+                    .select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
 
-                        followUp: [
-                            { $match: { status: "Follow-up" } },
-                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
-                        ],
+                Lead.find({ assignedTo: userId, status: "Not Interested" })
+                    .select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
 
-                        inDiscussion: [
-                            { $match: { assignedTo: userId, status: "In Discussion" } },
-                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
-                        ]
-                    }
-                }
+                Lead.find({ status: "Follow-up" })
+                    .select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
+
+                Lead.find({ assignedTo: userId, status: "In Discussion" })
+                    .select("_id assignedTo assignedBy createdBy")
+                    .populate("assignedTo assignedBy createdBy"),
             ]);
 
-            const doc = data[0];
-            const enrolledCount = await Candidate.countDocuments(); // separate but fast
-
             result = {
-                total: doc.total[0]?.count || 0,
-                assigned: doc.assigned.length,
-                enrolled: enrolledCount,
-                interested: doc.interested.length,
-                notInterested: doc.notInterested.length,
-                followUp: doc.followUp.length,
-                inDiscussion: doc.inDiscussion.length,
+                total,
+                assigned: assignedLeads.length,
+                enrolled: enrolledLeads.length,
+                interested: interestedLeads.length,
+                notInterested: notInterestedLeads.length,
+                followUp: followUpLeads.length,
+                inDiscussion: inDiscussionLeads.length,
 
-                assignedLeads: doc.assigned,
-                interestedLeads: doc.interested,
-                notInterestedLeads: doc.notInterested,
-                followUpLeads: doc.followUp,
-                inDiscussionLeads: doc.inDiscussion
+                assignedLeads,
+                enrolledLeads,
+                interestedLeads,
+                notInterestedLeads,
+                followUpLeads,
+                inDiscussionLeads
             };
-
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            return res.status(200).json(result);
         }
 
-        // -------------------------------------------------------------------
-        // ⭐ 4️⃣ RESUME TEAM
-        // -------------------------------------------------------------------
+        // ============================================
+        // 4️⃣ ROLE : RESUME TEAM
+        // ============================================
         if (role === "Resume") {
-            const data = await Candidate.aggregate([
-                {
-                    $facet: {
-                        untouched: [
-                            {
-                                $match: {
-                                    movedToTraining: true,
-                                    movedToCV: false,
-                                    touchedByResume: false
-                                }
-                            },
-                            { $project: { leadId: 1 } }
-                        ],
+            const [total, untouched, touched, completed] = await Promise.all([
+                Lead.countDocuments(),
 
-                        touched: [
-                            {
-                                $match: {
-                                    movedToTraining: true,
-                                    touchedByResume: true,
-                                    endDate: null
-                                }
-                            },
-                            { $project: { leadId: 1 } }
-                        ],
+                Candidate.find({
+                    movedToTraining: true,
+                    movedToCV: false,
+                    touchedByResume: false
+                }).populate("leadId"),
 
-                        completed: [
-                            {
-                                $match: {
-                                    movedToTraining: true,
-                                    movedToCV: false,
-                                    touchedByResume: true,
-                                    endDate: { $ne: null }
-                                }
-                            },
-                            { $project: { leadId: 1 } }
-                        ]
-                    }
-                }
+                Candidate.find({
+                    movedToTraining: true,
+                    touchedByResume: true,
+                    endDate: null
+                }).populate("leadId"),
+
+                Candidate.find({
+                    movedToTraining: true,
+                    movedToCV: false,
+                    touchedByResume: true,
+                    endDate: { $ne: null }
+                }).populate("leadId")
             ]);
 
-            const doc = data[0];
-            const totalLeads = await Lead.countDocuments();
-
             result = {
-                total: totalLeads,
-                untouched: doc.untouched.length,
-                touched: doc.touched.length,
-                completed: doc.completed.length,
-
-                untouchedLeads: doc.untouched,
-                touchedLeads: doc.touched,
-                completedLeads: doc.completed
+                total,
+                untouched: untouched.length,
+                touched: touched.length,
+                completed: completed.length,
+                untouchedLeads: untouched,
+                touchedLeads: touched,
+                completedLeads: completed
             };
-
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            return res.status(200).json(result);
         }
 
-        // -------------------------------------------------------------------
-        // ⭐ 5️⃣ MARKETING
-        // -------------------------------------------------------------------
+        // ============================================
+        // 5️⃣ ROLE : MARKETING
+        // ============================================
         if (role === "Marketing") {
-            const data = await Candidate.aggregate([
-                {
-                    $facet: {
-                        total: [{ $count: "count" }],
+            const [total, unassigned, assigned] = await Promise.all([
+                Candidate.countDocuments(),
 
-                        unassigned: [
-                            {
-                                $match: {
-                                    movedToMarketing: true,
-                                    assignedTo: null
-                                }
-                            },
-                            { $project: { leadId: 1, assignedTo: 1, assignedBy: 1 } }
-                        ],
+                Candidate.find({
+                    movedToMarketing: true,
+                    assignedTo: null,
+                }).populate("leadId assignedTo assignedBy"),
 
-                        assigned: [
-                            {
-                                $match: {
-                                    movedToMarketing: true,
-                                    assignedTo: { $ne: null }
-                                }
-                            },
-                            { $project: { leadId: 1, assignedTo: 1, assignedBy: 1 } }
-                        ]
-                    }
-                }
+                Candidate.find({
+                    movedToMarketing: true,
+                    assignedTo: { $ne: null },
+                }).populate("leadId assignedTo assignedBy")
             ]);
 
-            const doc = data[0];
-
             result = {
-                total: doc.total[0]?.count || 0,
-                unassigned: doc.unassigned.length,
-                assigned: doc.assigned.length,
-                unassignedLeads: doc.unassigned,
-                assignedLeads: doc.assigned
+                total,
+                unassigned: unassigned.length,
+                assigned: assigned.length,
+                unassignedLeads: unassigned,
+                assignedLeads: assigned
             };
-
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            return res.status(200).json(result);
         }
 
-        // -------------------------------------------------------------------
-        // ⭐ 6️⃣ SR LEAD GENERATOR
-        // -------------------------------------------------------------------
+        // ============================================
+        // 6️⃣ ROLE : Sr Lead Generator
+        // ============================================
         if (role === "Sr_Lead_Generator") {
             const total = await Lead.countDocuments();
             result = { total };
-
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            return res.status(200).json(result);
         }
 
-        return res.status(400).json({ message: "Unknown role" });
+        // ============================================
+        // Save in Redis
+        // ============================================
+        await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+        console.log("📌 Cached:", cacheKey);
+
+        res.setHeader("X-Cache", "MISS");
+        return res.status(200).json(result);
 
     } catch (error) {
-        console.error("Stats Error:", error);
+        console.error("Error getLeadState:", error);
         res.status(500).json({ message: "Error fetching stats" });
     }
 };
