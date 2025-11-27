@@ -345,167 +345,689 @@ exports.importLeads = async (req, res) => {
 };
 
 
+// exports.getLeadState = async (req, res) => {
+//     try {
+
+//         if (!req.user) {
+//             return res.status(401).json({ message: "Unauthorized: User not found" });
+//         }
+
+//         const role = req.user.role?.name;
+//         console.log("User Role For State:", role);
+
+//         const user = req.user;
+//         console.log("req.user for state:", req.user);
+//         const cacheKey = `lead_state:${role}:${user._id}`;
+
+//         const cached = await redisClient.get(cacheKey);
+//         if (cached) {
+//             console.log("Served from GetLeadState redis cache:", cacheKey);
+//             res.setHeader("X-Cache", "HIT");
+//             return res.status(200).json(JSON.parse(cached));
+//         }
+
+//         console.log("Cache Miss => Computing lead for state:", cacheKey);
+
+//         let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
+//         let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
+
+//         if (role === "Lead_Gen_Manager") {
+//             total = await Lead.countDocuments();
+//             unassignedLeads = await Lead.find({ assignedTo: null })
+//                 .populate("assignedTo assignedBy createdBy");
+//             unassigned = unassignedLeads.length;
+//             assignedLeads = await Lead.find({ assignedTo: { $ne: null } })
+//                 .populate("assignedTo assignedBy createdBy");
+//             assigned = assignedLeads.length;
+//         }
+
+//         if (role === "Sales_Manager") {
+
+//             total = await Lead.countDocuments();
+
+//             unassignedLeads = await Lead.find({
+//                 assignedTo: user._id,
+//                 assignedBy: { $ne: null }
+//             }).populate("assignedTo assignedBy createdBy");
+
+//             unassigned = unassignedLeads.length;
+
+//             assignedLeads = await Lead.find({
+//                 assignedBy: user._id
+//             }).populate("assignedTo assignedBy createdBy");
+//             assigned = assignedLeads.length;
+//         }
+
+//         if (role === "Sales") {
+
+//             total = await Lead.countDocuments({ assignedTo: user._id });
+//             assignedLeads = await Lead.find({
+//                 assignedTo: user._id
+//             }).populate("assignedTo assignedBy createdBy");
+//             assigned = assignedLeads.length;
+
+//             enrolledLeads = await Candidate.find().populate();
+//             enrolled = enrolledLeads.length;
+
+//             interestedLeads = await Lead.find({
+//                 assignedTo: user._id,
+//                 status: "Interested"
+//             }).populate("assignedTo assignedBy createdBy");
+//             interested = interestedLeads.length;
+
+//             notInterestedLeads = await Lead.find({
+//                 assignedTo: user._id,
+//                 status: "Not Interested"
+//             }).populate("assignedTo assignedBy createdBy");
+//             notInterested = notInterestedLeads.length;
+
+//             followUpLeads = await Lead.find({
+//                 status: "Follow-up"
+//             }).populate("assignedTo assignedBy createdBy");
+//             followUp = followUpLeads.length;
+
+//             inDiscussionLeads = await Lead.find({
+//                 assignedTo: user._id,
+//                 status: "In Discussion"
+//             }).populate("assignedTo assignedBy createdBy");
+//             inDiscussion = inDiscussionLeads.length;
+//         }
+
+//         if (role === "Resume") {
+
+//             total = await Lead.countDocuments();
+
+//             untouchedLeads = await Candidate.find({
+//                 movedToTraining: true,
+//                 movedToCV: false,
+//                 touchedByResume: false
+//             }).populate("leadId");
+//             untouched = untouchedLeads.length;
+
+//             touchedLeads = await Candidate.find({
+//                 movedToTraining: true,
+//                 touchedByResume: true,
+//                 endDate: null
+//             }).populate("leadId");
+//             touched = touchedLeads.length;
+
+//             completedLeads = await Candidate.find({
+//                 movedToTraining: true,
+//                 movedToCV: false,
+//                 touchedByResume: true,
+//                 endDate: { $ne: null }
+//             }).populate("leadId");
+//             completed = completedLeads.length;
+//         }
+
+//         if (role === "Marketing") {
+//             total = await Candidate.countDocuments();
+
+//             unassignedLeads = await Candidate.find({
+//                 movedToMarketing: true,
+//                 assignedTo: null,
+//             }).populate("leadId").populate("assignedTo").populate("assignedBy");
+//             unassigned = unassignedLeads.length;
+
+//             assignedLeads = await Candidate.find({
+//                 movedToMarketing: true,
+//                 assignedTo: { $ne: null }
+//             }).populate("leadId").populate("assignedTo").populate("assignedBy");;
+//             assigned = assignedLeads.length;
+//         }
+
+//         if (role === "Sr_Lead_Generator") {
+//             total = await Lead.countDocuments();
+//         }
+
+//         const result = ({
+//             total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
+//             notInterested,
+//             followUp,
+//             inDiscussion,
+//             interestedLeads,
+//             notInterestedLeads,
+//             followUpLeads,
+//             inDiscussionLeads
+//         });
+
+//         try {
+//             await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+//             console.log("Cached lead state:", cacheKey);
+//         } catch (error) {
+//             console.error("Redis setEx failed:", error);
+//         }
+
+//         res.setHeader("X-Cache", "MISS");
+//         return res.status(200).json(result);
+
+//     } catch (error) {
+//         console.error("Error fetching lead state:", error);
+//         res.status(500).json({ message: "Error fetching stats" });
+//     }
+// }
+
+// exports.getLeadState = async (req, res) => {
+//     try {
+//         if (!req.user) {
+//             return res.status(401).json({ message: "Unauthorized" });
+//         }
+
+//         const role = req.user.role?.name;
+//         const userId = req.user._id;
+
+//         const cacheKey = `lead_state:${role}:${userId}`;
+//         const cached = await redisClient.get(cacheKey);
+
+//         if (cached) {
+//             console.log("🔥 Served from Redis:", cacheKey);
+//             res.setHeader("X-Cache", "HIT");
+//             return res.status(200).json(JSON.parse(cached));
+//         }
+
+//         console.log("⚠ Cache MISS — Computing:", cacheKey);
+
+//         let result = {};
+
+//         // ============================================
+//         // 1️⃣ ROLE : LEAD GEN MANAGER
+//         // ============================================
+//         if (role === "Lead_Gen_Manager") {
+//             const [total, unassignedLeads, assignedLeads] = await Promise.all([
+//                 Lead.countDocuments(),
+//                 Lead.find({ assignedTo: null }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//                 Lead.find({ assignedTo: { $ne: null } }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//             ]);
+
+//             result = {
+//                 total,
+//                 unassigned: unassignedLeads.length,
+//                 assigned: assignedLeads.length,
+//                 unassignedLeads,
+//                 assignedLeads
+//             };
+//         }
+
+//         // ============================================
+//         // 2️⃣ ROLE : SALES MANAGER
+//         // ============================================
+//         if (role === "Sales_Manager") {
+//             const [total, unassignedLeads, assignedLeads] = await Promise.all([
+//                 Lead.countDocuments(),
+//                 Lead.find({
+//                     assignedTo: userId,
+//                     assignedBy: { $ne: null }
+//                 }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({
+//                     assignedBy: userId
+//                 }).select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//             ]);
+
+//             result = {
+//                 total,
+//                 unassigned: unassignedLeads.length,
+//                 assigned: assignedLeads.length,
+//                 unassignedLeads,
+//                 assignedLeads
+//             };
+//         }
+
+//         // ============================================
+//         // 3️⃣ ROLE : SALES
+//         // ============================================
+//         if (role === "Sales") {
+//             const [
+//                 total,
+//                 assignedLeads,
+//                 enrolledLeads,
+//                 interestedLeads,
+//                 notInterestedLeads,
+//                 followUpLeads,
+//                 inDiscussionLeads
+//             ] = await Promise.all([
+//                 Lead.countDocuments({ assignedTo: userId }),
+
+//                 Lead.find({ assignedTo: userId })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Candidate.find().select("_id"),
+
+//                 Lead.find({ assignedTo: userId, status: "Interested" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({ assignedTo: userId, status: "Not Interested" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({ status: "Follow-up" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+
+//                 Lead.find({ assignedTo: userId, status: "In Discussion" })
+//                     .select("_id assignedTo assignedBy createdBy")
+//                     .populate("assignedTo assignedBy createdBy"),
+//             ]);
+
+//             result = {
+//                 total,
+//                 assigned: assignedLeads.length,
+//                 enrolled: enrolledLeads.length,
+//                 interested: interestedLeads.length,
+//                 notInterested: notInterestedLeads.length,
+//                 followUp: followUpLeads.length,
+//                 inDiscussion: inDiscussionLeads.length,
+
+//                 assignedLeads,
+//                 enrolledLeads,
+//                 interestedLeads,
+//                 notInterestedLeads,
+//                 followUpLeads,
+//                 inDiscussionLeads
+//             };
+//         }
+
+//         // ============================================
+//         // 4️⃣ ROLE : RESUME TEAM
+//         // ============================================
+//         if (role === "Resume") {
+//             const [total, untouched, touched, completed] = await Promise.all([
+//                 Lead.countDocuments(),
+
+//                 Candidate.find({
+//                     movedToTraining: true,
+//                     movedToCV: false,
+//                     touchedByResume: false
+//                 }).populate("leadId"),
+
+//                 Candidate.find({
+//                     movedToTraining: true,
+//                     touchedByResume: true,
+//                     endDate: null
+//                 }).populate("leadId"),
+
+//                 Candidate.find({
+//                     movedToTraining: true,
+//                     movedToCV: false,
+//                     touchedByResume: true,
+//                     endDate: { $ne: null }
+//                 }).populate("leadId")
+//             ]);
+
+//             result = {
+//                 total,
+//                 untouched: untouched.length,
+//                 touched: touched.length,
+//                 completed: completed.length,
+//                 untouchedLeads: untouched,
+//                 touchedLeads: touched,
+//                 completedLeads: completed
+//             };
+//         }
+
+//         // ============================================
+//         // 5️⃣ ROLE : MARKETING
+//         // ============================================
+//         if (role === "Marketing") {
+//             const [total, unassigned, assigned] = await Promise.all([
+//                 Candidate.countDocuments(),
+
+//                 Candidate.find({
+//                     movedToMarketing: true,
+//                     assignedTo: null,
+//                 }).populate("leadId assignedTo assignedBy"),
+
+//                 Candidate.find({
+//                     movedToMarketing: true,
+//                     assignedTo: { $ne: null },
+//                 }).populate("leadId assignedTo assignedBy")
+//             ]);
+
+//             result = {
+//                 total,
+//                 unassigned: unassigned.length,
+//                 assigned: assigned.length,
+//                 unassignedLeads: unassigned,
+//                 assignedLeads: assigned
+//             };
+//         }
+
+//         // ============================================
+//         // 6️⃣ ROLE : Sr Lead Generator
+//         // ============================================
+//         if (role === "Sr_Lead_Generator") {
+//             const total = await Lead.countDocuments();
+//             result = { total };
+//         }
+
+//         // ============================================
+//         // Save in Redis
+//         // ============================================
+//         await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+//         console.log("📌 Cached:", cacheKey);
+
+//         res.setHeader("X-Cache", "MISS");
+//         return res.status(200).json(result);
+
+//     } catch (error) {
+//         console.error("Error getLeadState:", error);
+//         res.status(500).json({ message: "Error fetching stats" });
+//     }
+// };
+
 exports.getLeadState = async (req, res) => {
     try {
-
         if (!req.user) {
-            return res.status(401).json({ message: "Unauthorized: User not found" });
+            return res.status(401).json({ message: "Unauthorized" });
         }
 
         const role = req.user.role?.name;
-        console.log("User Role For State:", role);
+        const userId = req.user._id;
 
-        const user = req.user;
-        console.log("req.user for state:", req.user);
-        const cacheKey = `lead_state:${role}:${user._id}`;
-
+        const cacheKey = `lead_state:${role}:${userId}`;
         const cached = await redisClient.get(cacheKey);
+
         if (cached) {
-            console.log("Served from GetLeadState redis cache:", cacheKey);
             res.setHeader("X-Cache", "HIT");
             return res.status(200).json(JSON.parse(cached));
         }
 
-        console.log("Cache Miss => Computing lead for state:", cacheKey);
-
-        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
-        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
-
-        if (role === "Lead_Gen_Manager") {
-            total = await Lead.countDocuments();
-            unassignedLeads = await Lead.find({ assignedTo: null })
-                .populate("assignedTo assignedBy createdBy");
-            unassigned = unassignedLeads.length;
-            assignedLeads = await Lead.find({ assignedTo: { $ne: null } })
-                .populate("assignedTo assignedBy createdBy");
-            assigned = assignedLeads.length;
-        }
-
-        if (role === "Sales_Manager") {
-
-            total = await Lead.countDocuments();
-
-            unassignedLeads = await Lead.find({
-                assignedTo: user._id,
-                assignedBy: { $ne: null }
-            }).populate("assignedTo assignedBy createdBy");
-
-            unassigned = unassignedLeads.length;
-
-            assignedLeads = await Lead.find({
-                assignedBy: user._id
-            }).populate("assignedTo assignedBy createdBy");
-            assigned = assignedLeads.length;
-        }
-
-        if (role === "Sales") {
-
-            total = await Lead.countDocuments({ assignedTo: user._id });
-            assignedLeads = await Lead.find({
-                assignedTo: user._id
-            }).populate("assignedTo assignedBy createdBy");
-            assigned = assignedLeads.length;
-
-            enrolledLeads = await Candidate.find().populate();
-            enrolled = enrolledLeads.length;
-
-            interestedLeads = await Lead.find({
-                assignedTo: user._id,
-                status: "Interested"
-            }).populate("assignedTo assignedBy createdBy");
-            interested = interestedLeads.length;
-
-            notInterestedLeads = await Lead.find({
-                assignedTo: user._id,
-                status: "Not Interested"
-            }).populate("assignedTo assignedBy createdBy");
-            notInterested = notInterestedLeads.length;
-
-            followUpLeads = await Lead.find({
-                status: "Follow-up"
-            }).populate("assignedTo assignedBy createdBy");
-            followUp = followUpLeads.length;
-
-            inDiscussionLeads = await Lead.find({
-                assignedTo: user._id,
-                status: "In Discussion"
-            }).populate("assignedTo assignedBy createdBy");
-            inDiscussion = inDiscussionLeads.length;
-        }
-
-        if (role === "Resume") {
-
-            total = await Lead.countDocuments();
-
-            untouchedLeads = await Candidate.find({
-                movedToTraining: true,
-                movedToCV: false,
-                touchedByResume: false
-            }).populate("leadId");
-            untouched = untouchedLeads.length;
-
-            touchedLeads = await Candidate.find({
-                movedToTraining: true,
-                touchedByResume: true,
-                endDate: null
-            }).populate("leadId");
-            touched = touchedLeads.length;
-
-            completedLeads = await Candidate.find({
-                movedToTraining: true,
-                movedToCV: false,
-                touchedByResume: true,
-                endDate: { $ne: null }
-            }).populate("leadId");
-            completed = completedLeads.length;
-        }
-
-        if (role === "Marketing") {
-            total = await Candidate.countDocuments();
-
-            unassignedLeads = await Candidate.find({
-                movedToMarketing: true,
-                assignedTo: null,
-            }).populate("leadId").populate("assignedTo").populate("assignedBy");
-            unassigned = unassignedLeads.length;
-
-            assignedLeads = await Candidate.find({
-                movedToMarketing: true,
-                assignedTo: { $ne: null }
-            }).populate("leadId").populate("assignedTo").populate("assignedBy");;
-            assigned = assignedLeads.length;
-        }
-
-        if (role === "Sr_Lead_Generator") {
-            total = await Lead.countDocuments();
-        }
-
-        const result = ({
-            total, unassigned, assigned, enrolled, untouched, touched, completed, unassignedLeads, assignedLeads, enrolledLeads, untouchedLeads, touchedLeads, completedLeads, interested,
-            notInterested,
-            followUp,
-            inDiscussion,
-            interestedLeads,
-            notInterestedLeads,
-            followUpLeads,
-            inDiscussionLeads
-        });
-
-        try {
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            console.log("Cached lead state:", cacheKey);
-        } catch (error) {
-            console.error("Redis setEx failed:", error);
-        }
-
         res.setHeader("X-Cache", "MISS");
-        return res.status(200).json(result);
+
+        let result = {};
+
+        // -------------------------------------------------------------------
+        // ⭐ 1️⃣ LEAD GEN MANAGER (All Leads)
+        // -------------------------------------------------------------------
+        if (role === "Lead_Gen_Manager") {
+            const data = await Lead.aggregate([
+                {
+                    $facet: {
+                        total: [{ $count: "count" }],
+
+                        unassigned: [
+                            { $match: { assignedTo: null } },
+                            {
+                                $project: {
+                                    assignedTo: 1,
+                                    assignedBy: 1,
+                                    createdBy: 1
+                                }
+                            }
+                        ],
+
+                        assigned: [
+                            { $match: { assignedTo: { $ne: null } } },
+                            {
+                                $project: {
+                                    assignedTo: 1,
+                                    assignedBy: 1,
+                                    createdBy: 1
+                                }
+                            }
+                        ]
+                    }
+                }
+            ]);
+
+            const doc = data[0];
+
+            result = {
+                total: doc.total[0]?.count || 0,
+                unassigned: doc.unassigned.length,
+                assigned: doc.assigned.length,
+                unassignedLeads: doc.unassigned,
+                assignedLeads: doc.assigned
+            };
+
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            return res.status(200).json(result);
+        }
+
+        // -------------------------------------------------------------------
+        // ⭐ 2️⃣ SALES MANAGER
+        // -------------------------------------------------------------------
+        if (role === "Sales_Manager") {
+            const data = await Lead.aggregate([
+                {
+                    $facet: {
+                        total: [{ $count: "count" }],
+
+                        unassigned: [
+                            {
+                                $match: {
+                                    assignedTo: userId,
+                                    assignedBy: { $ne: null }
+                                }
+                            },
+                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
+                        ],
+
+                        assigned: [
+                            {
+                                $match: { assignedBy: userId }
+                            },
+                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
+                        ]
+                    }
+                }
+            ]);
+
+            const doc = data[0];
+
+            result = {
+                total: doc.total[0]?.count || 0,
+                unassigned: doc.unassigned.length,
+                assigned: doc.assigned.length,
+                unassignedLeads: doc.unassigned,
+                assignedLeads: doc.assigned
+            };
+
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            return res.status(200).json(result);
+        }
+
+        // -------------------------------------------------------------------
+        // ⭐ 3️⃣ SALES
+        // -------------------------------------------------------------------
+        if (role === "Sales") {
+            const data = await Lead.aggregate([
+                {
+                    $facet: {
+                        total: [
+                            { $match: { assignedTo: userId } },
+                            { $count: "count" }
+                        ],
+
+                        assigned: [
+                            { $match: { assignedTo: userId } },
+                            {
+                                $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 }
+                            }
+                        ],
+
+                        interested: [
+                            { $match: { assignedTo: userId, status: "Interested" } },
+                            {
+                                $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 }
+                            }
+                        ],
+
+                        notInterested: [
+                            { $match: { assignedTo: userId, status: "Not Interested" } },
+                            {
+                                $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 }
+                            }
+                        ],
+
+                        followUp: [
+                            { $match: { status: "Follow-up" } },
+                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
+                        ],
+
+                        inDiscussion: [
+                            { $match: { assignedTo: userId, status: "In Discussion" } },
+                            { $project: { assignedTo: 1, assignedBy: 1, createdBy: 1 } }
+                        ]
+                    }
+                }
+            ]);
+
+            const doc = data[0];
+            const enrolledCount = await Candidate.countDocuments(); // separate but fast
+
+            result = {
+                total: doc.total[0]?.count || 0,
+                assigned: doc.assigned.length,
+                enrolled: enrolledCount,
+                interested: doc.interested.length,
+                notInterested: doc.notInterested.length,
+                followUp: doc.followUp.length,
+                inDiscussion: doc.inDiscussion.length,
+
+                assignedLeads: doc.assigned,
+                interestedLeads: doc.interested,
+                notInterestedLeads: doc.notInterested,
+                followUpLeads: doc.followUp,
+                inDiscussionLeads: doc.inDiscussion
+            };
+
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            return res.status(200).json(result);
+        }
+
+        // -------------------------------------------------------------------
+        // ⭐ 4️⃣ RESUME TEAM
+        // -------------------------------------------------------------------
+        if (role === "Resume") {
+            const data = await Candidate.aggregate([
+                {
+                    $facet: {
+                        untouched: [
+                            {
+                                $match: {
+                                    movedToTraining: true,
+                                    movedToCV: false,
+                                    touchedByResume: false
+                                }
+                            },
+                            { $project: { leadId: 1 } }
+                        ],
+
+                        touched: [
+                            {
+                                $match: {
+                                    movedToTraining: true,
+                                    touchedByResume: true,
+                                    endDate: null
+                                }
+                            },
+                            { $project: { leadId: 1 } }
+                        ],
+
+                        completed: [
+                            {
+                                $match: {
+                                    movedToTraining: true,
+                                    movedToCV: false,
+                                    touchedByResume: true,
+                                    endDate: { $ne: null }
+                                }
+                            },
+                            { $project: { leadId: 1 } }
+                        ]
+                    }
+                }
+            ]);
+
+            const doc = data[0];
+            const totalLeads = await Lead.countDocuments();
+
+            result = {
+                total: totalLeads,
+                untouched: doc.untouched.length,
+                touched: doc.touched.length,
+                completed: doc.completed.length,
+
+                untouchedLeads: doc.untouched,
+                touchedLeads: doc.touched,
+                completedLeads: doc.completed
+            };
+
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            return res.status(200).json(result);
+        }
+
+        // -------------------------------------------------------------------
+        // ⭐ 5️⃣ MARKETING
+        // -------------------------------------------------------------------
+        if (role === "Marketing") {
+            const data = await Candidate.aggregate([
+                {
+                    $facet: {
+                        total: [{ $count: "count" }],
+
+                        unassigned: [
+                            {
+                                $match: {
+                                    movedToMarketing: true,
+                                    assignedTo: null
+                                }
+                            },
+                            { $project: { leadId: 1, assignedTo: 1, assignedBy: 1 } }
+                        ],
+
+                        assigned: [
+                            {
+                                $match: {
+                                    movedToMarketing: true,
+                                    assignedTo: { $ne: null }
+                                }
+                            },
+                            { $project: { leadId: 1, assignedTo: 1, assignedBy: 1 } }
+                        ]
+                    }
+                }
+            ]);
+
+            const doc = data[0];
+
+            result = {
+                total: doc.total[0]?.count || 0,
+                unassigned: doc.unassigned.length,
+                assigned: doc.assigned.length,
+                unassignedLeads: doc.unassigned,
+                assignedLeads: doc.assigned
+            };
+
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            return res.status(200).json(result);
+        }
+
+        // -------------------------------------------------------------------
+        // ⭐ 6️⃣ SR LEAD GENERATOR
+        // -------------------------------------------------------------------
+        if (role === "Sr_Lead_Generator") {
+            const total = await Lead.countDocuments();
+            result = { total };
+
+            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+            return res.status(200).json(result);
+        }
+
+        return res.status(400).json({ message: "Unknown role" });
 
     } catch (error) {
-        console.error("Error fetching lead state:", error);
+        console.error("Stats Error:", error);
         res.status(500).json({ message: "Error fetching stats" });
     }
-}
+};
 
 exports.LeadIdOnly = async (req, res) => {
     try {
