@@ -15,6 +15,7 @@ import AnimatedNumber from "../../components/Animated_Number/AnimatedNumber";
 import { motion } from "framer-motion";
 import { ModeToggle } from "../../components/mode-toggle";
 import AnnouncementModal from "../../components/DarkModeModal/AnnouncementModal";
+import { useCallback } from "react";
 
 const Leads = () => {
   const { id } = useParams();
@@ -537,7 +538,22 @@ const Leads = () => {
     fetchResumeLeads();
   };
 
-  const handleSelectAllUnassigned = () => {
+  // const handleSelectAllUnassigned = () => {
+  //   if (selectAllUnassigned) {
+  //     setSelectedUnassignedLeads([]);
+  //     setSelectedLead([]);
+  //     setSelectAllUnassigned(false);
+  //     console.log("Deselected all 'Unassigned Leads'")
+  //   } else {
+  //     const ids = unassignedLeads.map(l => l._id);
+  //     setSelectedUnassignedLeads(ids);
+  //     setSelectedLead(ids);
+  //     setSelectAllUnassigned(true);
+  //     console.log(`Selected all 'Unassigned Leads': ${ids.length}`);
+  //   }
+  // };
+
+  const handleSelectAllUnassigned = useCallback(() => {
     if (selectAllUnassigned) {
       setSelectedUnassignedLeads([]);
       setSelectedLead([]);
@@ -550,9 +566,9 @@ const Leads = () => {
       setSelectAllUnassigned(true);
       console.log(`Selected all 'Unassigned Leads': ${ids.length}`);
     }
-  };
+  }, [selectAllUnassigned, unassignedLeads]);
 
-  const handleSelectAllAssigned = () => {
+  const handleSelectAllAssigned = useCallback(() => {
     if (selectAllAssigned) {
       setSelectedAssignedLeads([]);
       setSelectedLead([]);
@@ -565,9 +581,9 @@ const Leads = () => {
       setSelectAllAssigned(true);
       console.log(`Selected all 'Assigned Leads': ${ids.length}`);
     }
-  };
+  }, [selectAllAssigned, assignedLeads]);
 
-  const handleSelectAllTouched = () => {
+  const handleSelectAllTouched = useCallback(() => {
     if (selectAllTouched) {
       setSelectedTouchedLeads([]);
       setSelectedLead([]);
@@ -580,9 +596,9 @@ const Leads = () => {
       setSelectAllTouched(true);
       console.log(`Selected all 'Assigned Leads': ${ids.length}`);
     }
-  };
+  }, [selectAllTouched, touchedLeads]);
 
-  const handleSelectAllUntouched = () => {
+  const handleSelectAllUntouched = useCallback(() => {
     if (selectAllUntouched) {
       setSelectedUntouchedLeads([]);
       setSelectedLead([]);
@@ -595,9 +611,9 @@ const Leads = () => {
       setSelectAllUntouched(true);
       console.log(`Selected all 'Assigned Leads': ${ids.length}`);
     }
-  };
+  }, [selectAllUntouched, untouchedLeads]);
 
-  const handleSelectAllCompleted = () => {
+  const handleSelectAllCompleted = useCallback(() => {
     if (selectAllCompleted) {
       setSelectedCompletedLeads([]);
       setSelectedLead([]);
@@ -610,9 +626,9 @@ const Leads = () => {
       setSelectAllCompleted(true);
       console.log(`Selected all 'Assigned Leads': ${ids.length}`);
     }
-  };
+  }, [selectAllCompleted, completedLeads]);
 
-  const handleSelectAllEnrolled = () => {
+  const handleSelectAllEnrolled = useCallback(() => {
     if (selectAllEnrolled) {
       setSelectedEnrolledLeads([]);
       setSelectedLead([]);
@@ -625,9 +641,114 @@ const Leads = () => {
       setSelectAllEnrolled(true);
       console.log(`Selected all 'Assigned Leads': ${ids.length}`);
     }
-  };
+  }, [selectAllEnrolled, enrolledLeads]);
 
-  const toggleLeadSelection = (id, type) => {
+  // const toggleLeadSelection = (id, type) => {
+  //   switch (type) {
+  //     case "all":
+  //       setSelectedAllLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllAll(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === leads.length) setSelectAllAll(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+  //     case "unassigned":
+  //       setSelectedUnassignedLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllUnassigned(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === unassignedLeads.length) setSelectAllUnassigned(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+  //     case "assigned":
+  //       setSelectedAssignedLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllAssigned(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === assignedLeads.length) setSelectAllAssigned(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+  //     case "enrolled":
+  //       setSelectedEnrolledLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllEnrolled(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === enrolledLeads.length) setSelectAllEnrolled(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+
+  //     case "touched":
+  //       setSelectedTouchedLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllTouched(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === touchedLeads.length) setSelectAllTouched(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+  //     case "untouched":
+  //       setSelectedUntouchedLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllUntouched(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === untouchedLeads.length) setSelectAllUntouched(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+  //     case "completed":
+  //       setSelectedCompletedLeads(prev => {
+  //         let updated;
+  //         if (prev.includes(id)) {
+  //           updated = prev.filter(l => l !== id);
+  //           setSelectAllCompleted(false);
+  //         } else {
+  //           updated = [...prev, id];
+  //           if (updated.length === completedLeads.length)
+  //             setSelectAllCompleted(true);
+  //         }
+  //         return updated;
+  //       });
+  //       break;
+
+  //   }
+  // };
+
+  const toggleLeadSelection = useCallback((id, type) => {
     switch (type) {
       case "all":
         setSelectedAllLeads(prev => {
@@ -728,9 +849,9 @@ const Leads = () => {
           return updated;
         });
         break;
-
     }
-  };
+  },
+    [leads, unassignedLeads, assignedLeads, enrolledLeads, touchedLeads, untouchedLeads, completedLeads]);
 
   const handleSelectAll = (e, type = "all") => {
     const checked = e.target.checked;
@@ -760,7 +881,18 @@ const Leads = () => {
     console.log(`Selected ${ids.length} leads from type: ${type}`);
   }
 
-  const handleBulkAssign = async () => {
+  const handleBulkAssign = useCallback(async () => {
+
+    if (!selectedLead?.length) {
+      toast.error("No leads is selected");
+      return;
+    }
+
+    if (!selectedMember) {
+      toast.error("Please select a team member to assign");
+      return;
+    }
+
     try {
       const token = sessionStorage.getItem("token");
 
@@ -771,16 +903,20 @@ const Leads = () => {
         },
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       toast.success(res.data.message);
+
       setSelectedLead([]);
       setSelectAll(false);
+
       fetchBackendLeads();
       handleRefresh();
+
     } catch (error) {
-      // console.error("Bulk assign error:", error);
       toast.error("Error assigning leads");
     }
-  }
+
+  }, [selectedLead, selectedMember, BASE_URL]);
 
   const handleBulkDelete = async () => {
     if (selectedAllLeads.length === 0) return;
@@ -1035,7 +1171,29 @@ const Leads = () => {
     setShowViewModal(true);
   }
 
-  const handleRefresh = async () => {
+  // const handleRefresh = async () => {
+  //   try {
+  //     setSquareLoading(true);
+  //     setLoading(true);
+  //     const res = await axios.get(`${BASE_URL}/api/leads`);
+  //     console.log("Lead fetched:", res.data);
+  //     setLeads(res.data);
+  //     console.log("Current permission:", permissions);
+
+  //     await fetchBackendLeads();
+  //     await fetchPermissions();
+  //     await fetchCandidates();
+  //     await fetchResumeLeads();
+
+  //   } catch (err) {
+  //     console.error("Error refreshing users:", err);
+  //   } finally {
+  //     setSquareLoading(true);
+  //     setLoading(false);
+  //   }
+  // };
+
+ const handleRefresh = useCallback(async () => {
     try {
       setSquareLoading(true);
       setLoading(true);
@@ -1055,7 +1213,7 @@ const Leads = () => {
       setSquareLoading(true);
       setLoading(false);
     }
-  };
+  });
 
   const handleAddLeadClick = () => {
     setNewLead({
@@ -1211,7 +1369,65 @@ const Leads = () => {
     return new Intl.DateTimeFormat("en-GB", options).format(date);
   };
 
-  const handleAssign = async () => {
+  // const handleAssign = async () => {
+
+  //   if (!selectedLead || !selectedMember) return;
+
+  //   const token = sessionStorage.getItem("token");
+
+  //   console.log("Sending token to backend:", token);
+
+  //   console.log("Selected Lead ID:", selectedLead, "Selected Member ID:", selectedMember);
+
+  //   try {
+
+  //     const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
+  //     console.log("LoggedIn User:", loggedInUser);
+
+  //     const roleName = loggedInUser?.role?.name;
+
+  //     const managerId = loggedInUser?._id || loggedInUser.id;
+  //     console.log("Manager ID:", managerId);
+
+  //     setUnassignedLeads((prev) => prev.filter((lead) => lead._id !== selectedLead));
+
+  //     const assignedLead = unassignedLeads.find((lead) => lead._id === selectedLead);
+
+  //     if (assignedLead) {
+  //       setAssignedLeads((prev) => [...prev, { ...assignedLead, assignedTo: selectedMember },]);
+  //     }
+
+  //     const res = await axios.post(`${BASE_URL}/api/leads/assign/${selectedLead}`,
+  //       {
+  //         teamMemberId: selectedMember,
+  //         assignedBy: managerId
+  //       },
+  //       {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`
+  //         }
+  //       }
+  //     );
+
+  //     console.log("Assign response:", res.data);
+
+  //     toast.success("Lead assigned successfully!");
+
+  //     setFinalLead(null);
+  //     setSelectedMember("");
+
+  //     document.getElementById("closeAssignModalBtn").click();
+
+  //     fetchBackendLeads();
+
+  //   } catch (error) {
+  //     console.error("Error assigning lead:", error.message);
+  //     toast.error("Failed to assign lead. Check console for more details")
+  //   }
+
+  // };
+
+  const handleAssign = useCallback(async () => {
 
     if (!selectedLead || !selectedMember) return;
 
@@ -1257,8 +1473,6 @@ const Leads = () => {
 
       setFinalLead(null);
       setSelectedMember("");
-      // fetchUnassignedLeads();
-      // fetchBackendLeads();
 
       document.getElementById("closeAssignModalBtn").click();
 
@@ -1268,7 +1482,8 @@ const Leads = () => {
       console.error("Error assigning lead:", error.message);
       toast.error("Failed to assign lead. Check console for more details")
     }
-  };
+
+  }, [selectedLead, selectedMember, BASE_URL]);
 
   const getPageNumbers = () => {
     const pageNumbers = [];
@@ -1287,116 +1502,123 @@ const Leads = () => {
   };
 
   console.log("Leads type:", Array.isArray(leads), leads);
-  const filteredLeads = Array.isArray(leads) ? leads.filter((lead) => {
-    const searchMatch =
-      lead.candidate_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      lead.candidate_email?.toLowerCase().includes(filters.search.toLowerCase()) ||
-      lead.candidate_phone_no?.toString().includes(filters.search)
 
-    const typeMatch = filters.type ? lead.type === filters.type : true
+  const filteredLeads = useMemo(() => {
+    if (!Array.isArray(leads)) return [];
 
-    const statusMatch = filters.status ? lead.status === filters.status : true
-    const visaMatch = filters.visa ? lead.visa === filters.visa : true
+    const filtered = leads
+      .filter((lead) => {
+        const searchMatch =
+          lead.candidate_name?.toLowerCase().includes(filters.search.toLowerCase()) ||
+          lead.candidate_email?.toLowerCase().includes(filters.search.toLowerCase()) ||
+          lead.candidate_phone_no?.toString().includes(filters.search);
 
-    const dateMatch =
-      (!filters.startDate || new Date(lead.createdAt) >= new Date(filters.startDate)) &&
-      (!filters.endDate || new Date(lead.createdAt) <= new Date(filters.endDate))
+        const typeMatch = filters.type ? lead.type === filters.type : true;
+        const statusMatch = filters.status ? lead.status === filters.status : true;
+        const visaMatch = filters.visa ? lead.visa === filters.visa : true;
 
-    const timeMatch =
-      (!filters.startTime || lead.preferred_time_to_talk >= filters.startTime) &&
-      (!filters.endTime || lead.preferred_time_to_talk <= filters.endTime)
+        const dateMatch =
+          (!filters.startDate || new Date(lead.createdAt) >= new Date(filters.startDate)) &&
+          (!filters.endDate || new Date(lead.createdAt) <= new Date(filters.endDate));
 
-    return searchMatch && typeMatch && statusMatch && visaMatch && dateMatch && timeMatch
-  })
-    .sort((a, b) => {
-      if (filters.dateSort) {
-        const dateA = new Date(a.createdAt);
-        const dateB = new Date(b.createdAt);
+        const timeMatch =
+          (!filters.startTime || lead.preferred_time_to_talk >= filters.startTime) &&
+          (!filters.endTime || lead.preferred_time_to_talk <= filters.endTime);
 
-        if (filters.dateSort === "newest") {
-          return dateB - dateA;
-        } else {
-          return dateA - dateB;
+        return (
+          searchMatch &&
+          typeMatch &&
+          statusMatch &&
+          visaMatch &&
+          dateMatch &&
+          timeMatch
+        );
+      })
+      .sort((a, b) => {
+        if (filters.dateSort) {
+          const dateA = new Date(a.createdAt);
+          const dateB = new Date(b.createdAt);
+          return filters.dateSort === "newest" ? dateB - dateA : dateA - dateB;
         }
-      }
 
-      if (!filters.sortField) return 0;
+        if (!filters.sortField) return 0;
 
-      let valA = a[filters.sortField];
-      let valB = b[filters.sortField];
+        let valA = a[filters.sortField] ?? "";
+        let valB = b[filters.sortField] ?? "";
 
-      if (valA == null) valA = "";
-      if (valB == null) valB = "";
+        if (typeof valA === "string") valA = valA.toLowerCase();
+        if (typeof valB === "string") valB = valB.toLowerCase();
 
-      if (typeof valA === "string") valA = valA.toLowerCase();
-      if (typeof valB === "string") valB = valB.toLowerCase();
+        return filters.sortOrder === "asc"
+          ? valA > valB ? 1 : valA < valB ? -1 : 0
+          : valA < valB ? 1 : valA > valB ? -1 : 0;
+      });
 
-      if (filters.sortOrder === "asc") {
-        return valA > valB ? 1 : valA < valB ? -1 : 0;
-      } else {
-        return valA < valB ? 1 : valA > valB ? -1 : 0;
-      }
-    }) : [];
+    return filtered;
+  }, [leads, filters]);
 
-  let filteredTouchedLeads = touchedLeads.filter((lead) => {
-    const searchTerm = touchedFilters.search.toLowerCase().trim();
-    return (
-      lead.name?.toLowerCase().includes(searchTerm) ||
-      lead.email?.toLowerCase().includes(searchTerm) ||
-      lead.phone?.toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredTouchedLeads = useMemo(() => {
+    let results = touchedLeads.filter((lead) => {
+      const searchTerm = touchedFilters.search.toLowerCase().trim();
+      return (
+        lead.name?.toLowerCase().includes(searchTerm) ||
+        lead.email?.toLowerCase().includes(searchTerm) ||
+        lead.phone?.toLowerCase().includes(searchTerm)
+      );
+    });
 
-  filteredTouchedLeads = filteredTouchedLeads.sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return touchedFilters.sortByDate === "newest"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
 
-    if (touchedFilters.sortByDate === "newest") {
-      return dateB - dateA;
-    } else {
-      return dateA - dateB;
-    }
-  });
+    return results;
+  }, [touchedLeads, touchedFilters]);
 
-  let filteredCompletedLeads = completedLeads.filter((lead) => {
-    const searchTerm = completedFilters.search.toLowerCase();
-    return (
-      lead.name?.toLowerCase().includes(searchTerm) ||
-      lead.email?.toLowerCase().includes(searchTerm) ||
-      lead.phone?.toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredCompletedLeads = useMemo(() => {
+    let results = completedLeads.filter((lead) => {
+      const searchTerm = completedFilters.search.toLowerCase();
+      return (
+        lead.name?.toLowerCase().includes(searchTerm) ||
+        lead.email?.toLowerCase().includes(searchTerm) ||
+        lead.phone?.toLowerCase().includes(searchTerm)
+      );
+    });
 
-  filteredCompletedLeads = filteredCompletedLeads.sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return completedFilters.sortByDate === "newest"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
 
-    if (completedFilters.sortByDate === "newest") {
-      return dateB - dateA;
-    } else {
-      return dateA - dateB;
-    }
-  });
+    return results;
+  }, [completedLeads, completedFilters]);
 
-  let filteredUntouchedLeads = untouchedLeads.filter((lead) => {
-    const searchTerm = untouchedFilters.search.toLowerCase();
-    return (
-      lead.name?.toLowerCase().includes(searchTerm) ||
-      lead.email?.toLowerCase().includes(searchTerm) ||
-      lead.phone?.toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredUntouchedLeads = useMemo(() => {
+    let results = untouchedLeads.filter((lead) => {
+      const searchTerm = untouchedFilters.search.toLowerCase();
+      return (
+        lead.name?.toLowerCase().includes(searchTerm) ||
+        lead.email?.toLowerCase().includes(searchTerm) ||
+        lead.phone?.toLowerCase().includes(searchTerm)
+      );
+    });
 
-  filteredUntouchedLeads = filteredUntouchedLeads.sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return untouchedFilters.sortByDate === "newest"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
 
-    if (untouchedFilters.sortByDate === "newest") {
-      return dateB - dateA;
-    } else {
-      return dateA - dateB;
-    }
-  });
+    return results;
+  }, [untouchedLeads, untouchedFilters]);
 
   const getProgress = (candidate) => {
     if (!candidate.startDate && !candidate.endDate) return 0;
@@ -2385,35 +2607,6 @@ const Leads = () => {
 
               </div>
 
-              {/* {selectedAllLeads.length > 0 && (
-              <div className="d-flex justify-content-between align-items-center mb-3 mx-3">
-
-                <div className="d-flex align-items-center gap-2">
-                  <select
-                    className="form-select"
-                    value={selectedMember}
-                    onChange={(e) => setSelectedMember(e.target.value)}
-                    style={{ width: "200px" }}
-                  >
-                    <option value="">-- Select Team Member --</option>
-                    {teamMembers.map((user) => (
-                      <option key={user._id} value={user._id}>
-                        {user.name} ({user.role.name})
-                      </option>
-                    ))}
-                  </select>
-
-                  <button
-                    className="btn btn-primary"
-                    onClick={handleBulkAssign}
-                    disabled={!selectedMember || selectedLead.length === 0}
-                  >
-                    Assign Selected ({selectedAllLeads.length})
-                  </button>
-                </div>
-              </div>
-            )} */}
-
               {loading ? (
                 <MyLoader
                   rowHeight={40}
@@ -2607,6 +2800,8 @@ const Leads = () => {
                 </div>
               )}
 
+              {/* Paginations */}
+
               <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
                 <button
                   className="btn btn-sm btn-outline-primary me-2"
@@ -2634,6 +2829,7 @@ const Leads = () => {
                   Next
                 </button>
               </div>
+
 
             </div>
           </div>
@@ -3104,35 +3300,6 @@ const Leads = () => {
                     </tbody>
                   </table>
 
-                  <div className="d-flex justify-content-center justify-content-md-center flex-wrap align-items-center gap-1 py-2 assignLeadsTableBackground">
-                    <button
-                      className="btn btn-sm btn-outline-primary me-1 previousDark"
-                      disabled={currentAssignedPage === 1}
-                      onClick={() => setCurrentAssignedPage(currentAssignedPage - 1)}
-                    >
-                      Previous
-                    </button>
-
-                    {[...Array(totalAssignedPages)].map((_, index) => (
-                      <button
-                        key={index}
-                        className={`btn btn-sm me-1 numberDark ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
-                        onClick={() => setCurrentAssignedPage(index + 1)}
-                      >
-                        {index + 1}
-                      </button>
-                    ))}
-
-                    <button
-                      className="btn btn-sm btn-outline-primary ms-2 nextDark"
-                      disabled={currentAssignedPage === totalAssignedPages}
-                      onClick={() => setCurrentAssignedPage(currentAssignedPage + 1)}
-                    >
-                      Next
-                    </button>
-                  </div>
-
-
                   <div
                     className="modal fade"
                     id="assignLeadModal"
@@ -3153,8 +3320,7 @@ const Leads = () => {
                                     <select
                                       className="form-select form-select-sm"
                                       value={selectedMember}
-                                      onChange={(e) => setSelectedMember(e.target.value)}
-                                    >
+                                      onChange={(e) => setSelectedMember(e.target.value)}>
                                       <option value="">-- Choose Team Member --</option>
                                       {teamMembers.map((member) => (
                                         <option key={member._id} value={member._id}>
@@ -3200,9 +3366,36 @@ const Leads = () => {
                       </div>
                     </div>
                   </div>
+
                 </div >
               )}
+              <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 py-2 assignLeadsTableBackground">
+                <button
+                  className="btn btn-sm btn-outline-primary me-1 previousDark"
+                  disabled={currentAssignedPage === 1}
+                  onClick={() => setCurrentAssignedPage(currentAssignedPage - 1)}
+                >
+                  Previous
+                </button>
 
+                {[...Array(totalAssignedPages)].map((_, index) => (
+                  <button
+                    key={index}
+                    className={`btn btn-sm me-1 numberDark ${currentAssignedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                    onClick={() => setCurrentAssignedPage(index + 1)}
+                  >
+                    {index + 1}
+                  </button>
+                ))}
+
+                <button
+                  className="btn btn-sm btn-outline-primary ms-2 nextDark"
+                  disabled={currentAssignedPage === totalAssignedPages}
+                  onClick={() => setCurrentAssignedPage(currentAssignedPage + 1)}
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -5144,9 +5337,7 @@ const Leads = () => {
                               borderRadius: "8px",
                               fontWeight: "normal",
                               textTransform: "capitalize",
-                            }}
-                          >
-                            {/* Icons same as before */}
+                            }}>
                             {c.status === "New" && <FaLink />}
                             {c.status === "Connected" && <FaCheckCircle />}
                             {c.status === "In Progress" && <FaHourglassHalf />}
