@@ -1171,7 +1171,7 @@ const Leads = () => {
     setShowViewModal(true);
   }
 
-  // const handleRefresh = async () => {
+  // const handleRefresh = useCallback(async () => {
   //   try {
   //     setSquareLoading(true);
   //     setLoading(true);
@@ -1191,29 +1191,38 @@ const Leads = () => {
   //     setSquareLoading(true);
   //     setLoading(false);
   //   }
-  // };
+  // });
 
- const handleRefresh = useCallback(async () => {
+  const handleRefresh = useCallback(async () => {
     try {
       setSquareLoading(true);
       setLoading(true);
-      const res = await axios.get(`${BASE_URL}/api/leads`);
-      console.log("Lead fetched:", res.data);
-      setLeads(res.data);
-      console.log("Current permission:", permissions);
 
-      await fetchBackendLeads();
-      await fetchPermissions();
-      await fetchCandidates();
-      await fetchResumeLeads();
+      const token = sessionStorage.getItem("token");
+
+      const [
+        leadsRes,
+        backendLeadsRes,
+        permissionsRes,
+        candidatesRes,
+        resumeLeadsRes
+      ] = await Promise.all([
+        axios.get(`${BASE_URL}/api/leads`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetchBackendLeads(),
+        fetchPermissions(),
+        fetchCandidates(),
+        fetchResumeLeads()
+      ]);
+
+      setLeads(leadsRes.data);
 
     } catch (err) {
-      console.error("Error refreshing users:", err);
+      console.error("Refresh error:", err);
     } finally {
-      setSquareLoading(true);
+      setSquareLoading(false);
       setLoading(false);
     }
-  });
+  }, []);
 
   const handleAddLeadClick = () => {
     setNewLead({
