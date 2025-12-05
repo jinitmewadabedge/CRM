@@ -14,6 +14,9 @@ import {
   FaCog,
 } from "react-icons/fa";
 import MyLoader from "../components/Lead/MyLoader";
+import { ModeToggle } from "../components/mode-toggle";
+import { ToggleButton } from "react-bootstrap";
+import AnnouncementModal from "../components/DarkModeModal/AnnouncementModal";
 
 const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
@@ -28,6 +31,7 @@ const AdminDashboard = () => {
   const [newRole, setNewRole] = useState("");
   const [csvData, setCsvData] = useState([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
@@ -252,7 +256,17 @@ const AdminDashboard = () => {
   return (
     <div className="container-fluid mt-5 px-5">
       <div className="row g-5">
-        <h4 className='mt-4 text-left adminDashboardTitle'>Hello Admin <img src={UsersImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }} /> ,</h4>
+        <div className="d-flex justify-content-between align-items-center mt-4 mb-2">
+          <h4 className='mt-4 text-left adminDashboardTitle'>
+            Hello Admin
+            <img src={UsersImg} alt="Users" className="mb-2" style={{ width: "40px", border: "0px solid green", borderRadius: "20px" }}
+            />
+            ,
+          </h4>
+          <ModeToggle />
+          {showAnnouncement && <AnnouncementModal show={showAnnouncement} />}
+
+        </div>
         <div className="col-12 col-md-4 m-0 mb-2">
           <div className="rounded-4 bg-white shadow-sm py-4 h-100">
             <div className="d-flex flex-column flex-md-row align-items-center text-center text-md-start gap-3 px-3">

@@ -368,8 +368,8 @@ exports.getLeadState = async (req, res) => {
 
         console.log("Cache Miss => Computing lead for state:", cacheKey);
 
-        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0;
-        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [];
+        let total = 0, unassigned = 0, assigned = 0, enrolled = 0, untouched = 0, touched = 0, completed = 0, interested = 0, notInterested = 0, followUp = 0, inDiscussion = 0, reverted = 0;
+        let unassignedLeads = [], assignedLeads = [], enrolledLeads = [], untouchedLeads = [], touchedLeads = [], completedLeads = [], interestedLeads = [], notInterestedLeads = [], followUpLeads = [], inDiscussionLeads = [], revertedLeads = [];
 
         if (role === "Lead_Gen_Manager") {
             total = await Lead.countDocuments();
@@ -458,6 +458,11 @@ exports.getLeadState = async (req, res) => {
                 endDate: { $ne: null }
             }).populate("leadId");
             completed = completedLeads.length;
+
+            revertedLeads = await Candidate.find({
+                revertToResume: true
+            }).populate("leadId");
+            reverted = revertedLeads.length;
         }
 
         if (role === "Marketing") {
@@ -485,6 +490,8 @@ exports.getLeadState = async (req, res) => {
             notInterested,
             followUp,
             inDiscussion,
+            reverted,
+            revertedLeads,
             interestedLeads,
             notInterestedLeads,
             followUpLeads,

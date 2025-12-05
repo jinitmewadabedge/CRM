@@ -2,7 +2,7 @@ import React, { useRef } from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
-import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaArrowRight } from "react-icons/fa";
+import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaUndo, FaArrowRight } from "react-icons/fa";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
@@ -49,6 +49,7 @@ const Leads = () => {
   const [untouchedLeads, setUntouchedLeads] = useState([]);
   const [touchedLeads, setTouchedLeads] = useState([]);
   const [completedLeads, setCompletedLeads] = useState([]);
+  const [revertedLeads, setRevertedLeads] = useState([]);
   const [selectedAllLeads, setSelectedAllLeads] = useState([]);
   const [selectAllAll, setSelectAllAll] = useState(false);
 
@@ -132,6 +133,12 @@ const Leads = () => {
   const [assignedFilters, setAssignedFilters] = useState({
     sortByDate: "desc",
   });
+
+  const [revertedFilters, setRevertedFilters] = useState({
+    search: ""
+  });
+
+  const [currentRevertedPage, setCurrentRevertedPage] = useState(1);
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
@@ -401,6 +408,7 @@ const Leads = () => {
   }, []);
 
   const fetchBackendLeads = async () => {
+
     const token = sessionStorage.getItem("token");
     console.log("Token:", token);
     const loggedInUser = JSON.parse(sessionStorage.getItem("user"));
@@ -433,6 +441,7 @@ const Leads = () => {
       setBackendNotInterestedLeads(res.data.notInterestedLeads || []);
       setBackendFollowUpLeads(res.data.followUpLeads || []);
       setBackendInDiscussionLeads(res.data.inDiscussionLeads || []);
+      setRevertedLeads(res.data.revertedLeads || []);
 
       setSalesLeads([
         ...(res.data.interestedLeads || []),
@@ -448,6 +457,10 @@ const Leads = () => {
       console.log("Touched state (after API):", res.data.touchedLeads);
       console.log("Completed state (after API):", res.data.completedLeads);
       console.log("In Discussion state (after API):", res.data.inDiscussionLeads);
+      console.log("Reverted Lead State (RAW):", res.data.revertedLeads);
+      res.data.revertedLeads?.forEach((lead, i) => {
+        console.log(`Reverted Lead ${i}:`, lead);
+      });
       // console.log("Training state (after API):", res.data.trainingLeads);
       // console.log("cv state (after API):", res.data.cvLeads);
 
@@ -463,6 +476,7 @@ const Leads = () => {
         backendNotInterested: res.data.notInterested || 0,
         backendFollowUp: res.data.followUp || 0,
         backendInDiscussion: res.data.inDiscussion || 0,
+        reverted: res.data.reverted || 0
       });
 
       console.log(`${roleName} Lead State:`, res.data.training);
@@ -1048,6 +1062,20 @@ const Leads = () => {
       toast.error("Failed to move candidate to CV");
     }
   };
+
+  const handleMoveBackToResume = async (id) => {
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      const res = await axios.put(`${BASE_URL}/api/resume/moveBackToResume/${id}`, {},
+        { headers: { Authorization: `Bearer ${token}` } });
+
+      toast.success(res.data.message);
+      fetchBackendLeads();
+    } catch (error) {
+      toast.error("Failed to revert lead to Marketing to Resume");
+    }
+  }
 
 
   const handleChange = (e) => {
@@ -1708,10 +1736,6 @@ const Leads = () => {
   const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
   const currentAssignedLeads = sortedAssignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
 
-  const indexOfLastEnrolledLeads = currentEnrolledPage * leadsPerPage;
-  const indexOfFirstEnrolledLeads = indexOfLastEnrolledLeads - leadsPerPage;
-  const currentEnrolledLeads = sortedEnrolledLeads.slice(indexOfFirstEnrolledLeads, indexOfLastEnrolledLeads);
-
   const indexOfLastInDiscussionLeads = currentInDiscussionPage * leadsPerPage;
   const indexOfFirstInDiscussionLeads = indexOfLastInDiscussionLeads - leadsPerPage;
   const currentInDiscussionLeads = sortedInDiscussionLeads.slice(indexOfFirstInDiscussionLeads, indexOfLastInDiscussionLeads);
@@ -1720,7 +1744,6 @@ const Leads = () => {
   const totalUnassignedPages = Math.ceil(unassignedLeads.length / leadsPerPage);
   const totalAssignedPages = Math.ceil(assignedLeads.length / leadsPerPage);
   const totalInDiscussionPages = Math.ceil(inDiscussionLeads.length / leadsPerPage);
-  const totalEnrolledPages = Math.ceil(enrolledLeads.length / leadsPerPage);
 
   const sortedFollowUpLeads = useMemo(() => {
     return [...FollowUpLeads].sort((a, b) => {
@@ -1762,6 +1785,9 @@ const Leads = () => {
 
     const enrolledLeads = salesLeads.filter(l => l.status === "Enrolled");
     console.log("Enrolled Leads:", enrolledLeads);
+
+    const revertedLeads = salesLeads.filter(l => l.status === "Reverted");
+    console.log("Reverted Leads:", revertedLeads);
 
   }, [salesLeads]);
 
@@ -1834,6 +1860,28 @@ const Leads = () => {
     fetchActiveLead();
   }, []);
 
+  const filteredRevertedLeads = revertedLeads.filter((lead) => {
+    const searchTerm = revertedFilters.search.toLowerCase().trim();
+    if (!searchTerm) return true;
+
+    return (
+      lead.name?.toLowerCase().includes(searchTerm) ||
+      lead.email?.toLowerCase().includes(searchTerm) ||
+      lead.phone?.toString().includes(searchTerm)
+    );
+  });
+
+  const indexOfLastReverted = currentRevertedPage * leadsPerPage;
+  const indexOfFirstReverted = indexOfLastReverted - leadsPerPage;
+
+  const currentReverted = filteredRevertedLeads.slice(
+    indexOfFirstReverted,
+    indexOfLastReverted
+  );
+
+  const totalRevertedPages = Math.ceil(filteredRevertedLeads.length / leadsPerPage);
+
+
   let filteredInterestedLeads = interestedLeads.filter((lead) => {
     const searchTerm = interestedFilters.search.toLowerCase().trim();
     if (!searchTerm) return true;
@@ -1904,7 +1952,7 @@ const Leads = () => {
     );
   });
 
-  const filteredEnrolledLeads = enrolledLeads.filter((lead) => {
+  const filteredEnrolledLeads = sortedEnrolledLeads.filter((lead) => {
     const searchTerm = enrolledFilters.search.toLowerCase().trim();
     if (!searchTerm) return true;
 
@@ -1915,6 +1963,12 @@ const Leads = () => {
       lead.technology?.toString().toLowerCase().includes(searchTerm)
     );
   });
+
+  const indexOfLastEnrolledLeads = currentEnrolledPage * leadsPerPage;
+  const indexOfFirstEnrolledLeads = indexOfLastEnrolledLeads - leadsPerPage;
+  const currentEnrolledLeads = filteredEnrolledLeads.slice(indexOfFirstEnrolledLeads, indexOfLastEnrolledLeads);
+
+  const totalEnrolledPages = Math.ceil(filteredEnrolledLeads.length / leadsPerPage);
 
   return (
 
@@ -2036,8 +2090,8 @@ const Leads = () => {
             className="col-12 col-md-4 m-0 mb-2"
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            whileHover={{ scale: 1.03, y: -4 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            whileHover={{ scale: 1.07, y: -4 }}
           >
             <div className="rounded-4 bg-white shadow-sm py-4 h-100 d-flex flex-column justify-content-center">
               {loading ? (
@@ -2075,7 +2129,6 @@ const Leads = () => {
             </div>
           </motion.div>
         )}
-
 
         {userRole === "Sales" && (
           <motion.div
@@ -2407,7 +2460,7 @@ const Leads = () => {
         )}
 
         {/* All Lead Main Table */}
-        {user.role !== "Resume" && user.role !== "Sales" && user.role !== "Marketing" && (
+        {user.role !== "Resume" && user.role !== "Sales" && user.role !== "Marketing" && user.role !== "Recruiter" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
               <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -2933,88 +2986,65 @@ const Leads = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {currentUnassignedLeads.map((a) => (
-                        <tr key={a._id}>
-                          <td>
-                            <input type="checkbox"
-                              checked={selectedUnassignedLeads.includes(a._id)}
-                              onChange={() => toggleLeadSelection(a._id, "unassigned")}
-                            />
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_name || a.name}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_email || a.email}</p>
-                          </td>
-                          {/* <td>
-                        <p className="mb-0 text-left tableData">{a.type}</p>
-                      </td> */}
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_phone_no || a.phone}</p>
-                          </td>
-                          <td>
-                            {permissions?.lead?.assignToSales && (
+                      {currentUnassignedLeads.length > 0 ? (
+                        currentUnassignedLeads.map((a) => (
+                          <tr key={a._id}>
+                            <td>
+                              <input type="checkbox"
+                                checked={selectedUnassignedLeads.includes(a._id)}
+                                onChange={() => toggleLeadSelection(a._id, "unassigned")}
+                              />
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.candidate_name || a.name}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.candidate_email || a.email}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.candidate_phone_no || a.phone}</p>
+                            </td>
+                            <td>
+                              {permissions?.lead?.assignToSales && (
+                                <button
+                                  id="assign"
+                                  className="btn btn-sm btn-success"
+                                  onClick={() => setSelectedLead(a._id)}
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#assignLeadModal">
+                                  Assign
+                                </button>
+                              )}
                               <button
-                                id="assign"
-                                className="btn btn-sm btn-success"
-                                onClick={() => setSelectedLead(a._id)}
-                                data-bs-toggle="modal"
-                                data-bs-target="#assignLeadModal">
-                                Assign
+                                className="btn btn-sm btn-danger"
+                                onClick={() => handleMoveBackToResume(a._id)}>
+                                Back To Resume <FaUndo className="ms-1" />
                               </button>
-                            )}
-                            <button
-                              id="viewLead"
-                              className="btn btn-sm btn-success ms-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#myLeadModal"
-                              onClick={() => {
-                                setTimeout(() => {
-                                  console.log("Selected Lead in modal", a);
-                                  setSelectedLead(a);
-                                  setModalSource("unassigned");
-                                }, 600);
-                              }}
-                            >
-                              View Lead
-                            </button>
+                              <button
+                                id="viewLead"
+                                className="btn btn-sm btn-success ms-2"
+                                data-bs-toggle="modal"
+                                data-bs-target="#myLeadModal"
+                                onClick={() => {
+                                  setTimeout(() => {
+                                    console.log("Selected Lead in modal", a);
+                                    setSelectedLead(a);
+                                    setModalSource("unassigned");
+                                  }, 600);
+                                }}>
+                                View Lead
+                              </button>
+                            </td>
+
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="11" className="mb-0 text-center tableData">
+                            No unassigned candidates found...
                           </td>
-
-                          {/* <td className="text-left tableData">
-                        <button
-                          type="button"
-                          className="btn btn-outline-primary btn-sm btn-rounded me-2"
-                          onClick={() => navigate(`/leads/${lead._id}`)}
-                        >
-                          View
-                        </button> */}
-
-                          {/* <button className="btn btn-outline-warning btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => setSelectedLead(lead)}>View</button> */}
-
-                          {/* <button
-                        type="button"
-                        className="btn btn-outline-success btn-sm btn-rounded me-2"
-                        onClick={() => navigate(`/leads/edit/${lead._id}`)}
-                      >
-                        Edit
-                      </button> */}
-
-                          {/* <button className="btn btn-outline-success btn-sm btn-rounded me-2" data-bs-toggle="modal" data-bs-target="#editLead" onClick={() => handleEditClick(lead)}>Edit</button>
-
-                        <button type="button"
-                          className="btn btn-outline-danger btn-sm"
-                          onClick={async () => {
-                            if (window.confirm("Are you sure?")) {
-                              await deleteLead(lead._id);
-                              setLeads(leads.filter(l => l._id !== lead._id));
-                            }
-                          }}>
-                          Delete
-                        </button> */}
-                          {/* </td> */}
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
 
@@ -3189,123 +3219,131 @@ const Leads = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {currentAssignedLeads.map((a) => (
-                        <tr key={a._id}>
-                          <td>
-                            <input type="checkbox"
-                              checked={selectedAssignedLeads.includes(a._id)}
-                              onChange={() => toggleLeadSelection(a._id, "assigned")}
-                            />
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_name}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_email}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.type}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.university}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.technology}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.visa}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.preferred_time_to_talk}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.source}</p>
-                          </td>
-                          <td className="text-center">
-                            <span
-                              className="badge px-2 d-flex align-items-center justify-content-center gap-2"
-                              style={{
-                                backgroundColor: statusColors[a.status] || "#d1d5db",
-                                color: "white",
-                                borderRadius: "12px",
-                                fontSize: "12px",
-                                fontWeight: "normal",
-                                textTransform: "capitalize",
-                              }}
-                            >
+                      {currentAssignedLeads.length > 0 ? (
+                        currentAssignedLeads.map((a) => (
+                          <tr key={a._id}>
+                            <td>
+                              <input type="checkbox"
+                                checked={selectedAssignedLeads.includes(a._id)}
+                                onChange={() => toggleLeadSelection(a._id, "assigned")}
+                              />
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.type}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.university}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.technology}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.visa}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.preferred_time_to_talk}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.source}</p>
+                            </td>
+                            <td className="text-center">
+                              <span
+                                className="badge px-2 d-flex align-items-center justify-content-center gap-2"
+                                style={{
+                                  backgroundColor: statusColors[a.status] || "#d1d5db",
+                                  color: "white",
+                                  borderRadius: "12px",
+                                  fontSize: "12px",
+                                  fontWeight: "normal",
+                                  textTransform: "capitalize",
+                                }}
+                              >
 
-                              {a.status === "New" && <FaLink />}
-                              {a.status === "Connected" && <FaCheckCircle />}
-                              {a.status === "In Progress" && <FaHourglassHalf />}
-                              {a.status === "Shortlisted" && <FaStar />}
-                              {a.status === "Rejected" && <FaTimesCircle />}
-                              {a.status === "Assigned" && <FaCheckCircle />}
-                              {a.status === "Converted" && <FaUserCheck />}
-                              {a.status === "Interested" && <FaThumbsUp />}
-                              {a.status === "Enrolled" && <FaGraduationCap />}
-                              {a.status === "Not Interested" && <FaThumbsDown />}
-                              {a.status === "Follow-up" && <FaRedo />}
-                              {a.status === "In Discussion" && <FaComments />}
+                                {a.status === "New" && <FaLink />}
+                                {a.status === "Connected" && <FaCheckCircle />}
+                                {a.status === "In Progress" && <FaHourglassHalf />}
+                                {a.status === "Shortlisted" && <FaStar />}
+                                {a.status === "Rejected" && <FaTimesCircle />}
+                                {a.status === "Assigned" && <FaCheckCircle />}
+                                {a.status === "Converted" && <FaUserCheck />}
+                                {a.status === "Interested" && <FaThumbsUp />}
+                                {a.status === "Enrolled" && <FaGraduationCap />}
+                                {a.status === "Not Interested" && <FaThumbsDown />}
+                                {a.status === "Follow-up" && <FaRedo />}
+                                {a.status === "In Discussion" && <FaComments />}
 
-                              {a.status}
-                            </span>
-                          </td>
+                                {a.status}
+                              </span>
+                            </td>
 
-                          <td>
-                            <p className="mb-0 text-left tableData">{formatDateTimeIST(a.createdAt)}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{formatDateTimeIST(a.updatedAt)}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
-                          </td>
-                          <td>
-                            <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
-                          </td>
-                          <td>
-                            <button
-                              className="btn btn-outline-warning btn-sm btn-rounded me-2"
-                              data-bs-toggle="modal"
-                              data-bs-target="#myLeadModal"
-                              onClick={() => {
-                                setSelectedLead(a);
-                                setModalSource("assigned")
-                              }}>
-                              View
-                            </button>
-                            {permissions?.lead?.updateScope !== "none" && (
+                            <td>
+                              <p className="mb-0 text-left tableData">{formatDateTimeIST(a.createdAt)}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{formatDateTimeIST(a.updatedAt)}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.assignedTo?.name}</p>
+                            </td>
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.assignedBy?.name}</p>
+                            </td>
+                            <td>
                               <button
-                                className="btn btn-outline-success btn-sm btn-rounded me-2"
+                                className="btn btn-outline-warning btn-sm btn-rounded me-2"
                                 data-bs-toggle="modal"
-                                data-bs-target="#editLead"
-                                onClick={() => handleEditClick(a)}>
-                                Edit
-                              </button>
-                            )}
-                            {permissions?.lead?.deleteScope !== "none" && (
-                              <button type="button"
-                                className="btn btn-outline-danger btn-sm"
-                                onClick={async () => {
-                                  if (window.confirm("Are you sure?")) {
-                                    await deleteLead(a._id);
-                                    setLeads(leads.filter(l => l._id !== a._id));
-                                    fetchBackendLeads();
-                                  }
+                                data-bs-target="#myLeadModal"
+                                onClick={() => {
+                                  setSelectedLead(a);
+                                  setModalSource("assigned")
                                 }}>
-                                Delete
+                                View
                               </button>
-                            )}
-                          </td>
+                              {permissions?.lead?.updateScope !== "none" && (
+                                <button
+                                  className="btn btn-outline-success btn-sm btn-rounded me-2"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#editLead"
+                                  onClick={() => handleEditClick(a)}>
+                                  Edit
+                                </button>
+                              )}
+                              {permissions?.lead?.deleteScope !== "none" && (
+                                <button type="button"
+                                  className="btn btn-outline-danger btn-sm"
+                                  onClick={async () => {
+                                    if (window.confirm("Are you sure?")) {
+                                      await deleteLead(a._id);
+                                      setLeads(leads.filter(l => l._id !== a._id));
+                                      fetchBackendLeads();
+                                    }
+                                  }}>
+                                  Delete
+                                </button>
+                              )}
+                            </td>
 
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="17" className="mb-0 text-center tableData">
+                            No assigned candidates found...
+                          </td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
 
@@ -5687,8 +5725,8 @@ const Leads = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentFollowUpLeads.length > 0 ? (
-                    currentFollowUpLeads.map((c, index) => (
+                  {filteredFollowUpLeads.length > 0 ? (
+                    filteredFollowUpLeads.map((c, index) => (
                       <tr key={c._id}>
                         <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                         <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
@@ -6173,7 +6211,7 @@ const Leads = () => {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={5} className="text-center tableData">
+                        <td colSpan={6} className="text-center tableData">
                           No untouched leads found....
                         </td>
                       </tr>
@@ -6587,6 +6625,127 @@ const Leads = () => {
           </div>
         )
       }
+
+      {/* Revert Leads Table  */}
+
+      {user.role === "Resume" && (
+        <div className="col-12 col-md-8 col-lg-12 mt-2">
+          <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
+
+            <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+              <div>
+                <h5 className="leadManagementTitle">Reverted Leads ({filteredRevertedLeads.length})</h5>
+                <h6 className="leadManagementSubtitle">Active Revert Leads</h6>
+              </div>
+
+              {/* Search */}
+              <div className="input-group input-group-sm w-25">
+                <span className="input-group-text bg-white border-end-0">
+                  <i className="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  className="form-control border-start-0"
+                  placeholder="Search..."
+                  value={revertedFilters.search}
+                  onChange={(e) =>
+                    setRevertedFilters({ ...revertedFilters, search: e.target.value })
+                  }
+                />
+              </div>
+            </div>
+
+            {/* Table */}
+            <table className="table table-hover align-middle">
+              <thead className="bg-light">
+                <tr>
+                  <th className="text-left tableHeader">#</th>
+                  <th className="text-left tableHeader">Name</th>
+                  <th className="text-left tableHeader">Email</th>
+                  <th className="text-left tableHeader">Phone</th>
+                  <th className="text-left tableHeader">Reason</th>
+                  <th className="text-left tableHeader">Status</th>
+                  <th className="text-left tableHeader">Reverted Date</th>
+                  <th className="text-left tableHeader">Actions</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {currentReverted.length > 0 ? (
+                  currentReverted.map((lead, index) => (
+                    <tr key={lead._id}>
+                      <td className="mb-0 text-left tableData">{indexOfFirstReverted + index + 1}</td>
+                      <td className="mb-0 text-left tableData">{lead.name}</td>
+                      <td className="mb-0 text-left tableData">{lead.email}</td>
+                      <td className="mb-0 text-left tableData">{lead.phone}</td>
+                      <td className="mb-0 text-left tableData">{lead.revertReason || "N/A"}</td>
+                      <td className="mb-0 text-left tableData">{lead.status}</td>
+                      <td className="mb-0 text-left tableData">{new Date(lead.revertedAt).toLocaleString()}</td>
+                      <td className="mb-0 text-left tableData">
+                        {/* <button
+                          id="moveToMarketing"
+                          className="btn btn-sm btn-warning fw-semibold"
+                          onClick={() => handleMovedToMarketing(lead._id)}
+                        >
+                          Move to Marketing
+                        </button> */}
+                        {!lead.movedToMarketing ? (
+                          <button
+                            id="moveToMarketing"
+                            className="btn btn-sm btn-warning fw-semibold"
+                            onClick={() => handleMovedToMarketing(lead._id)}
+                          >
+                            Move to Marketing
+                          </button>
+                        ) : (
+                          <span className="badge bg-success" id="movedToMarketing">Moved Done</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="text-center tableData">
+                      No reverted leads found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            <div className="d-flex justify-content-end align-items-center gap-2 mt-3">
+              <button
+                className="btn btn-sm btn-outline-primary"
+                disabled={currentRevertedPage === 1}
+                onClick={() => setCurrentRevertedPage(currentRevertedPage - 1)}
+              >
+                Previous
+              </button>
+
+              {[...Array(totalRevertedPages)].map((_, idx) => (
+                <button
+                  key={idx}
+                  className={`btn btn-sm ${currentRevertedPage === idx + 1 ? "btn-primary" : "btn-outline-primary"
+                    }`}
+                  onClick={() => setCurrentRevertedPage(idx + 1)}
+                >
+                  {idx + 1}
+                </button>
+              ))}
+
+              <button
+                className="btn btn-sm btn-outline-primary"
+                disabled={currentRevertedPage === totalRevertedPages}
+                onClick={() => setCurrentRevertedPage(currentRevertedPage + 1)}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div >
   )
 }

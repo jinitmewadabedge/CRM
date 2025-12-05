@@ -152,6 +152,14 @@ html.dark #viewLead {
     background-color: #30363d;
 }
 
+html.dark .BGColor{
+    background-color: #30363d;
+}
+
+html.dark .nav-link:hover{
+    color: #bedf07 !important;
+}
+
 html.dark #cancelButton{
     background-color: #30363d;
     border: 1px solid rgb(175, 26, 26);

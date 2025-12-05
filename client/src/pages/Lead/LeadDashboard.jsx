@@ -1,6 +1,7 @@
 import React from 'react'
 import LeadNavbar from '../../components/Lead/LeadNavbar'
 import { Outlet } from 'react-router-dom'
+import Footer from '../../components/Footer/Footer'
 
 const LeadDashboard = () => {
     return (
@@ -15,6 +16,9 @@ const LeadDashboard = () => {
                 </div>
                 <div className="col-12 col-md-8 col-lg-10">
                     <Outlet />
+                </div>
+                <div className='mt-3 p-0 bg-light rounded-3'>
+                    <Footer />
                 </div>
             </div>
         </div>

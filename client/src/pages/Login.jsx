@@ -37,7 +37,8 @@ const Login = () => {
     Lead_Gen_Team_Lead: "/leads",
     Lead_Generator: "/leads",
     Sales_Manager: "/leads",
-    Resume: "/leads"
+    Resume: "/leads",
+    Recruiter: "/leads"
   };
 
   useEffect(() => {
@@ -127,6 +128,7 @@ const Login = () => {
                 <option value="Lead_Generator">Lead Generator</option>
                 <option value="Sales_Manager">Sales Manager</option>
                 <option value="Resume">Resume</option>
+                <option value="Recruiter">Recruiter</option>
               </select>
               <label htmlFor="role">Role</label>
             </div>

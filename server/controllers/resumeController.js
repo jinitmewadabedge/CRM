@@ -1,4 +1,5 @@
 const Candidate = require('../models/Candidate');
+const redisClient = require("../utils/redisClient");
 
 exports.getUntouchedLeads = async (req, res) => {
     try {
@@ -234,6 +235,44 @@ exports.movedToMarketing = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error to moved to Marketing" });
+    }
+};
+
+exports.movedBackToResume = async (req, res) => {
+    try {
+        console.log("=== BACK TO RESUME HIT ===");
+        console.log("ID:", req.params.id);
+        const { id } = req.params;
+
+        const updated = await Candidate.findByIdAndUpdate(id,
+            {
+                movedToMarketing: false,
+                revertToResume: true,
+                movedBackToResume: true,
+                endDate: null,
+                touchedByResume: false,
+                movedToTraining: false,
+                revertedAt: new Date(),
+                status: "reverted"
+            },
+            { new: true }
+        ).populate("leadId");
+
+        if (!updated) return res.status(404).json({ message: "Lead is not found" });
+
+         if (redisClient) {
+            const keys = await redisClient.keys("lead_state:*");
+            if (keys.length > 0) {
+                await redisClient.del(keys);
+                console.log("🔥 Redis cache cleared after revert");
+            }
+        }
+
+        res.status(200).json({ message: "Lead Moved Back To The Resume Successfully", candidate: updated });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Error to Moved Back To Resume" });
     }
 };
 
