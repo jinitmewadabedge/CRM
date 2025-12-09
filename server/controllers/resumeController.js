@@ -1,5 +1,5 @@
 const Candidate = require('../models/Candidate');
-const redisClient = require("../utils/redisClient");
+const { clearLeadStateCache } = require('../utils/cache');
 
 exports.getUntouchedLeads = async (req, res) => {
     try {
@@ -161,6 +161,8 @@ exports.markAsTouched = async (req, res) => {
 
         const updated = await candidate.save();
 
+        await clearLeadStateCache();
+
         res.status(200).json({
             message: "Lead moved to touched successfully",
             candidate: updated,
@@ -184,6 +186,9 @@ exports.markAsCompleted = async (req, res) => {
         ).populate("leadId");
 
         if (!updated) return res.status(404).json({ message: "Candidate not found" });
+
+
+        await clearLeadStateCache();
 
         res.status(200).json({
             message: "Lead marked as completed successfully",
@@ -210,6 +215,8 @@ exports.startWork = async (req, res) => {
 
         if (!updated) return res.status(404).json({ message: "Candidate not found" });
 
+        await clearLeadStateCache();
+
         res.status(200).json({ message: "Work started successfully", candidate: updated });
     } catch (error) {
         console.error(error);
@@ -232,6 +239,7 @@ exports.movedToMarketing = async (req, res) => {
 
         res.status(200).json({ message: "Lead moved to marketing successfully", candidate: updated });
 
+        await clearLeadStateCache();
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Error to moved to Marketing" });
@@ -243,6 +251,7 @@ exports.movedBackToResume = async (req, res) => {
         console.log("=== BACK TO RESUME HIT ===");
         console.log("ID:", req.params.id);
         const { id } = req.params;
+        const { revertReason } = req.body;
 
         const updated = await Candidate.findByIdAndUpdate(id,
             {
@@ -253,20 +262,15 @@ exports.movedBackToResume = async (req, res) => {
                 touchedByResume: false,
                 movedToTraining: false,
                 revertedAt: new Date(),
-                status: "reverted"
+                revertReason: String(revertReason).trim(),
+                status: "Reverted"
             },
             { new: true }
         ).populate("leadId");
 
         if (!updated) return res.status(404).json({ message: "Lead is not found" });
 
-         if (redisClient) {
-            const keys = await redisClient.keys("lead_state:*");
-            if (keys.length > 0) {
-                await redisClient.del(keys);
-                console.log("🔥 Redis cache cleared after revert");
-            }
-        }
+        await clearLeadStateCache();
 
         res.status(200).json({ message: "Lead Moved Back To The Resume Successfully", candidate: updated });
 
@@ -275,4 +279,64 @@ exports.movedBackToResume = async (req, res) => {
         res.status(500).json({ message: "Error to Moved Back To Resume" });
     }
 };
+
+exports.assignToRecruiter = async (req, res) => {
+    try {
+        const { recruiterId } = req.body;
+        const { id } = req.params;
+
+        console.log("===Recruiter Assign API HIT====");
+        console.log("leadId (req.params):", id);
+        console.log("teamMemberId (req.body)", recruiterId);
+        console.log("req.user (from token)", req.user);
+
+        if (!recruiterId) {
+            return res.status(400).json({ message: "Recruiter ID is required" });
+        }
+
+        const updated = await Candidate.findByIdAndUpdate(
+            id,
+            {
+                assignedTo: recruiterId,
+                assignedBy: req.user._id,
+                assignedAt: new Date(),
+                status: "Recruiter"
+            },
+            { new: true }
+        ).populate("assignedTo").populate("assignedBy").populate("leadId");
+
+        if (!updated) {
+            return res.status(404).json({ message: "Candidate not found" });
+        }
+
+        await clearLeadStateCache();
+
+        res.status(200).json({
+            message: "Lead assgined To Recruiter Successfully",
+            candidate: updated
+        });
+
+    } catch (error) {
+        console.error("Assign Recruiter Error:", error);
+        res.status(500).json({ message: "Failed To Assign Recruiter" });
+
+    }
+};
+
+exports.submitReport = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const report = req.body;
+
+        const updated = await Candidate.findByIdAndUpdate(
+            id,
+            { report },
+            { new: true }
+        );
+
+        res.status(200).json({message: "Report Saved", candidate: updated});
+    } catch (error) {
+        res.status(500).json({message: "Error saving report"});
+    }
+}
 

@@ -7,6 +7,7 @@ const Candidate = require('../models/Candidate');
 const { removeListener } = require('../models/CV');
 const { invalidLeadStateCache } = require("../utils/cacheHelper");
 const { json } = require('express');
+const { clearLeadStateCache } = require('../utils/cache');
 
 exports.createLead = async (req, res) => {
 
@@ -52,8 +53,8 @@ exports.updateLead = async (req, res) => {
         if (!lead) {
             res.status(404).json({ message: "Lead not found" });
         }
-        await invalidLeadStateCache();
         res.status(200).json(lead);
+        await invalidLeadStateCache();
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -65,8 +66,8 @@ exports.deleteLead = async (req, res) => {
         if (!lead) {
             return res.status(404).json({ message: "Lead not found" });
         }
+        
         await invalidLeadStateCache();
-
         res.status(200).json({ message: "Lead deleted successfully" });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -481,6 +482,21 @@ exports.getLeadState = async (req, res) => {
             assigned = assignedLeads.length;
         }
 
+        if(role === "Recruiter"){
+            unassignedLeads = await Candidate.find({
+                assignedTo: user._id,
+                movedToMarketing: true,
+                recruiterStarted: { $ne : true}
+            }).populate("leadId").populate("assignedBy").populate("assignedTo");
+            unassigned = unassignedLeads.length;
+
+            assignedLeads = await Candidate.find({
+                assignedTo: user._id,
+                recruiterStarted: true
+            }).populate("leadId").populate("assignedTo").populate("assignedBy");
+            assigned = assignedLeads.length;
+        }
+
         if (role === "Sr_Lead_Generator") {
             total = await Lead.countDocuments();
         }
@@ -498,12 +514,12 @@ exports.getLeadState = async (req, res) => {
             inDiscussionLeads
         });
 
-        try {
-            await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
-            console.log("Cached lead state:", cacheKey);
-        } catch (error) {
-            console.error("Redis setEx failed:", error);
-        }
+        // try {
+        //     await redisClient.setEx(cacheKey, 60, JSON.stringify(result));
+        //     console.log("Cached lead state:", cacheKey);
+        // } catch (error) {
+        //     console.error("Redis setEx failed:", error);
+        // }
 
         res.setHeader("X-Cache", "MISS");
         return res.status(200).json(result);
@@ -897,6 +913,8 @@ exports.assignLeads = async (req, res) => {
             message: "Lead assigned successfully",
             lead,
         });
+
+        await clearLeadStateCache();
     } catch (error) {
         console.log("Assign Lead Error:", error);
         res.status(500).json({ message: "Error assigning lead", error });
@@ -947,9 +965,12 @@ exports.bulkAssignLeads = async (req, res) => {
         );
         console.log(`Bulk assigned ${result.modifiedCount} leads successfully`);
 
+        await clearLeadStateCache();
+
         return res.status(200).json({
             message: `${result.modifiedCount} leads assigned successfully.`,
         });
+
     } catch (error) {
         console.error("Bulk Assign Error:", error);
         res.status(500).json({ message: "Error during bulk asssignment", error });
@@ -975,6 +996,8 @@ exports.bulkDeleteLeads = async (req, res) => {
         const result = await Lead.deleteMany({ _id: { $in: leadIds } });
 
         console.log(`Deleted ${result.deletedCount} leads successfully`);
+
+        await clearLeadStateCache();
 
         return res.status(200).json({
             message: `${result.deletedCount} leads deleted successfully.`,
@@ -1116,6 +1139,7 @@ exports.addCallOutcome = async (req, res) => {
 
         res.status(200).json({ message: "Call outcome added successfully", lead });
 
+        await clearLeadStateCache();
     } catch (error) {
         console.error("Error in CallOutcome:", error);
         res.status(500).json({ message: "Server error", error });

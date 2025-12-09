@@ -2,7 +2,7 @@ import React, { useRef } from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
-import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaUndo, FaArrowRight } from "react-icons/fa";
+import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaUndo, FaArrowRight, FaBackward, FaBackspace, FaFastBackward, FaUser, FaFile } from "react-icons/fa";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
@@ -71,6 +71,21 @@ const Leads = () => {
   const [selectedEnrolledLeads, setSelectedEnrolledLeads] = useState([]);
   const [selectAllEnrolled, setSelectAllEnrolled] = useState(false);
 
+  const [selectedCandidate, setSelectedCandidate] = useState(null);
+  const [selectedRecruiter, setSelectedRecruiter] = useState("");
+  const [showRecruiterModal, setShowRecruiterModal] = useState(false);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportData, setReportData] = useState({
+    applications: "",
+    assessment: "",
+    screening: "",
+    interviews: "",
+    completed: "",
+    status: "",
+    reason: ""
+  })
+
   const [backendInterestedLeads, setBackendInterestedLeads] = useState([]);
   const [backendNotInterestedLeads, setBackendNotInterestedLeads] = useState([]);
   const [backendFollowUp, setBackendFollowUpLeads] = useState([]);
@@ -93,6 +108,9 @@ const Leads = () => {
 
   const [showOutcomeModal, setShowOutcomeModal] = useState(false);
   const [selectedLeadId, setSelectedLeadId] = useState(null);
+
+  const [selectedRevertLead, setSelectedRevertLead] = useState(null);
+  const [revertReason, setRevertReason] = useState("");
 
   const [touchedFilters, setTouchedFilters] = useState({
     search: "",
@@ -341,7 +359,9 @@ const Leads = () => {
     "Enrolled": "#8b5cf6",         // purple
     "completed": "#059669",        // teal
     "untouched": "#6b7280",        // gray
-    "touched": "#f97316"           // orange
+    "touched": "#f97316",           // orange
+    "Reverted": "#dc2626",
+    "Recruiter": "#305220ff"
   };
 
   const handleStartWork = async (candidateId) => {
@@ -983,6 +1003,10 @@ const Leads = () => {
         filteredUsers = users.filter(
           (u) => u.role?.name === "Sales"
         );
+      } else if (assignerRole === "Marketing") {
+        filteredUsers = users.filter(
+          (u) => u.role?.name === "Recruiter"
+        );
       }
 
       setTeamMembers(filteredUsers);
@@ -1077,6 +1101,35 @@ const Leads = () => {
     }
   }
 
+  const submitRevertReason = async () => {
+
+    if (!selectedRevertLead) return;
+
+    if (!revertReason) {
+      toast.error("Please enter a revert reason.");
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+      const res = await axios.put(
+        `${BASE_URL}/api/resume/moveBackToResume/${selectedRevertLead}`,
+        { revertReason },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success(res.data.message);
+
+      setRevertReason("");
+      fetchBackendLeads();
+
+      // Close modal
+      document.getElementById("revertModal").click();
+    } catch (error) {
+      toast.error("Failed to revert lead");
+    }
+  };
 
   const handleChange = (e) => {
     setNewLead({
@@ -1310,6 +1363,38 @@ const Leads = () => {
     reader.readAsArrayBuffer(file);
   };
 
+  const submitReportData = async () => {
+    if (!selectedCandidate) return;
+
+    try {
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+      const res = await axios.put(
+        `${BASE_URL}/api/resume/report/${selectedCandidate._id}`,
+        reportData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success("Report submitted successfully");
+
+      setShowReportModal(false);
+      setReportData({
+        applications: "",
+        assessment: "",
+        screening: "",
+        interview: "",
+        completed: "",
+        status: "",
+        reason: ""
+      });
+
+      fetchBackendLeads();
+      toast.success("Report Saved Successfully");
+    } catch (err) {
+      toast.error("Failed to submit report");
+    }
+  };
+
   const handleEnrollCandidate = (lead) => {
     setEnrollLead(lead);
     setEnrollmentData(prev => ({
@@ -1463,6 +1548,26 @@ const Leads = () => {
   //   }
 
   // };
+
+  const handleAssignRecruiter = async () => {
+
+    try {
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+      const res = await axios.put(
+        `${BASE_URL}/api/resume/assignToRecruiter/${selectedCandidate._id}`,
+        { recruiterId: selectedRecruiter },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      toast.success(res.data.message);
+      setShowRecruiterModal(false);
+      fetchBackendLeads();
+    } catch (error) {
+      toast.error("Failed to assign recruiter");
+      console.error(error);
+    }
+  };
 
   const handleAssign = useCallback(async () => {
 
@@ -2040,7 +2145,7 @@ const Leads = () => {
           </motion.div>
         )}
 
-        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing"].includes(userRole) && (
+        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Marketing", "Recruiter"].includes(userRole) && (
           <motion.div
             className="col-12 col-md-4 m-0 mb-2"
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -2085,7 +2190,7 @@ const Leads = () => {
           </motion.div>
         )}
 
-        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Sales", "Marketing"].includes(userRole) && (
+        {["Lead_Gen_Manager", "Lead_Gen_Team_Lead", "Sr_Lead_Generator", "Lead_Gen", "Sales_Manager", "Sales", "Marketing", "Recruiter"].includes(userRole) && (
           <motion.div
             className="col-12 col-md-4 m-0 mb-2"
             initial={{ opacity: 0, y: 40, scale: 0.95 }}
@@ -3015,11 +3120,45 @@ const Leads = () => {
                                   Assign
                                 </button>
                               )}
-                              <button
-                                className="btn btn-sm btn-danger"
-                                onClick={() => handleMoveBackToResume(a._id)}>
-                                Back To Resume <FaUndo className="ms-1" />
-                              </button>
+
+                              {user.role === "Marketing" &&
+                                <button
+                                  className="btn btn-sm btn-danger"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#revertModal"
+                                  onClick={() => {
+                                    console.log("Open Modal Clicked");
+                                    // handleMoveBackToResume(a._id)
+                                    setSelectedRevertLead(a._id);
+                                  }}>
+                                  Back To Resume <FaUndo className="ms-1" />
+                                </button>
+                              }
+
+                              {user.role === "Marketing" &&
+                                <button
+                                  className="btn btn-sm btn-success ms-2"
+                                  onClick={() => {
+                                    setShowRecruiterModal(true);
+                                    setSelectedCandidate(a);
+                                  }}>
+                                  Assign To Recruiter <FaUser size={14} />
+                                </button>
+                              }
+
+                              {user.role === "Recruiter" &&
+                                <button
+                                  className="btn btn-sm btn-warning text-white ms-2"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#reportModal"
+                                  onClick={() => {
+                                    setSelectedCandidate(a);
+                                    setShowReportModal(true);
+                                  }}>
+                                  Report <FaFile />
+                                </button>
+                              }
+
                               <button
                                 id="viewLead"
                                 className="btn btn-sm btn-success ms-2"
@@ -3204,11 +3343,15 @@ const Leads = () => {
                         <th className="text-left tableHeader">Email</th>
                         <th className="text-left tableHeader">Lead Type</th>
                         <th className="text-left tableHeader">Phone No</th>
-                        <th className="text-left tableHeader">URL</th>
+                        {user.role !== "Marketing" &&
+                          <th className="text-left tableHeader">URL</th>
+                        }
                         <th className="text-left tableHeader">University</th>
                         <th className="text-left tableHeader">Technology</th>
                         <th className="text-left tableHeader">Visa</th>
-                        <th className="text-left tableHeader">Preferred Time</th>
+                        {user.role !== "Marketing" &&
+                          <th className="text-left tableHeader">Preferred Time</th>
+                        }
                         <th className="text-left tableHeader">Source</th>
                         <th className="text-center tableHeader">Status</th>
                         <th className="text-left tableHeader">Created At</th>
@@ -3216,6 +3359,7 @@ const Leads = () => {
                         <th className="text-left tableHeader">Assigned To</th>
                         <th className="text-left tableHeader">Assigned By</th>
                         <th className="text-left tableHeader">Actions</th>
+
                       </tr>
                     </thead>
                     <tbody>
@@ -3229,34 +3373,38 @@ const Leads = () => {
                               />
                             </td>
                             <td>
-                              <p className="mb-0 text-left tableData">{a.candidate_name}</p>
+                              <p className="mb-0 text-left tableData">{a.candidate_name || a.name}</p>
                             </td>
                             <td>
-                              <p className="mb-0 text-left tableData">{a.candidate_email}</p>
+                              <p className="mb-0 text-left tableData">{a.candidate_email || a.email}</p>
                             </td>
                             <td>
-                              <p className="mb-0 text-left tableData">{a.type}</p>
+                              <p className="mb-0 text-left tableData">{a.type || a?.leadId?.type}</p>
                             </td>
                             <td>
-                              <p className="mb-0 text-left tableData">{a.candidate_phone_no}</p>
+                              <p className="mb-0 text-left tableData">{a.candidate_phone_no || a.phone}</p>
+                            </td>
+                            {user.role !== "Marketing" &&
+                              <td>
+                                <p className="mb-0 text-left tableData">{a.linked_in_url || a?.leadId?.linked_in_url}</p>
+                              </td>
+                            }
+                            <td>
+                              <p className="mb-0 text-left tableData">{a.university || a?.leadId?.university}</p>
                             </td>
                             <td>
-                              <p className="mb-0 text-left tableData">{a.linked_in_url}</p>
+                              <p className="mb-0 text-left tableData">{a.technology || a?.leadId?.technology}</p>
                             </td>
                             <td>
-                              <p className="mb-0 text-left tableData">{a.university}</p>
+                              <p className="mb-0 text-left tableData">{a.visa || a?.leadId?.visa}</p>
                             </td>
+                            {user.role !== "Marketing" &&
+                              <td>
+                                <p className="mb-0 text-left tableData">{a.preferred_time_to_talk || a?.leadId?.preferred_time_to_talk}</p>
+                              </td>
+                            }
                             <td>
-                              <p className="mb-0 text-left tableData">{a.technology}</p>
-                            </td>
-                            <td>
-                              <p className="mb-0 text-left tableData">{a.visa}</p>
-                            </td>
-                            <td>
-                              <p className="mb-0 text-left tableData">{a.preferred_time_to_talk}</p>
-                            </td>
-                            <td>
-                              <p className="mb-0 text-left tableData">{a.source}</p>
+                              <p className="mb-0 text-left tableData">{a.source || a?.leadId?.source}</p>
                             </td>
                             <td className="text-center">
                               <span
@@ -3283,6 +3431,7 @@ const Leads = () => {
                                 {a.status === "Not Interested" && <FaThumbsDown />}
                                 {a.status === "Follow-up" && <FaRedo />}
                                 {a.status === "In Discussion" && <FaComments />}
+                                {a.status === "reverted" && <FaBackward />}
 
                                 {a.status}
                               </span>
@@ -3311,7 +3460,7 @@ const Leads = () => {
                                 }}>
                                 View
                               </button>
-                              {permissions?.lead?.updateScope !== "none" && (
+                              {permissions?.lead?.updateScope !== "none" && user.role !== "Marketing" && (
                                 <button
                                   className="btn btn-outline-success btn-sm btn-rounded me-2"
                                   data-bs-toggle="modal"
@@ -3320,7 +3469,7 @@ const Leads = () => {
                                   Edit
                                 </button>
                               )}
-                              {permissions?.lead?.deleteScope !== "none" && (
+                              {permissions?.lead?.deleteScope !== "none" && user.role !== "Marketing" && (
                                 <button type="button"
                                   className="btn btn-outline-danger btn-sm"
                                   onClick={async () => {
@@ -4808,7 +4957,8 @@ const Leads = () => {
                                   {selectedLead.status === "Not Interested" && <FaThumbsDown />}
                                   {selectedLead.status === "Follow-up" && <FaRedo />}
                                   {selectedLead.status === "In Discussion" && <FaComments />}
-                                  {selectedLead.status === "completed" && <FaComments />}
+                                  {selectedLead.status === "Completed" && <FaComments />}
+                                  {selectedLead.status === "Reverted" && <FaBackspace />}
 
                                   {selectedLead.status || ""}
                                 </span>
@@ -6539,85 +6689,84 @@ const Leads = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredCompletedLeads
-                      .map((t, i) => (
-                        <tr key={t._id}>
-                          <td>
-                            <input type="checkbox"
-                              checked={selectedCompletedLeads.includes(t._id)}
-                              onChange={() => toggleLeadSelection(t._id, "completed")}
-                            />
-                          </td>
-                          <td className="mb-0 text-left tableData">{i + 1}</td>
-                          <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
-                          <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
-                          <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
-                          <td className="mb-0 text-left tableData">
-                            {getStatusBadge(t.status)}
-                          </td>
-                          <td className="mb-0 text-left tableData">
-                            <div className="progress-container">
-                              <div className="progress-bar"
-                                style={{
-                                  width: getWidth(getProgress(t)),
-                                  backgroundColor: getColor(getProgress(t)),
-                                  color: getTextColor(getProgress(t))
-                                }}
-                              >{getProgress(t) > 0 && `${getProgress(t)}%`}
-                              </div>
+                    {filteredCompletedLeads.map((t, i) => (
+                      <tr key={t._id}>
+                        <td>
+                          <input type="checkbox"
+                            checked={selectedCompletedLeads.includes(t._id)}
+                            onChange={() => toggleLeadSelection(t._id, "completed")}
+                          />
+                        </td>
+                        <td className="mb-0 text-left tableData">{i + 1}</td>
+                        <td className="mb-0 text-left tableData">{t.name || "N/A"}</td>
+                        <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
+                        <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
+                        <td className="mb-0 text-left tableData">
+                          {getStatusBadge(t.status)}
+                        </td>
+                        <td className="mb-0 text-left tableData">
+                          <div className="progress-container">
+                            <div className="progress-bar"
+                              style={{
+                                width: getWidth(getProgress(t)),
+                                backgroundColor: getColor(getProgress(t)),
+                                color: getTextColor(getProgress(t))
+                              }}
+                            >{getProgress(t) > 0 && `${getProgress(t)}%`}
                             </div>
-                          </td>
-                          <td className="mb-0 text-left tableData">
-                            {t.startDate ? new Date(t.startDate).toLocaleString() : "N/A"}
-                          </td>
-                          <td className="mb-0 text-left tableData">
-                            {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
-                          </td>
-                          <td className="mb-0 text-left tableData">
-                            {!t.movedToMarketing ? (
+                          </div>
+                        </td>
+                        <td className="mb-0 text-left tableData">
+                          {t.startDate ? new Date(t.startDate).toLocaleString() : "N/A"}
+                        </td>
+                        <td className="mb-0 text-left tableData">
+                          {t.endDate ? new Date(t.endDate).toLocaleString() : "N/A"}
+                        </td>
+                        <td className="mb-0 text-left tableData">
+                          {!t.movedToMarketing ? (
+                            <button
+                              id="moveToMarketing"
+                              className="btn btn-sm btn-warning fw-semibold"
+                              onClick={() => handleMovedToMarketing(t._id)}
+                            >
+                              Move to Marketing
+                            </button>
+                          ) : (
+                            <span className="badge bg-success" id="movedToMarketing">Moved to Marketing</span>
+                          )}
+                          {t.startDate ? (
+                            t.endDate ? (
                               <button
-                                id="moveToMarketing"
-                                className="btn btn-sm btn-warning fw-semibold"
-                                onClick={() => handleMovedToMarketing(t._id)}
-                              >
-                                Move to Marketing
+
+                                className="btn btn-sm btn-bg-muted ms-2"
+                                disabled>
+                                Doned
                               </button>
                             ) : (
-                              <span className="badge bg-success" id="movedToMarketing">Moved to Marketing</span>
-                            )}
-                            {t.startDate ? (
-                              t.endDate ? (
-                                <button
-
-                                  className="btn btn-sm btn-bg-muted ms-2"
-                                  disabled>
-                                  Doned
-                                </button>
-                              ) : (
-                                <button
-                                  id="done"
-                                  className="btn btn-sm btn-primary"
-                                  onClick={() => handleDone(t._id)}
-                                >
-                                  Done
-                                </button>
-                              )
-                            ) : (
                               <button
-                                className="btn btn-sm btn-success"
-                                onClick={() => handleStartWork(t._id)}
+                                id="done"
+                                className="btn btn-sm btn-primary"
+                                onClick={() => handleDone(t._id)}
                               >
-                                Start
+                                Done
                               </button>
+                            )
+                          ) : (
+                            <button
+                              className="btn btn-sm btn-success"
+                              onClick={() => handleStartWork(t._id)}
+                            >
+                              Start
+                            </button>
 
-                            )}
-                            <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => {
-                              setSelectedLead(t);
-                              setModalSource("completed");
-                            }}>View Lead</button>
-                          </td>
-                        </tr>
-                      ))}
+                          )}
+                          <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => {
+                            setSelectedLead(t);
+                            setModalSource("completed");
+                          }}>View Lead</button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -6625,6 +6774,68 @@ const Leads = () => {
           </div>
         )
       }
+
+      {/* Recruiter Assign Lead Modal  */}
+
+      <div className={`modal fade ${showRecruiterModal ? "show" : ""}`} style={{ display: showRecruiterModal ? "block" : "none" }} id="assignRecruiterModal" tabIndex="-1">
+        <div className="modal-dialog modal-dialog-centered">
+          <div className="modal-content">
+
+            <div className="modal-header">
+              <div className="d-flex justify-content-between">
+                <h5 className="modal-title">Assign Recruiter</h5>
+                <button type="button" className="btn-close" onClick={() => setShowRecruiterModal(false)}></button>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              {selectedCandidate && (
+                <table className="table table-bordered">
+                  <thead>
+                    <tr>
+                      <th className="border-1 tableHeader">Lead Name</th>
+                      <th className="border-1 tableHeader">Lead Contact No</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    <tr>
+                      <td className="border-1 p-2 tableData">{selectedCandidate.name}</td>
+                      <td className="border-1 p-2 tableData">{selectedCandidate.phone}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+
+              <label className="form-label">Select Recruiter</label>
+              <select
+                className="form-control form-control-sm w-50"
+                value={selectedRecruiter}
+                onChange={(e) => setSelectedRecruiter(e.target.value)}
+              >
+                <option value="" className="">------Choose Recruiter----------</option>
+
+                {teamMembers
+                  .filter(user => user.role?.name === "Recruiter")
+                  .map(user => (
+                    <option key={user._id} value={user._id}>{user.name}</option>
+                  ))
+                }
+              </select>
+
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowRecruiterModal(false)}>Cancel</button>
+              <button className="btn btn-primary" disabled={!selectedRecruiter} onClick={handleAssignRecruiter}>
+                Assign
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
 
       {/* Revert Leads Table  */}
 
@@ -6678,7 +6889,7 @@ const Leads = () => {
                       <td className="mb-0 text-left tableData">{lead.name}</td>
                       <td className="mb-0 text-left tableData">{lead.email}</td>
                       <td className="mb-0 text-left tableData">{lead.phone}</td>
-                      <td className="mb-0 text-left tableData">{lead.revertReason || "N/A"}</td>
+                      <td className="mb-0 text-left tableData text-wrap text-break w-25">{lead.revertReason || "N/A"}</td>
                       <td className="mb-0 text-left tableData">{lead.status}</td>
                       <td className="mb-0 text-left tableData">{new Date(lead.revertedAt).toLocaleString()}</td>
                       <td className="mb-0 text-left tableData">
@@ -6742,9 +6953,133 @@ const Leads = () => {
                 Next
               </button>
             </div>
+
           </div>
         </div>
       )}
+
+      {/* Revert Reason Modal */}
+      <div className="modal fade" id="revertModal" tabIndex="-1">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title">Revert Lead Reason</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div className="modal-body">
+              <textarea
+                className="form-control"
+                rows="3"
+                placeholder="Enter reason..."
+                value={revertReason}
+                onChange={(e) => setRevertReason(e.target.value)}
+              />
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-secondary" data-bs-dismiss="modal">
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={submitRevertReason}>
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Report Modal  */}
+      <div className="modal fade" id="reportModal" tabIndex="-1">
+        <div className="modal-dialog">
+          <div className="modal-content">
+
+            <div className="modal-header">
+              <h5 className="modal-title">Lead Report</h5>
+              <button className="btn-close" onClick={() => setShowReportModal(false)}></button>
+            </div>
+
+            <div className="modal-body">
+
+              <label className="form-label">No. of Application</label>
+              <input
+                type="number"
+                className="form-control mb-2"
+                value={reportData.applications}
+                onChange={(e) => setReportData({ ...reportData, applications: e.target.value })}
+              />
+
+              <label className="form-label">Assessment + Technical</label>
+              <input
+                type="number"
+                className="form-control mb-2"
+                value={reportData.assessment}
+                onChange={(e) => setReportData({ ...reportData, assessment: e.target.value })}
+              />
+
+              <label className="form-label">Screening</label>
+              <input
+                type="number"
+                className="form-control mb-2"
+                value={reportData.screening}
+                onChange={(e) => setReportData({ ...reportData, screening: e.target.value })}
+              />
+
+              <label className="form-label">Interview</label>
+              <input
+                type="number"
+                className="form-control mb-2"
+                value={reportData.interview}
+                onChange={(e) => setReportData({ ...reportData, interview: e.target.value })}
+              />
+
+              <label className="form-label">Completed</label>
+              <input
+                type="number"
+                className="form-control mb-2"
+                value={reportData.completed}
+                onChange={(e) => setReportData({ ...reportData, completed: e.target.value })}
+              />
+
+              <label className="form-label">Status</label>
+              <select
+                className="form-control mb-2"
+                value={reportData.status}
+                onChange={(e) => setReportData({ ...reportData, status: e.target.value })}
+              >
+                <option value="">Select Status</option>
+                <option value="Active">Active</option>
+                <option value="Hold">Hold</option>
+                <option value="Placed">Placed</option>
+                <option value="Backout">Backout</option>
+              </select>
+
+              {(reportData.status === "Hold" || reportData.status === "Backout") && (
+                <>
+                  <label className="form-label">Reason</label>
+                  <textarea
+                    className="form-control"
+                    rows="2"
+                    value={reportData.reason}
+                    onChange={(e) => setReportData({ ...reportData, reason: e.target.value })}
+                  />
+                </>
+              )}
+
+            </div>
+
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowReportModal(false)}>
+                Cancel
+              </button>
+              <button className="btn btn-primary" onClick={submitReportData}>
+                Submit Report
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
 
     </div >
   )

@@ -37,6 +37,7 @@ const candidateSchema = new mongoose.Schema({
     reference: { type: String },
     revertReason: { type: String, default: null },
     revertedAt: { type: Date, default: null },
+    recruiterStarted: { type: Boolean, default: false },
 
     touchedByResume: { type: Boolean, default: false },
     notes: { type: String, default: "" },
