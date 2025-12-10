@@ -2,7 +2,7 @@ import React, { useRef } from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 import { getLeadById, createLead, getLeads, deleteLead, updateLead } from "../../api/leadApi";
-import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaUndo, FaArrowRight, FaBackward, FaBackspace, FaFastBackward, FaUser, FaFile } from "react-icons/fa";
+import { FaPlus, FaDownload, FaFileCsv, FaFileExcel, FaAlignRight, FaUndo, FaArrowRight, FaBackward, FaBackspace, FaFastBackward, FaUser, FaFile, FaHistory, FaSadTear, FaSadCry, FaRemoveFormat, FaAnchor, FaTrash } from "react-icons/fa";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import LeadImg from "../../assets/Lead_Img.png"
 import axios from "axios";
@@ -77,14 +77,16 @@ const Leads = () => {
 
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportData, setReportData] = useState({
-    applications: "",
-    assessment: "",
+    noOfApplications: "",
+    assessmentTechnical: "",
     screening: "",
     interviews: "",
     completed: "",
     status: "",
     reason: ""
-  })
+  });
+
+  const [reportHistory, setReportHistory] = useState([]);
 
   const [backendInterestedLeads, setBackendInterestedLeads] = useState([]);
   const [backendNotInterestedLeads, setBackendNotInterestedLeads] = useState([]);
@@ -111,6 +113,8 @@ const Leads = () => {
 
   const [selectedRevertLead, setSelectedRevertLead] = useState(null);
   const [revertReason, setRevertReason] = useState("");
+
+  const [selectedLeadName, setSelectedLeadName] = useState("");
 
   const [touchedFilters, setTouchedFilters] = useState({
     search: "",
@@ -1131,6 +1135,23 @@ const Leads = () => {
     }
   };
 
+  const fetchReportHistory = async (candidateId) => {
+    try {
+
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+      const res = await axios.get(`${BASE_URL}/api/resume/getReportHistory/${candidateId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setReportHistory(res.data);
+
+    } catch (error) {
+      console.error("History fetch error:", error);
+      toast.error("Failed to load history");
+    }
+  }
+
   const handleChange = (e) => {
     setNewLead({
       ...newLead,
@@ -1366,6 +1387,8 @@ const Leads = () => {
   const submitReportData = async () => {
     if (!selectedCandidate) return;
 
+    console.log("Incoming REPORT BODY:", reportData);
+
     try {
       const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
@@ -1379,8 +1402,8 @@ const Leads = () => {
 
       setShowReportModal(false);
       setReportData({
-        applications: "",
-        assessment: "",
+        noOfApplications: "",
+        assessmentTechnical: "",
         screening: "",
         interview: "",
         completed: "",
@@ -2565,7 +2588,7 @@ const Leads = () => {
         )}
 
         {/* All Lead Main Table */}
-        {user.role !== "Resume" && user.role !== "Sales" && user.role !== "Marketing" && user.role !== "Recruiter" && (
+        {user.role !== "Resume" && user.role !== "Sales" && user.role !== "Marketing" && (
           <div className="col-12 col-md-8 col-lg-12 mt-2">
             <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
               <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
@@ -3153,9 +3176,24 @@ const Leads = () => {
                                   data-bs-target="#reportModal"
                                   onClick={() => {
                                     setSelectedCandidate(a);
+                                    setSelectedLeadName(a.name || a.candidate_name);
                                     setShowReportModal(true);
                                   }}>
                                   Report <FaFile />
+                                </button>
+                              }
+
+                              {user.role === "Recruiter" &&
+                                <button
+                                  className="btn btn-sm btn-warning text-white ms-2"
+                                  data-bs-toggle="modal"
+                                  data-bs-target="#historyModal"
+                                  onClick={() => {
+                                    setSelectedCandidate(a);
+                                    setSelectedLeadName(a.name);
+                                    fetchReportHistory(a._id);
+                                  }}>
+                                  History <FaHistory color="white" />
                                 </button>
                               }
 
@@ -4245,474 +4283,7 @@ const Leads = () => {
       </div>
 
       {console.log("Selected Lead in modal:", selectedLead)}
-      {/* View Lead Modal */}
-
-      {/* <div className="modal fade global-modal" id="viewLead" tabIndex="-1" >
-        <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
-          <div className="modal-content">
-            <div className="modal-header">
-              <div className="modal-body p-0">
-                <div className="card card-plain cardDark">
-                  <h3 className="modal-title editUserTitle mt-2 text-center leadDetailsDark">Lead Details</h3>
-                  <button type="button" className="btn-close ms-4" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div className="card-body">
-                  {selectedLead ? (
-                    <form
-                      className="card p-3 shadow-sm LogcallOutcome"
-                      onSubmit={async (e) => {
-                        e.preventDefault();
-                        console.log("Submitting call for Lead ID:", selectedLead?._id);
-                        console.log("Payload:", { outcome, date, time, duration, notes });
-                        console.log("Token:", sessionStorage.getItem("token"));
-
-                        setLoading(true);
-                        try {
-                          const token = sessionStorage.getItem("token");
-                          const res = await axios.post(
-                            `${BASE_URL}/api/leads/${selectedLead._id}/call`,
-                            { outcome, date, time, duration, notes },
-                            { headers: { Authorization: `Bearer ${token}` } }
-                          );
-                          toast.success("Call outcome saved successfully!");
-                          setSelectedLead(res.data.lead);
-                          setOutcome(""); setDate(""); setTime(""); setDuration(""); setNotes("");
-                          fetchBackendLeads();
-                        } catch (err) {
-                          // console.error("Error saving call outcome:", err.response?.data || err);
-                          toast.error(err.response?.data?.message || "Failed to save call outcome!");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}>
-
-                      <div className="mb-0 table-responsive">
-                        <table className="table table-sm">
-                          <tbody>
-                            <tr>
-                              <th className="tableHeader">Name</th>
-                              <td className="tableData" colSpan="6">{selectedLead.candidate_name || selectedLead.leadId?.candidate_name || selectedLead.name || selectedLead.name || "N/A" || ""}</td>
-                            </tr>
-                            <tr>
-                              <th className="tableHeader">Email</th>
-                              <td className="tableData" colSpan="6">{selectedLead.candidate_email || selectedLead.leadId?.candidate_email || selectedLead.email || "N/A" || ""}</td>
-                            </tr>
-                            <tr>
-                              <th className="tableHeader">Phone</th>
-                              <td className="tableData" colSpan="6">{selectedLead.candidate_phone_no || selectedLead.leadId?.candidate_phone_no || selectedLead.phone || "N/A" || ""}</td>
-                            </tr>
-                            <tr>
-                              <th className="tableHeader">Technology</th>
-                              <td className="tableData" colSpan="6">
-                                {Array.isArray(selectedLead.technology)
-                                  ? selectedLead.technology.join(", ")
-                                  : selectedLead.technology || ""}
-                              </td>
-                            </tr>
-                            {modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">LinkedIn</th>
-                                <td className="tableData" colSpan="6">{selectedLead.linked_in_url || selectedLead?.leadId?.linked_in_url || selectedLead.linked_in_url || "N/A" || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Visa</th>
-                                <td className="tableData" colSpan="6">{selectedLead.visa || selectedLead?.leadId?.visa || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Lead Type</th>
-                                <td className="tableData" colSpan="6">{selectedLead.type || selectedLead?.leadId?.type || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">University</th>
-                                <td className="tableData" colSpan="6">{selectedLead.university || selectedLead?.leadId?.university || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Preferred Time to Talk</th>
-                                <td className="tableData" colSpan="6">{selectedLead.preferred_time_to_talk || selectedLead?.leadId?.preferred_time_to_talk || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Source</th>
-                                <td className="tableData" colSpan="6">{selectedLead.source || selectedLead?.leadId?.source || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "assigned" && selectedLead.assignedTo && (
-                              <tr>
-                                <th className="tableHeader">Assigned To</th>
-                                <td className="tableData">{selectedLead.assignedTo.name || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "assigned" && selectedLead.assignedBy && (
-                              <tr>
-                                <th className="tableHeader">Assigned By</th>
-                                <td className="tableData">{selectedLead.assignedBy.name || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "touched" && modalSource !== "completed" && modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Created At</th>
-                                <td className="tableData">{formatDateTimeIST(selectedLead.createdAt) || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource !== "touched" && modalSource !== "completed" && modalSource !== "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Updated At</th>
-                                <td className="tableData">{formatDateTimeIST(selectedLead.updatedAt) || ""}</td>
-                              </tr>
-                            )}
-
-                            {modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Lead Work Start Date</th>
-                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.startDate) || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "completed" && (
-                              <tr>
-                                <th className="tableHeader">Lead Work End Date</th>
-                                <td className="tableData" colSpan="5">{formatDateTimeIST(selectedLead.endDate || "")}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Payment Status</th>
-                                <td className="tableData">
-                                  <span className={`badge px-3 py-2 rounded-pill fw-normal 
-                                        ${selectedLead.paymentStatus === "pending"
-                                      ? "bg-warning text-dark fw-bold" : "bg-success"
-                                    }`}>
-                                    {selectedLead.paymentStatus || ""}
-                                  </span>
-                                </td>
-                              </tr>
-                            )}
-
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Upfront</th>
-                                <td className="tableData">{selectedLead.upfront && selectedLead.upfront || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Contracted</th>
-                                <td className="tableData">{selectedLead.contracted || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
-                              <tr>
-                                <th className="tableHeader">Payment 1</th>
-                                <td className="tableData">
-                                  {selectedLead.collectedPayments[0].amount} ({new Date(selectedLead.collectedPayments[0].date).toLocaleDateString("en-IN")})
-                                </td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
-                              <tr>
-                                <th className="tableHeader">Payment 2</th>
-                                <td className="tableData">
-                                  {selectedLead.collectedPayments[1].amount} ({new Date(selectedLead.collectedPayments[1].date).toLocaleDateString("en-IN")})
-                                </td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && selectedLead.collectedPayments?.length > 0 && (
-                              <tr>
-                                <th className="tableHeader">Payment 2</th>
-                                <td className="tableData">
-                                  {selectedLead.collectedPayments[2].amount} ({new Date(selectedLead.collectedPayments[2].date).toLocaleDateString("en-IN")})
-                                </td>
-                              </tr>
-                            )}
-
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Percentage</th>
-                                <td className="tableData">{selectedLead.percentage || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Job Guarantee</th>
-                                <td className="tableData">{selectedLead.jobGuarantee ? "Yes" : "No" || ""}</td>
-                              </tr>
-                            )}
-
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Payment Gateway</th>
-                                <td className="tableData">{selectedLead.paymentGateway || ""}</td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Enrollment Date</th>
-                                <td><p className="mb-0 text-left tableData">{formatDateTimeIST(selectedLead.createdAt) || ""}</p></td>
-                              </tr>
-                            )}
-                            {modalSource === "enrolled" && (
-                              <tr>
-                                <th className="tableHeader">Plan</th>
-                                <td className="tableData mb-0">{selectedLead.plan || ""}</td>
-                              </tr>
-                            )}
-                            <tr>
-                              <th className="tableHeader">Status</th>
-                              <td colSpan="6">
-                                <span
-                                  className="badge px-2 d-flex align-items-center justify-content-center gap-2"
-                                  style={{
-                                    backgroundColor: statusColors[selectedLead.status] || "#d1d5db",
-                                    color: "white",
-                                    borderRadius: "12px",
-                                    fontWeight: "normal",
-                                    textTransform: "capitalize",
-                                    maxWidth: "100px"
-                                  }}
-                                >
-                                  {selectedLead.status === "New" && <FaLink />}
-                                  {selectedLead.status === "Connected" && <FaCheckCircle />}
-                                  {selectedLead.status === "In Progress" && <FaHourglassHalf />}
-                                  {selectedLead.status === "Shortlisted" && <FaStar />}
-                                  {selectedLead.status === "Rejected" && <FaTimesCircle />}
-                                  {selectedLead.status === "Assigned" && <FaCheckCircle />}
-                                  {selectedLead.status === "Converted" && <FaUserCheck />}
-                                  {selectedLead.status === "Interested" && <FaThumbsUp />}
-                                  {selectedLead.status === "Not Interested" && <FaThumbsDown />}
-                                  {selectedLead.status === "Follow-up" && <FaRedo />}
-                                  {selectedLead.status === "In Discussion" && <FaComments />}
-                                  {selectedLead.status === "completed" && <FaComments />}
-
-                                  {selectedLead.status || ""}
-                                </span>
-                              </td>
-                            </tr>
-
-                            {modalSource === "completed" || modalSource === "touched" && (
-                              <>
-                                {(() => {
-
-                                  const resumeCalls = selectedLead?.callHistory || [];
-                                  const salesCalls = selectedLead?.leadId?.callHistory || [];
-
-                                  const allCalls = [...resumeCalls, ...salesCalls]
-                                    .filter(call => call.source !== "Resume" || modalSource !== "assigned")
-                                    .sort((a, b) => new Date(b.date) - new Date(a.date)
-                                    );
-
-                                  return allCalls.length > 0 ? (
-                                    <>
-                                      <tr>
-                                        <th colSpan="12" className="text-center tableHeader bg-success text-white">
-                                          Call Log Outcomes
-                                        </th>
-                                      </tr>
-
-                                      <tr className="table-light">
-                                        <th className="tableHeader">Index</th>
-                                        <th className="tableHeader">Outcome</th>
-                                        <th className="tableHeader">Date</th>
-                                        <th className="tableHeader">Time</th>
-                                        <th className="tableHeader">Duration</th>
-                                        <th className="tableHeader">Notes</th>
-                                        <th className="tableHeader">Source</th>
-                                      </tr>
-
-                                      {allCalls.map((call, index) => (
-                                        <tr key={index}>
-                                          <td className="tableData">{index + 1}</td>
-                                          <td className="tableData">{call.outcome || "—"}</td>
-                                          <td className="tableData">
-                                            {call.date
-                                              ? new Date(call.date).toLocaleDateString("en-IN", {
-                                                day: "2-digit",
-                                                month: "2-digit",
-                                                year: "numeric",
-                                              })
-                                              : "N/A"}
-                                          </td>
-                                          <td className="tableData">
-                                            {call.date
-                                              ? new Date(call.date).toLocaleTimeString("en-IN", {
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                                hour12: true,
-                                              })
-                                              : "N/A"}
-                                          </td>
-                                          <td className="tableData">{call.duration}</td>
-                                          <td className="tableData">{call.notes}</td>
-                                          <td
-                                            className={`tableData ${resumeCalls.includes(call)
-                                              ? "text-dark"
-                                              : "text-dark"
-                                              }`}
-                                          >
-                                            {resumeCalls.includes(call) ? "Resume" : "Sales"}
-                                          </td>
-                                        </tr>
-                                      ))}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <tr>
-                                        <th colSpan="14" className="text-center tableHeader bg-secondary text-white">
-                                          Call Log Outcomes
-                                        </th>
-                                      </tr>
-                                      <tr>
-                                        <td colSpan="14" className="text-center text-muted py-2 tableData">
-                                          No outcome history found
-                                        </td>
-                                      </tr>
-                                    </>
-                                  );
-                                })()}
-                              </>
-                            )}
-
-                          </tbody>
-                        </table>
-                      </div>
-
-                      {user.role === "Sales" && (modalSource === "interested" || modalSource === "Not Interested" || modalSource === "inDiscussion" || modalSource === "follow-up" || modalSource === "assigned") && modalSource !== "enrolled" && (
-                        <>
-                          <div className="card p-3 mb- LogCallOutcome">
-                            <h6 className="text-center mb-3">Log Call Outcome</h6>
-                            <select
-                              value={outcome}
-                              onChange={(e) => setOutcome(e.target.value)}
-                              required
-                              className="form-select form-select-sm mb-2 selectFont"
-                            >
-                              <option value="">Select Outcome</option>
-                              <option value="Not Interested">Not Interested</option>
-                              <option value="Interested">Interested</option>
-                              <option value="In Discussion">In Discussion</option>
-                              <option value="Follow-up">Follow-Up</option>
-                            </select>
-
-                            <input
-                              type="date"
-                              value={date}
-                              onChange={(e) => setDate(e.target.value)}
-                              required
-                              className="form-control form-control-sm mb-2 selectFont"
-                            />
-                            <input
-                              type="time"
-                              value={time}
-                              onChange={(e) => setTime(e.target.value)}
-                              required
-                              className="form-control form-control-sm mb-2 selectFont"
-                            />
-                            <input
-                              type="text"
-                              value={duration}
-                              onChange={(e) => setDuration(e.target.value)}
-                              placeholder="Enter Duration (Mins)"
-                              required
-                              className="form-control form-control-sm mb-2 selectFont"
-                            />
-                            <textarea
-                              value={notes}
-                              onChange={(e) => setNotes(e.target.value)}
-                              required
-                              className="form-control form-control-sm mb-2 selectFont"
-                              placeholder="Enter notes..."
-                            />
-
-                            <button
-                              type="submit"
-                              className={`btn btn-sm w-100 text-light ${loading ? "btn-secondary" : "btn-primary"
-                                }`}
-                              disabled={loading}
-                            >
-                              {loading ? "Saving..." : "Save Outcome"}
-                            </button>
-                          </div>
-
-                          <h5 className="mt-3">Call History</h5>
-                          {selectedLead?.callHistory && selectedLead.callHistory.length > 0 ? (
-                            <div className="table-responsive">
-                              <table className="table table-striped">
-                                <thead>
-                                  <tr>
-                                    <th className="tableHeader">#</th>
-                                    <th className="tableHeader">Outcome</th>
-                                    <th className="tableHeader">Date</th>
-                                    <th className="tableHeader">Time</th>
-                                    <th className="tableHeader">Duration</th>
-                                    <th className="tableHeader">Notes</th>
-                                  </tr>
-                                </thead>
-                                <tbody>
-                                  {selectedLead.callHistory.map((call, index) => {
-                                    const date = new Date(call.date);
-                                    const formattedDate = date.toLocaleDateString("en-IN", {
-                                      day: "2-digit",
-                                      month: "2-digit",
-                                      year: "numeric",
-                                    });
-
-                                    const [hours, minutes] = call.time.split(":");
-                                    const timeDate = new Date();
-                                    timeDate.setHours(hours, minutes);
-                                    const formattedTime = timeDate.toLocaleTimeString("en-IN", {
-                                      hour: "2-digit",
-                                      minute: "2-digit",
-                                      hour12: true,
-                                    });
-
-                                    return (
-                                      <tr key={index}>
-                                        <td className="tableData">{index + 1}</td>
-                                        <td className="tableData">{call.outcome}</td>
-                                        <td className="tableData">{formattedDate}</td>
-                                        <td className="tableData">{formattedTime}</td>
-                                        <td className="tableData">{call.duration}</td>
-                                        <td className="tableData">{call.notes}</td>
-                                      </tr>
-                                    );
-                                  })}
-
-                                </tbody>
-                              </table>
-                            </div>
-                          ) : (
-                            <p className="text-muted">No call history yet.</p>
-                          )}
-                        </>
-                      )}
-                      <div className="text-center">
-                        <button
-                          type="button"
-                          className="btn btn-danger btn-sm closeDark"
-                          data-bs-dismiss="modal"
-                          onClick={() => setSelectedLead(null)}
-                        >
-                          Close
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <h2 className="text-center my-3">Loading...</h2>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div >
-      </div> */}
-
+    
       <div className="modal fade global-modal" id="myLeadModal" tabIndex="-1" >
         <div className="modal-dialog modal-dialog-centered modal-lg" role="document">
           <div className="modal-content">
@@ -5764,23 +5335,6 @@ const Leads = () => {
                           <p className="mb-0 text-left tableHeader">{formatDateTimeIST(c.updatedAt)}</p>
                         </td>
                         <td>
-                          {/* <button className="btn btn-sm btn-warning me-2" disabled={c.movedToTraining} onClick={() => handleMoveToTraining(c._id)}>Move to Training</button>
-                        <button className="btn btn-sm btn-success me-2" disabled={c.movedToCV} onClick={() => handleMoveToCV(c._id)}>Move to CV</button> */}
-                          {/* <button className="btn btn-sm btn-warning me-2" onClick={() => updateStage(c._id, "training")} disabled={c.movedToTraining}>{c.movedToTraining ? "Moved" : "Move to Resume"}</button> */}
-                          {/* <button className="btn btn-sm btn-success me-2" onClick={() => updateStage(c._id, "cv")}>Move to CV</button> */}
-
-                          {/* <button
-                            className="btn btn-sm btn-success ms-2"
-                            data-bs-toggle="modal"
-                            data-bs-target="#myLeadModal"
-                            onClick={() => {
-                              setSelectedLead(c);
-                              setModalSource("inDiscussion");
-                            }}
-                          >
-                            View Lead
-                          </button> */}
-
                           <button
                             className="btn btn-sm me-2 d-flex align-items-center"
                             style={{
@@ -6995,8 +6549,10 @@ const Leads = () => {
           <div className="modal-content">
 
             <div className="modal-header">
-              <h5 className="modal-title">Lead Report</h5>
-              <button className="btn-close" onClick={() => setShowReportModal(false)}></button>
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="modal-title">Lead Report - <span className="text-primary">{selectedLeadName}</span></h5>
+                <button className="btn-close" data-bs-dismiss="modal"></button>
+              </div>
             </div>
 
             <div className="modal-body">
@@ -7005,16 +6561,16 @@ const Leads = () => {
               <input
                 type="number"
                 className="form-control mb-2"
-                value={reportData.applications}
-                onChange={(e) => setReportData({ ...reportData, applications: e.target.value })}
+                value={reportData.noOfApplications}
+                onChange={(e) => setReportData({ ...reportData, noOfApplications: e.target.value })}
               />
 
               <label className="form-label">Assessment + Technical</label>
               <input
                 type="number"
                 className="form-control mb-2"
-                value={reportData.assessment}
-                onChange={(e) => setReportData({ ...reportData, assessment: e.target.value })}
+                value={reportData.assessmentTechnical}
+                onChange={(e) => setReportData({ ...reportData, assessmentTechnical: e.target.value })}
               />
 
               <label className="form-label">Screening</label>
@@ -7069,12 +6625,69 @@ const Leads = () => {
             </div>
 
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowReportModal(false)}>
+              <button className="btn btn-secondary" data-bs-dismiss="modal">
                 Cancel
               </button>
               <button className="btn btn-primary" onClick={submitReportData}>
                 Submit Report
               </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div className="modal fade" id="historyModal" tabIndex="-1">
+        <div className="modal-dialog modal-lg">
+          <div className="modal-content">
+
+            <div className="modal-header">
+              <div className="d-flex justify-content-between align-items-center">
+                <h5 className="modal-title">Report History - <span className="text-primary">{selectedLeadName}</span></h5>
+                <button className="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+            </div>
+
+            <div className="modal-body">
+              {reportHistory.length === 0 ? (
+                <div className="d-flex justify-content-center align-items-center gap-2 my-3">
+                  <FaTrash size={20} />
+                  <p className="fw-bold m-0">No history found...</p>
+                </div>
+              ) : (
+                <div className="table-responsive">
+
+                  <table className="table table-bordered">
+                    <thead>
+                      <tr>
+                        <th className="tableHeader">Date</th>
+                        <th className="tableHeader">Applications</th>
+                        <th className="tableHeader">Assessment</th>
+                        <th className="tableHeader">Screening</th>
+                        <th className="tableHeader">Interview</th>
+                        <th className="tableHeader">Completed</th>
+                        <th className="tableHeader">Status</th>
+                        <th className="tableHeader">Reason</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {reportHistory.map((r, index) => (
+                        <tr key={index}>
+                          <td className="tableData">{new Date(r.createdAt).toLocaleString()}</td>
+                          <td className="tableData">{r.noOfApplications}</td>
+                          <td className="tableData">{r.assessmentTechnical}</td>
+                          <td className="tableData">{r.screening}</td>
+                          <td className="tableData">{r.interview}</td>
+                          <td className="tableData">{r.completed}</td>
+                          <td className="tableData">{r.status}</td>
+                          <td className="tableData" style={{ whiteSpace: "pre-wrap" }}>{r.reason || "N/A"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
 
           </div>

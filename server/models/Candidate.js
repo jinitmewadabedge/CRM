@@ -14,7 +14,7 @@ const candidateSchema = new mongoose.Schema({
     enrollmentDate: { type: Date, default: Date.now },
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
-    status: { type: String, enum: ["touched", "in-progress", "completed"], default: "touched" },
+    status: { type: String, enum: ["touched", "in-progress", "completed","Recruiter"], default: "touched" },
     plan: { type: String },
     upfront: { type: Number },
 
@@ -38,6 +38,16 @@ const candidateSchema = new mongoose.Schema({
     revertReason: { type: String, default: null },
     revertedAt: { type: Date, default: null },
     recruiterStarted: { type: Boolean, default: false },
+    reportHistory: [{
+        noOfApplications: Number,
+        assessmentTechnical: Number,
+        screening: Number,
+        interview: Number,
+        completed: Number,
+        status: String,
+        reason: String,
+        createdAt: { type: Date, default: Date.now}
+    }],
 
     touchedByResume: { type: Boolean, default: false },
     notes: { type: String, default: "" },

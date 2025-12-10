@@ -483,6 +483,7 @@ exports.getLeadState = async (req, res) => {
         }
 
         if(role === "Recruiter"){
+
             unassignedLeads = await Candidate.find({
                 assignedTo: user._id,
                 movedToMarketing: true,
