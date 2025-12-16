@@ -7,7 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const testRoute = require("./routes/test");
 const leadRoute = require("./routes/leadRoutes");
 const roleRoutes = require("./routes/roleRoutes");
-const candidateRoutes = require("./routes/CandidateRoutes");
+const candidateRoutes = require("./routes/candidateRoutes");
 const trainingRoutes = require("./routes/trainingRoutes");
 const cvRoutes = require("./routes/cvRoutes");
 const resumeRoutes = require("./routes/resumeRoutes");
@@ -15,14 +15,44 @@ const User = require("./models/User");
 const { importUsers } = require("./controllers/authController");
 const responseTime = require("response-time");
 const compression = require("compression");
+const http = require("http");
+const { Server } = require("socket.io");
 
 dotenv.config();
 
 const app = express();
+
 app.use((req, res, next) => {
-    if(req.path === "/api/auth/login" || req.path === "/api/auth/logout") return next();
+    if (req.path === "/api/auth/login" || req.path === "/api/auth/logout") return next();
     compression()(req, res, next);
 });
+
+const server = http.createServer(app);
+
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        methods: ["GET", "POST"],
+    }
+});
+
+global.io = io;
+
+io.on('connection', (socket) => {
+    console.log("Socket Connected:", socket.id);
+
+    socket.on('register', async ({ userId, role, token }) => {
+        if (role) socket.join(role);
+        if (userId) socket.join(userId);
+        console.log(`Socket ${socket.id} joined rooms: ${role}, ${userId}`);
+    });
+
+    socket.on('disconnect', async () => {
+        console.log("Socket Disconnected", socket.id);
+
+    });
+});
+
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
@@ -56,6 +86,7 @@ app.use("/api/candidates", candidateRoutes);
 app.use("/api/training", trainingRoutes);
 app.use("/api/cv", cvRoutes);
 app.use("/api/resume", resumeRoutes);
+app.get("/", (req, res) => res.send("Server running websocket"));
 
 
 const uri = process.env.MONGO_URL_DEV;
@@ -84,8 +115,8 @@ db.once("open", async () => {
     console.log("MongoDB");
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+server.listen(PORT, () => {
+    console.log(`Server+ Websocket running on port ${PORT}`);
 });
 
 setInterval(async () => {

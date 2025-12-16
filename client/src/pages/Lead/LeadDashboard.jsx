@@ -10,7 +10,8 @@ const LeadDashboard = () => {
                 <div className="col-12 col-md-4 col-lg-2 adminDashboardBG bg-white shadow-sm">
                     <div className="rounded-3 h-100">
                         <div className="d-flex justify-content-center align-items-center flex-column mt-2">
-                            <LeadNavbar />
+                            {/* <LeadNavbar /> */}
+                            <LeadNavbar/>
                         </div>
                     </div>
                 </div>

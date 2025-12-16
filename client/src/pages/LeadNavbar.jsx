@@ -4,7 +4,8 @@ import Logo from "../../assets/logo.png"
 import { FaHome, FaUser, FaUserShield, FaChartBar, FaFileAlt, FaBullhorn, FaCog } from 'react-icons/fa'
 import { FiLogOut } from 'react-icons/fi'
 import { ModeToggle } from '../components/mode-toggle'
-const LeadNavbar = () => {
+
+const LeadNavbar = ({notificationCount, setNotificationCount}) => {
 
     const navigate = useNavigate();
 
@@ -43,11 +44,11 @@ const LeadNavbar = () => {
                         <li className="nav-item w-100">
                             <NavLink
                                 to="/leads/"
+                                onClick={() => setNotificationCount?.(0)}
                                 className={({ isActive }) =>
                                     `nav-link d-flex align-items-center px-2 ${isActive ? "fw-bold text-color" : ""
                                     }`
-                                }
-                            >
+                                }>
                                 <FaHome className="icon-color me-2" />
                                 Leads</NavLink>
                         </li>

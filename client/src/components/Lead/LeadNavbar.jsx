@@ -1,8 +1,10 @@
 import { Navbar, Nav } from "react-bootstrap";
+import { useState } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { FiLogOut, FiUser } from "react-icons/fi";
 import axios from "axios";
 import Logo from "../../assets/logo.png";
+import { useEffect } from "react";
 
 const LeadNavbar = () => {
 
@@ -15,7 +17,7 @@ const LeadNavbar = () => {
             if (token) {
                 await axios.post(
                     `${BASE_URL}/api/auth/logout`,
-                    {}, 
+                    {},
                     {
                         headers: { Authorization: `Bearer ${token}` },
                     }

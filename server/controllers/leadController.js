@@ -14,6 +14,8 @@ exports.createLead = async (req, res) => {
     try {
 
         const lead = await Lead.create(req.body);
+        console.log(req.body);
+        
         await invalidLeadStateCache();
 
         res.status(201).json(lead);
@@ -337,7 +339,7 @@ exports.importLeads = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Import Error:", error);
+        console.error("Import Error:", error);
         return res.status(500).json({
             message: "Server error while importing leads",
             error: error.message
@@ -401,6 +403,7 @@ exports.getLeadState = async (req, res) => {
 
         if (role === "Sales") {
 
+            
             total = await Lead.countDocuments({ assignedTo: user._id });
             assignedLeads = await Lead.find({
                 assignedTo: user._id
@@ -432,6 +435,7 @@ exports.getLeadState = async (req, res) => {
                 status: "In Discussion"
             }).populate("assignedTo assignedBy createdBy");
             inDiscussion = inDiscussionLeads.length;
+            console.log("Backend inDiscussionLeads Count:", inDiscussionLeads);
         }
 
         if (role === "Resume") {

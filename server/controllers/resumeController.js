@@ -1,5 +1,7 @@
 const Candidate = require('../models/Candidate');
+const Lead = require('../models/Lead');
 const { clearLeadStateCache } = require('../utils/cache');
+// const { sendNotification } = require('../utils/notifications');
 
 exports.getUntouchedLeads = async (req, res) => {
     try {
@@ -313,7 +315,8 @@ exports.assignToRecruiter = async (req, res) => {
 
         res.status(200).json({
             message: "Lead assgined To Recruiter Successfully",
-            candidate: updated
+            candidate: updated,
+            success: true
         });
 
     } catch (error) {
@@ -330,7 +333,7 @@ exports.submitReport = async (req, res) => {
 
         const candidate = await Candidate.findById(id);
 
-        
+
 
         if (!candidate) return res.status(404).json({ message: "Candidate not found" });
 
@@ -356,15 +359,15 @@ exports.getReportHistory = async (req, res) => {
 
         const candidate = await Candidate.findById(id).select("reportHistory");
 
-        if(!candidate) {
-            return res.status(404).json({message: "Candidate not found"});
+        if (!candidate) {
+            return res.status(404).json({ message: "Candidate not found" });
         }
 
         res.status(200).json(candidate.reportHistory);
 
     } catch (error) {
         console.error("Get History Error:", error);
-        res.status(500).json({ message: "Error fetching report history"});
+        res.status(500).json({ message: "Error fetching report history" });
     }
 };
 

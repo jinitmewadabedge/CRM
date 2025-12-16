@@ -29,6 +29,7 @@ exports.enrollCandidate = async (req, res) => {
             paymentStatus
         } = req.body;
 
+        console.log("Backend Enroll:", leadId);
 
         const lead = await Lead.findById(leadId);
 
@@ -155,7 +156,7 @@ exports.updateCandidateStage = async (req, res) => {
         }
 
         await candidate.save();
-        res.status(200).json({ message: "Candidate stage updated successfully", candidate });
+        res.status(200).json({ message: "Lead moved to Resume", candidate });
 
     } catch (error) {
         console.error("Update Stage Error:", error); 

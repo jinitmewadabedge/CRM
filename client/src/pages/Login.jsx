@@ -13,6 +13,7 @@ import lead_img_1_BR from "../assets/lead_img_1_BR.png"
 import lead_img_2 from "../assets/lead_img_2.png"
 import { ModeToggle } from "../components/mode-toggle";
 import { useTheme } from "../components/themeProvider";
+import { socket } from "../socket"
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -81,9 +82,22 @@ const Login = () => {
         sessionStorage.setItem("user", JSON.stringify(data.user));
       }
 
+      const loggedInUser = data.user;
+
+      socket.connect();
+
+      console.log("Socket Registration:", loggedInUser._id, loggedInUser.role);
+
       toast.success("Login Successfully!");
+
+      socket.emit("register", {
+        userId: loggedInUser._id,
+        role: loggedInUser.role
+      });
+      
       const route = roleRoutes[data.user.role] || "/";
       navigate(route);
+      
     } catch (error) {
       const message = error.response?.data?.message || error.message || "Login failed - please check credentials.";
       // alert(message);
