@@ -91,7 +91,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                     <label className="tableData">Enrollment Date</label>
                     <input
                       type="date"
-                      className="form-control form-control-sm tableData"
+                      className="form-control form-control-sm tableData candidateFields"
                       value={enrollmentData.enrollmentDate}
                       onChange={e => setEnrollmentData({ ...enrollmentData, enrollmentDate: e.target.value })}
                     />
@@ -99,24 +99,24 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
 
                   <div className="col-md-6">
                     <label className="tableData">Candidate Name</label>
-                    <input type="text" className="form-control form-control-sm tableData" value={lead?.candidate_name} disabled />
+                    <input type="text" className="form-control form-control-sm tableData candidateField" value={lead?.candidate_name} disabled />
                   </div>
 
                   <div className="col-md-6">
                     <label className="tableData">Email</label>
-                    <input type="email" className="form-control form-control-sm tableData" value={lead?.candidate_email} disabled />
+                    <input type="email" className="form-control form-control-sm tableData candidateField" value={lead?.candidate_email} disabled />
                   </div>
 
                   <div className="col-md-6">
                     <label className="tableData">Number</label>
-                    <input type="text" className="form-control form-control-sm tableData" value={lead?.candidate_phone_no} disabled />
+                    <input type="text" className="form-control form-control-sm tableData candidateField" value={lead?.candidate_phone_no} disabled />
                   </div>
 
                   <div className="col-md-6">
                     <label className="tableData">Upfront</label>
                     <input
                       type="number"
-                      className="form-control form-control-sm tableData"
+                      className="form-control form-control-sm tableData candidateField"
                       value={enrollmentData.upfront}
                       onChange={e => setEnrollmentData({ ...enrollmentData, upfront: e.target.value })}
                     />
@@ -126,7 +126,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                     <label className="tableData">Contracted</label>
                     <input
                       type="number"
-                      className="form-control form-control-sm tableData"
+                      className="form-control form-control-sm tableData candidateField"
                       value={enrollmentData.contracted}
                       onChange={e => setEnrollmentData({ ...enrollmentData, contracted: e.target.value })}
                     />
@@ -138,7 +138,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                         <label className="tableData">Collected Amount {index + 1}</label>
                         <input
                           type="number"
-                          className="form-control form-control-sm tableData"
+                          className="form-control form-control-sm tableData candidateField"
                           value={payment.amount}
                           onChange={(e) => {
                             const newPayments = [...enrollmentData.collectedPayments];
@@ -152,7 +152,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                         <label className="tableData">Collected Date {index + 1}</label>
                         <input
                           type="date"
-                          className="form-control form-control-sm tableData"
+                          className="form-control form-control-sm tableData candidateField"
                           value={payment.date}
                           onChange={(e) => {
                             const newPayments = [...enrollmentData.collectedPayments];
@@ -168,7 +168,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                     <label className="tableData">Percentage</label>
                     <input
                       type="number"
-                      className="form-control form-control-sm tableData"
+                      className="form-control form-control-sm tableData candidateField"
                       value={enrollmentData.percentage}
                       onChange={e => setEnrollmentData({ ...enrollmentData, percentage: e.target.value })}
                     />
@@ -177,7 +177,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                   <div className="col-md-6">
                     <label className="tableData">Job Guarantee</label>
                     <select
-                      className="form-select form-select-sm tableData"
+                      className="form-select form-select-sm tableData candidateField"
                       value={enrollmentData.jobGuarantee}
                       onChange={e => setEnrollmentData({ ...enrollmentData, jobGuarantee: e.target.value })}
                     >
@@ -189,13 +189,13 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
 
                   <div className="col-md-6">
                     <label className="tableData">Technology</label>
-                    <input type="text" className="form-control form-control-sm tableData" value={lead?.technology} disabled />
+                    <input type="text" className="form-control form-control-sm tableData candidateField" value={lead?.technology} disabled />
                   </div>
 
                   <div className="col-md-6">
                     <label className="tableData">Plan</label>
                     <select
-                      className="form-select form-select-sm tableData"
+                      className="form-select form-select-sm tableData candidateField"
                       value={enrollmentData.plan}
                       onChange={e => setEnrollmentData({ ...enrollmentData, plan: e.target.value })}
                     >
@@ -209,7 +209,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                   <div className="col-md-6">
                     <label className="tableData">Payment Gateway</label>
                     <select
-                      className="form-select form-select-sm tableData"
+                      className="form-select form-select-sm tableData candidateField"
                       value={enrollmentData.paymentGateway}
                       onChange={e => setEnrollmentData({ ...enrollmentData, paymentGateway: e.target.value })}
                     >
@@ -223,7 +223,7 @@ const EnrollCandidateModal = ({ show, onClose, lead, onEnrollSuccess }) => {
                   <div className="col-md-6">
                     <label className="form-label form-label-sm tableData">Payment Status</label>
                     <select
-                      className="form-select form-select-sm tableData"
+                      className="form-select form-select-sm tableData candidateField"
                       value={enrollmentData.paymentStatus}
                       onChange={e => setEnrollmentData({ ...enrollmentData, paymentStatus: e.target.value })}
                     >

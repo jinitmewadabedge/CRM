@@ -333,8 +333,6 @@ exports.submitReport = async (req, res) => {
 
         const candidate = await Candidate.findById(id);
 
-
-
         if (!candidate) return res.status(404).json({ message: "Candidate not found" });
 
         candidate.reportHistory.push({
@@ -351,6 +349,31 @@ exports.submitReport = async (req, res) => {
         res.status(500).json({ message: "Error saving report" });
     }
 };
+
+exports.submitResponseReport = async (req, res) => {
+    
+    try {
+
+        const { id } = req.params;
+        const report = req.body;
+
+        const candidate = await Candidate.findById(id);
+
+        if(!candidate) return res.status(404).json({message: "Candidate not found"});
+
+        candidate.responseReportHistory.push({
+            ...report,
+            createdAt: new Date()
+        })
+
+        await candidate.save();
+
+        res.status(200).json({message: "Response Report Saved Successfully", candidate});
+
+    } catch (error) {
+        res.status(500).json({message: "Error saving response report"});
+    }
+}
 
 exports.getReportHistory = async (req, res) => {
     try {
@@ -370,4 +393,22 @@ exports.getReportHistory = async (req, res) => {
         res.status(500).json({ message: "Error fetching report history" });
     }
 };
+
+exports.getResponseReportHistory = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const candidate = await Candidate.findById(id).select("responseReportHistory");
+
+        if (!candidate) {
+            return res.status(404).json({ message: "Candidate not found" });
+        }
+
+        res.status(200).json(candidate.responseReportHistory || []);
+    } catch (error) {
+        console.error("Get History Error:", error);
+        res.status(500).json({ message: "Error fetching response report history" })
+
+    }
+}
 

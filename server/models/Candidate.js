@@ -48,6 +48,21 @@ const candidateSchema = new mongoose.Schema({
         reason: String,
         createdAt: { type: Date, default: Date.now}
     }],
+    responseReportHistory: [{
+        clientName: String,
+        email: String,
+        contactNo: String,
+        scheduledDate: Date,
+        scheduledTime: String,
+        responseType: String,
+        responseMode: String,
+        support: Boolean,
+        supportPersonName: String,
+        interviewStatus: String,
+        recruiterRemarks : String,
+        finalStatus: String,
+        seniorRemarks: String
+    }],
 
     touchedByResume: { type: Boolean, default: false },
     notes: { type: String, default: "" },

@@ -1,45 +1,49 @@
 import { useTheme } from "../components/themeProvider";
 import { FaSun, FaMoon } from "react-icons/fa";
-import { Tooltip, Popover } from "bootstrap";
-import { useEffect } from "react";
+// import { Tooltip, Popover } from "bootstrap";
 
-export function ModeToggle() {
+export function ModeToggle({ variant = "icon" }) {
   const { theme, setTheme } = useTheme();
 
   const toggleTheme = () => {
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
-  useEffect(() => {
-    const btn = document.getElementById("darkModeBtn");
-    if (btn) {
-      new Popover(btn);
-    }
-  }, []);
+  if (variant === "icon") {
 
-  return (
-    <button className="theme-toggle-btn" onClick={toggleTheme} data-bs-toggle="popover" data-bs-placement="left" title="Hello, Dark Mode">
-      <div className="toggle-content">
+    return (
+      <button className="theme-toggle-btn px-2 py-2" onClick={toggleTheme}>
+        {/* <div className="toggle-content"> */}
+        {theme === "dark" ? (
+          <FaMoon size={25} />
+        ) : (
+          <FaSun size={25} />
+        )}
+
+        {/* </div> */}
+      </button>
+    );
+  }
+
+  if (variant === "button") {
+
+    return (
+      <button className="theme-toggle-btn px-4 py-2 d-flex align-items-center justify-content-center gap-2" onClick={toggleTheme}>
         {theme === "dark" ? (
           <>
-            <FaMoon size={15} />
-            <span>Dark</span>
+            <h6 className="m-0">Dark Mode</h6>
+            <FaMoon size={18} />
           </>
         ) : (
           <>
-            <FaSun size={15} />
-            <span>Light</span>
+            <h6 className="m-0" style={{color: "#4925E9"}}>Light Mode</h6>
+            <FaSun size={18} color="#4925E9" />
           </>
         )}
+      </button>
+    )
+  }
 
-        <div className={`switch ${theme === "dark" ? "dark" : "light"}`}>
-          <div className="circle"></div>
-        </div>
-      </div>
-    </button>
-  );
-
-  // return (
   //   <label className="toggle-with-text">
   //     <input type="checkbox" checked={theme === "dark"} onChange={toggleTheme} />
   //     <span className="toggle-track">

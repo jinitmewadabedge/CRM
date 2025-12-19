@@ -5,6 +5,7 @@ import Logo from "../assets/logo_webp.webp";
 import "../App.css";
 "use client";
 import { TextAnimate } from "../registry/magicui/text-animate";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import Lead_Hero from "../assets/lead_hero_image.jpg"
 import lead_hero_img from "../assets/lead_img.jpg"
@@ -19,6 +20,7 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -94,10 +96,10 @@ const Login = () => {
         userId: loggedInUser._id,
         role: loggedInUser.role
       });
-      
+
       const route = roleRoutes[data.user.role] || "/";
       navigate(route);
-      
+
     } catch (error) {
       const message = error.response?.data?.message || error.message || "Login failed - please check credentials.";
       // alert(message);
@@ -159,11 +161,10 @@ const Login = () => {
               />
               <label htmlFor="email">Email</label>
             </div>
-
-            <div className="form-floating mt-3 mb-3">
+            <div className="form-floating mt-3 mb-3 position-relative">
               <input
-                type="password"
-                className="form-control loginPageForm"
+                type={showPassword ? "text" : "password"}
+                className="form-control loginPageForm pe-5"
                 id="pwd"
                 placeholder="Enter password"
                 value={password}
@@ -171,6 +172,16 @@ const Login = () => {
                 required
               />
               <label htmlFor="pwd">Password</label>
+
+              <span
+                role="button"
+                aria-label={showPassword ? "Hide Password" : "Show Password"}
+                onClick={() => setShowPassword(!showPassword)}
+                className="position-absolute top-50 end-0 translate-middle-y me-3"
+                style={{ cursor: "pointer", zIndex: 5 }}
+              >
+                {showPassword ? <FaEyeSlash size={20}/> : <FaEye size={20}/> }
+              </span>
             </div>
 
             <div className="form-check mb-3 d-flex justify-content-between">

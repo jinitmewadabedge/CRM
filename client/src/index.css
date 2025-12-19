@@ -40,11 +40,132 @@ body {
 } */
 
 html.dark h6 {
-    color: #FFF4A3 !important;
+    /* color: #FFF4A3 !important; */
+    /* color: #a9dfd8 !important */
+    color: white !important;
+}
+
+html.dark .subHeading {
+    color: rgb(197, 180, 24) !important;
+}
+
+html.dark .addUserBtn {
+    border: 1px solid #2387b9;
+    color: #2387b9;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .importLead {
+    border: 1px solid #2387b9;
+    color: #2387b9;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .showFilters {
+    border: 1px solid #2387b9;
+    color: #2387b9;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .refresh {
+    border: 1px solid #e01818;
+    color: #e01818;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .dailyReport {
+    border: 1px solid #28aff3a1;
+    color: #28aff3a1 !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .interviewReport {
+    border: 1px solid #c5cacce1;
+    color: #c5caccd2 !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .history {
+    border: 1px solid rgb(201, 201, 21);
+    color: rgb(211, 211, 21) !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 450;
+}
+
+html.dark .viewLead {
+    border: 1px solid rgba(58, 226, 17, 0.904);
+    color: rgba(58, 226, 17, 0.904) !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 450;
+}
+
+html.dark .exportLead {
+    border: 1px solid rgb(138, 138, 12);
+    color: rgb(182, 182, 19) !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 450;
+}
+
+html.dark .interviewBorder {
+    border: 1px solid gray;
+}
+
+html.dark .searchInput {
+    border: 1px solid gray !important;
+}
+
+html.dark .sortSelect {
+    border: 1px solid gray !important;
+}
+
+html.dark .interviewFields {
+    color: rgb(221, 221, 221) !important;
+}
+
+html.dark select {
+    background-color: #1b1b1b !important;
+}
+
+html.dark .textareaBG {
+    background-color: #1b1b1b !important;
+}
+
+html.dark .saveReport {
+    border: 1px solid #28AEF3;
+    color: #28AEF3 !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .cancelReport {
+    border: 1px solid #909597;
+    color: #a9abac !important;
+    background-color: rgba(128, 128, 128, 0.164);
+    font-weight: 500;
+}
+
+html.dark .leadReportLabel {
+    color: white;
+    font-weight: 500;
+}
+
+html.dark .leadReport {
+    border: 1px solid gray;
+    color: white;
+}
+
+html.dark .leadReport::placeholder {
+    color: #c9d1d9 !important;
 }
 
 html.dark .rounded-4 {
-    background-color: #1D2A35 !important;
+    background-color: #21222d !important;
     color: #c9d1d9 !important;
     border-color: #30363d !important;
 }
@@ -123,73 +244,92 @@ html.dark #startWork {
     background-color: #30363d;
 }
 
-html.dark #enrollButton{
+html.dark #enrollButton {
     background-color: #30363d;
 }
 
-html.dark .modal-body{
+html.dark .modal-body {
     background-color: #30363d;
 }
 
-html.dark .modal-title{
+html.dark .modal-title {
     color: whitesmoke !important;
 }
 
 
-html.dark .modal-footer{
+html.dark .modal-footer {
     background-color: #30363d;
 }
 
-html.dark .form-control:disabled{
+html.dark .form-control:disabled {
     color: black !important;
 }
 
-html.dark .tableData{
+html.dark .tableData {
     color: #c9d1d9 !important;
+}
+
+html.dark .candidateField {
+    border: 1px solid gray;
+}
+
+html.dark input:disabled {
+    background-color: rgb(161, 159, 159);
 }
 
 html.dark #viewLead {
     background-color: #30363d;
 }
 
-html.dark .BGColor{
+html.dark .icon-stack {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.icon-stack svg:first-child {
+    color: #c5b418ff;
+}
+
+.icon-stack svg:last-child {
+    color: #c5b418ff;
+    position: absolute;
+    right: -10px;
+    bottom: 17px;
+}
+
+html.dark .BGColor {
     background-color: #30363d;
 }
 
-html.dark .nav-link:hover{
+html.dark .nav-link:hover {
     color: #bedf07 !important;
 }
 
-html.dark #cancelButton{
+html.dark #cancelButton {
     background-color: #30363d;
     border: 1px solid rgb(175, 26, 26);
 }
 
-html.dark .assignLeadsTableBackground{
+html.dark .assignLeadsTableBackground {
     background-color: #000000;
 }
 
-html.dark .technologyFont{
+html.dark .technologyFont {
     color: #c9d1d9 !important;
 }
 
-html.dark .darkFormLabel{
+html.dark .darkFormLabel {
     color: #d9d2c9 !important;
 }
 
-
-/* html.dark select{
-    background-color: #1b1b1b !important;
-    color: #c9d1d9 !important;
-} */
-
-html.dark .darkForm{
+html.dark .darkForm {
     background-color: #1b1b1b !important;
     color: #c9d1d9 !important;
     border: 1px solid #30363d !important;
 }
 
-html.dark .card-plain{
+html.dark .card-plain {
     background-color: #30363d !important;
 }
 
@@ -227,12 +367,14 @@ html.dark .card-plain{
     text-shadow: 0 0 3px white;
 }
 
-html.dark .announcement-active body > *:not(.modal):not(.dark-mode-toggle-container) {
+html.dark .announcement-active body>*:not(.modal):not(.dark-mode-toggle-container) {
     filter: blur(4px) brightness(0.6);
     pointer-events: none;
 }
 
-html.dark .previousDark,html.dark .numberDark, html.dark .nextDark{
+html.dark .previousDark,
+html.dark .numberDark,
+html.dark .nextDark {
     border: 1px solid whitesmoke;
     color: whitesmoke;
 }
@@ -299,7 +441,9 @@ html.dark .tableHeader {
 }
 
 html.dark .adminDashboardTitle {
-    color: #FFF4A3;
+    /* color: #FFF4A3; */
+    /* color: #a9dfd8 !important; */
+    color: #ffffff;
 }
 
 html.dark select {
@@ -391,7 +535,7 @@ html.dark .theme-label {
 }
 
 html.dark .container-fluid {
-    background-color: #1f1c1c;
+    background-color: #171821;
 }
 
 @keyframes fadeSlideIn {
