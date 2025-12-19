@@ -37,6 +37,11 @@ const InterviewReportModal = ({ show, onClose, lead }) => {
 
   const handleSubmit = async () => {
 
+    console.log("handleSubmit called");
+    console.log("lead:", lead);
+    console.log("selectedCandidate:", typeof selectedCandidate);
+
+
     if (!lead?._id) {
       toast.error("Lead not selected");
       return;
@@ -46,7 +51,7 @@ const InterviewReportModal = ({ show, onClose, lead }) => {
       const token = sessionStorage.getItem("token") || localStorage.getItem("token");
 
       await axios.put(
-        `${import.meta.env.VITE_BASE_URL}/api/resume/responseReport/${candidateId}`,
+        `${import.meta.env.VITE_BASE_URL}/api/resume/responseReport/${lead._id}`,
         {
           leadId: lead._id,
           ...form
@@ -235,8 +240,8 @@ const InterviewReportModal = ({ show, onClose, lead }) => {
                 <div className="col-md-12">
                   <label htmlFor="" className="selectFont fw-bold interviewFields">Final Status</label>
                   <select name="" id="" className="form-select form-select-sm interviewBorder"
-                  value={form.finalStatus}
-                  onChange={(e) => setForm({...form, finalStatus: e.target.value})}>
+                    value={form.finalStatus}
+                    onChange={(e) => setForm({ ...form, finalStatus: e.target.value })}>
                     <option value="Next Round">Next Round</option>
                     <option value="Rescheduled">Rescheduled</option>
                     <option value="Cancelled">Cancelled</option>
