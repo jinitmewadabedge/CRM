@@ -16,7 +16,7 @@ exports.createLead = async (req, res) => {
         const lead = await Lead.create(req.body);
         console.log(req.body);
         
-        await invalidLeadStateCache();
+        // await invalidLeadStateCache();
 
         res.status(201).json(lead);
 

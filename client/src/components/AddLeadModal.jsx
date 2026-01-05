@@ -19,6 +19,8 @@ const AddLeadModal = ({ onLeadAdded }) => {
     status: ""
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleChange = (e) => {
     setNewLead({
       ...newLead,
@@ -28,6 +30,10 @@ const AddLeadModal = ({ onLeadAdded }) => {
 
   const handleSubmitNew = async (e) => {
     e.preventDefault();
+
+    if(isSubmitting) return;
+    setIsSubmitting(true);
+
     console.log("Submitting Lead:", newLead);
 
     const payload = {
@@ -52,16 +58,14 @@ const AddLeadModal = ({ onLeadAdded }) => {
         source: "",
         status: ""
       });
-      onLeadAdded && onLeadAdded();
-      // Close modal
-      const modalEl = document.getElementById("addNewLead");
-      if (modalEl) {
-        const modal = window.bootstrap.Modal.getInstance(modalEl);
-        modal.hide();
-      }
+      
+      onLeadAdded?.();
+
     } catch (error) {
       console.error("Error adding lead:", error.response?.data || error.message);
       toast.error("Failed to add lead. Please try again");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -210,7 +214,7 @@ const AddLeadModal = ({ onLeadAdded }) => {
                   </div>
 
                   <div className="text-center">
-                    <button type="submit" className="btn btn-primary btn-sm">Add Lead</button>
+                    <button type="submit" className="btn btn-primary btn-sm" data-bs-dismiss="modal" disabled={isSubmitting}>{isSubmitting ? "Adding" : "Add Lead"}</button>
                   </div>
                 </form>
               </div>

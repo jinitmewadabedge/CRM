@@ -729,111 +729,6 @@ const Leads = () => {
     }
   }, [selectAllEnrolled, enrolledLeads]);
 
-  // const toggleLeadSelection = (id, type) => {
-  //   switch (type) {
-  //     case "all":
-  //       setSelectedAllLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllAll(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === leads.length) setSelectAllAll(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-  //     case "unassigned":
-  //       setSelectedUnassignedLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllUnassigned(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === unassignedLeads.length) setSelectAllUnassigned(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-  //     case "assigned":
-  //       setSelectedAssignedLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllAssigned(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === assignedLeads.length) setSelectAllAssigned(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-  //     case "enrolled":
-  //       setSelectedEnrolledLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllEnrolled(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === enrolledLeads.length) setSelectAllEnrolled(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-
-  //     case "touched":
-  //       setSelectedTouchedLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllTouched(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === touchedLeads.length) setSelectAllTouched(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-  //     case "untouched":
-  //       setSelectedUntouchedLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllUntouched(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === untouchedLeads.length) setSelectAllUntouched(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-  //     case "completed":
-  //       setSelectedCompletedLeads(prev => {
-  //         let updated;
-  //         if (prev.includes(id)) {
-  //           updated = prev.filter(l => l !== id);
-  //           setSelectAllCompleted(false);
-  //         } else {
-  //           updated = [...prev, id];
-  //           if (updated.length === completedLeads.length)
-  //             setSelectAllCompleted(true);
-  //         }
-  //         return updated;
-  //       });
-  //       break;
-
-  //   }
-  // };
-
   const toggleLeadSelection = useCallback((id, type) => {
     switch (type) {
       case "all":
@@ -1705,6 +1600,31 @@ const Leads = () => {
 
     return filtered;
   }, [leads, filters]);
+
+  const filteredUnassignedLeads = useMemo(() => {
+    const searchTerm = unassignedFilters.search.toLowerCase().trim();
+
+    let results = unassignedLeads.filter((lead) => {
+      if (!searchTerm) return true;
+
+      return (
+        lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_phone_no?.includes(searchTerm)
+      );
+    });
+
+    results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      return unassignedFilters.sortByDate === "newest"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+
+    return results;
+  }, [unassignedLeads, unassignedFilters.search, unassignedFilters.sortByDate]);
 
   const filteredTouchedLeads = useMemo(() => {
     let results = touchedLeads.filter((lead) => {
@@ -2706,8 +2626,7 @@ const Leads = () => {
                   </div>
                   <div>
                     <button className="btn btn-primary btn-sm showFilters"
-                      onClick={() => setShowFilters(!showFilters)}
-                    >
+                      onClick={() => setShowFilters(!showFilters)}>
                       <i className="bi bi-funnel-fill me-2"></i>
                       {showFilters ? "Hide Filters" : "Show Filters"}
                     </button>
@@ -3123,29 +3042,34 @@ const Leads = () => {
                     <h5 className="text-left leadManagementTitle mt-4">All Unassigned Leads({counts.unassigned})</h5>
                     <h6 className="leadManagementSubtitle mb-3">Active Leads</h6>
                   </div>
-                  <div className="d-flex justify-content-between align-items-center px-3 mt-2 mb-3">
+                  <div className="d-flex justify-content-between align-items-center gap-4 px-3 mt-2 mb-3">
+                    <div className="input-group input-group-sm w-auto search">
+                      <span className="input-group-text bg-white border-end-0">
+                        <i className="bi bi-search"></i>
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        className="form-control form-control-sm border-start-0"
+                        value={unassignedFilters.search}
+                        onChange={(e) =>
+                          setUnassignedFilters({ ...unassignedFilters, search: e.target.value })
+                        }
+                      />
+                    </div>
                     <select
                       className="form-select form-select-sm selectFont sortSelect"
                       value={unassignedFilters.sortByDate}
                       onChange={(e) => setUnassignedFilters({ ...unassignedFilters, sortByDate: e.target.value })}>
                       <option value="">----Sort By Order----</option>
                       <option value="desc">Newest to Oldest</option>
-                      <option value="asc">Oldest to Newest</option>   
+                      <option value="asc">Oldest to Newest</option>
                     </select>
                   </div>
 
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    className="form-control form-control-sm border-start-0"
-                    value={unassignedFilters.search}
-                    onChange={(e) =>
-                      setUnassignedFilters({ ...unassignedFilters, search: e.target.value })
-                    }
-                  />
+
+
+
                 </div>
 
                 {/* <div>
@@ -3225,8 +3149,8 @@ const Leads = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {currentUnassignedLeads.length > 0 ? (
-                          currentUnassignedLeads.map((a) => (
+                        {filteredUnassignedLeads.length > 0 ? (
+                          filteredUnassignedLeads.map((a) => (
                             <tr key={a._id} onClick={() => handleRowClick(a, "unassigned")} style={{ cursor: "pointer" }}>
                               <td>
                                 <input type="checkbox"
@@ -5981,10 +5905,10 @@ const Leads = () => {
                               <button
                                 id="moveToMarketing"
                                 className="btn btn-sm btn-warning fw-semibold"
-                                onClick={(e) => { 
-                                handleMovedToMarketing(t._id)
-                                 e.stopPropagation();
-                                 }}
+                                onClick={(e) => {
+                                  handleMovedToMarketing(t._id)
+                                  e.stopPropagation();
+                                }}
                               >
                                 Move to Marketing
                               </button>
