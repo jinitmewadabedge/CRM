@@ -14,7 +14,7 @@ const candidateSchema = new mongoose.Schema({
     enrollmentDate: { type: Date, default: Date.now },
     startDate: { type: Date, default: null },
     endDate: { type: Date, default: null },
-    status: { type: String, enum: ["touched", "in-progress", "completed","Recruiter"], default: "touched" },
+    status: { type: String, enum: ["touched", "in-progress", "completed", "Recruiter"], default: "touched" },
     plan: { type: String },
     upfront: { type: Number },
 
@@ -46,7 +46,7 @@ const candidateSchema = new mongoose.Schema({
         completed: Number,
         status: String,
         reason: String,
-        createdAt: { type: Date, default: Date.now}
+        createdAt: { type: Date, default: Date.now }
     }],
     responseReportHistory: [{
         clientName: String,
@@ -54,14 +54,38 @@ const candidateSchema = new mongoose.Schema({
         contactNo: String,
         scheduledDate: Date,
         scheduledTime: String,
-        responseType: String,
-        responseMode: String,
+        responseType: {
+            type: String,
+            enum: ["RTR", "Screening", "Assessment-Tech", "One-Way-Screening", "Interview"],
+            default: null
+        },
+        responseMode: {
+            type: String,
+            enum: ["Phone", "Web", "AI", "MS Teams", "G-Meet", "Zoom", "Skype", "Webex", "Other"],
+            default: null
+        },
         support: Boolean,
-        supportPersonName: String,
-        interviewStatus: String,
-        recruiterRemarks : String,
-        finalStatus: String,
-        seniorRemarks: String
+        supportPersonName: {
+            type: String,
+            enum: ["Rutvik", "Kishan", "Sam"],
+            default: null
+        },
+        interviewStatus: {
+            type: String,
+            enum: ["Scheduled", "Completed", "Rescheduled-Client", "Rescheduled-Candidate", "Cancelled-Client", "Cancelled-Candidate"],
+            default: null
+        },
+        recruiterRemarks: String,
+        finalStatus: {
+            type: String,
+            enum: ["Next Round", "Rescheduled", "Cancelled", "In Process", "DNR", "Rejection", "Placement", "Onboarding"],
+            default: null
+        },
+        seniorRemarks: String,
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
     }],
 
     touchedByResume: { type: Boolean, default: false },

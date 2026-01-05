@@ -26,6 +26,7 @@ import { useTheme } from "../../components/themeProvider";
 import AddLeadModal from "../../components/AddLeadModal";
 import EnrollCandidateModal from "../../components/EnrollCandidateModal";
 import InterviewReportModal from "../../components/InterviewReportModal";
+import MarketingReportModal from "../../components/MarketingReportModal";
 
 const Leads = () => {
   const { id } = useParams();
@@ -63,6 +64,12 @@ const Leads = () => {
   const [revertedLeads, setRevertedLeads] = useState([]);
   const [selectedAllLeads, setSelectedAllLeads] = useState([]);
   const [selectAllAll, setSelectAllAll] = useState(false);
+
+  const [reportCandidateId, setReportCandidateId] = useState(null);
+  const [reportCandidateName, setReportCandidateName] = useState("");
+
+  const [dailyReports, setDailyReports] = useState([]);
+  const [responseReports, setResponseReports] = useState([]);
 
   const [notificationCount, setNotificationCount] = useState(0);
 
@@ -174,6 +181,7 @@ const Leads = () => {
   });
 
   const [unassignedFilters, setUnassignedFilters] = useState({
+    search: "",
     sortByDate: "desc"
   })
 
@@ -290,6 +298,20 @@ const Leads = () => {
     if (!dateString) return "";
     const [year, month, day] = dateString.split("-");
     return `${day}/${month}/${year}`;
+  };
+
+  const formatTime12Hour = (time24) => {
+    if (!time24) return "-";
+
+    const [hourStr, minute] = time24.split(":");
+    let hour = Number(hourStr);
+
+    if (isNaN(hour)) return "-";
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    hour = hour % 12 || 12;
+
+    return `${hour}:${minute} ${ampm}`;
   };
 
   const fetchCandidates = async () => {
@@ -423,6 +445,27 @@ const Leads = () => {
     console.log("Permissions for user:", permissions);
   }, [permissions]);
 
+  useEffect(() => {
+
+    if (!showReportModal || !reportCandidateId) return;
+
+    const fetchReports = async () => {
+      const token = sessionStorage.getItem("token") || localStorage.getItem("token");
+
+      const res = await axios.get(
+        `${BASE_URL}/api/resume/reports/${reportCandidateId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      console.log("Marketing Report Log", res.data);
+      console.log("Daily Reports Log:", res.data.dailyReports);
+      setDailyReports(res.data.dailyReports);
+      setResponseReports(res.data.responseReports);
+    };
+
+    fetchReports();
+  }, [showReportModal, reportCandidateId]);
 
   useEffect(() => {
     fetchBackendLeads();
@@ -430,6 +473,10 @@ const Leads = () => {
     fetchPermissions();
     fetchResumeLeads();
   }, []);
+
+  useEffect(() => {
+    console.log("showReportModal:", showReportModal);
+  }, [showReportModal]);
 
   const fetchBackendLeads = async () => {
 
@@ -1136,6 +1183,12 @@ const Leads = () => {
     }
   };
 
+  const formatDate = (dateString) => {
+    if (!dateString) return "-";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-GB"); // DD/MM/YYYY
+  };
+
   const fetchReportHistory = async (candidateId) => {
     try {
 
@@ -1160,7 +1213,7 @@ const Leads = () => {
       const res = await axios.get(`${BASE_URL}/api/resume/getResponseReportHistory/${candidateId}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
+      console.log("Fetch Reponse Report Hisory From RES.DATA:", res.data);
       setResponseReportHistory(res.data);
 
     } catch (error) {
@@ -3062,8 +3115,6 @@ const Leads = () => {
             </div>
           )}
 
-
-          {/* Unassigned Leads */}
           {user.role !== "Resume" && user.role !== "Sales" && (
             <div className="col-12 col-md-8 col-lg-12 mt-2">
               <div className="rounded-4 bg-white shadow-sm p-4 table-responsive h-100">
@@ -3079,9 +3130,22 @@ const Leads = () => {
                       onChange={(e) => setUnassignedFilters({ ...unassignedFilters, sortByDate: e.target.value })}>
                       <option value="">----Sort By Order----</option>
                       <option value="desc">Newest to Oldest</option>
-                      <option value="asc">Oldest to Newest</option>
+                      <option value="asc">Oldest to Newest</option>   
                     </select>
                   </div>
+
+                  <span className="input-group-text bg-white border-end-0">
+                    <i className="bi bi-search"></i>
+                  </span>
+                  <input
+                    type="text"
+                    placeholder="Search..."
+                    className="form-control form-control-sm border-start-0"
+                    value={unassignedFilters.search}
+                    onChange={(e) =>
+                      setUnassignedFilters({ ...unassignedFilters, search: e.target.value })
+                    }
+                  />
                 </div>
 
                 {/* <div>
@@ -3259,7 +3323,7 @@ const Leads = () => {
                                       e.stopPropagation();
                                       setSelectedCandidate(a);
                                       setSelectedLeadName(a.name || a.candidate_name);
-                                      setShowReportModal(true);
+                                      // setShowReportModal(true);
                                     }}>
                                     Daily Report <FaFile />
                                   </button>
@@ -3312,8 +3376,9 @@ const Leads = () => {
                                   className="btn btn-sm btn-success ms-2 viewLead"
                                   data-bs-toggle="modal"
                                   data-bs-target="#myLeadModal"
-                                  onClick={() => {
+                                  onClick={(e) => {
                                     setTimeout(() => {
+                                      e.stopPropagation();
                                       console.log("Selected Lead in modal", a);
                                       setSelectedLead(a);
                                       setModalSource("unassigned");
@@ -3608,6 +3673,17 @@ const Leads = () => {
                                   }}>
                                   View
                                 </button>
+                                {user.role === "Marketing" && (
+                                  <button
+                                    className="btn btn-success btn-sm btn-rounded me-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setReportCandidateId(a._id);
+                                      setShowReportModal(true);
+                                    }}>
+                                    View Report
+                                  </button>
+                                )}
                                 {permissions?.lead?.updateScope !== "none" && user.role !== "Marketing" && (
                                   <button
                                     className="btn btn-outline-success btn-sm btn-rounded me-2"
@@ -5508,7 +5584,7 @@ const Leads = () => {
                     <tbody>
                       {filteredUntouchedLeads.length > 0 ? (
                         filteredUntouchedLeads.map((t, i) => (
-                          <tr key={t._id}>
+                          <tr key={t._id} onClick={() => handleRowClick(t, "untouched")} style={{ cursor: "pointer" }}>
                             <td>
                               <input
                                 type="checkbox"
@@ -5521,8 +5597,10 @@ const Leads = () => {
                             <td className="mb-0 text-left tableData">{t.email || "N/A"}</td>
                             <td className="mb-0 text-left tableData">{t.phone || "N/A"}</td>
                             <td>
-                              <button className="btn btn-sm btn-success" id="startWork" onClick={() => handleStart(t._id)}>Start Work</button>
-                              <button
+                              <button className="btn btn-sm btn-success" id="startWork" onClick={(e) => {
+                                e.stopPropagation(), handleStart(t._id)
+                              }}>Start Work</button>
+                              {/* <button
                                 id="viewLead"
                                 className="btn btn-sm btn-success ms-2"
                                 data-bs-toggle="modal"
@@ -5535,7 +5613,7 @@ const Leads = () => {
                                 }}
                               >
                                 View Lead
-                              </button>
+                              </button> */}
                             </td>
                           </tr>
                         ))
@@ -5697,7 +5775,11 @@ const Leads = () => {
                     <tbody>
                       {filteredTouchedLeads.length > 0 ? (
                         filteredTouchedLeads.map((t, i) => (
-                          <tr key={t._id}>
+                          <tr key={t._id} onClick={(e) => {
+                            e.stopPropagation();
+                            handleRowClick(t, "touched")
+                          }
+                          }>
                             <td>
                               <input
                                 type="checkbox"
@@ -5756,7 +5838,7 @@ const Leads = () => {
                                   Start
                                 </button>
                               )}
-                              <button
+                              {/* <button
                                 id="viewLead"
                                 className="btn btn-sm btn-success ms-2"
                                 data-bs-toggle="modal"
@@ -5770,7 +5852,7 @@ const Leads = () => {
                                 }}
                               >
                                 View Lead
-                              </button>
+                              </button> */}
 
                             </td>
                           </tr>
@@ -5859,7 +5941,10 @@ const Leads = () => {
                     </thead>
                     <tbody>
                       {filteredCompletedLeads.map((t, i) => (
-                        <tr key={t._id}>
+                        <tr key={t._id} onClick={(e) => {
+                          e.stopPropagation();
+                          handleRowClick(t, "completed");
+                        }}>
                           <td>
                             <input type="checkbox"
                               checked={selectedCompletedLeads.includes(t._id)}
@@ -5896,7 +5981,10 @@ const Leads = () => {
                               <button
                                 id="moveToMarketing"
                                 className="btn btn-sm btn-warning fw-semibold"
-                                onClick={() => handleMovedToMarketing(t._id)}
+                                onClick={(e) => { 
+                                handleMovedToMarketing(t._id)
+                                 e.stopPropagation();
+                                 }}
                               >
                                 Move to Marketing
                               </button>
@@ -5929,10 +6017,10 @@ const Leads = () => {
                               </button>
 
                             )}
-                            <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => {
+                            {/* <button id="viewLead" className="btn btn-sm btn-success ms-2" data-bs-toggle="modal" data-bs-target="#myLeadModal" onClick={() => {
                               setSelectedLead(t);
                               setModalSource("completed");
-                            }}>View Lead</button>
+                            }}>View Lead</button> */}
                           </td>
                         </tr>
                       ))}
@@ -6053,7 +6141,10 @@ const Leads = () => {
                 <tbody>
                   {currentReverted.length > 0 ? (
                     currentReverted.map((lead, index) => (
-                      <tr key={lead._id}>
+                      <tr key={lead._id} onClick={(e) => {
+                        e.stopPropagation();
+                        handleRowClick(lead, "reverted");
+                      }} style={{ cursor: "pointer" }}>
                         <td className="mb-0 text-left tableData">{indexOfFirstReverted + index + 1}</td>
                         <td className="mb-0 text-left tableData">{lead.name}</td>
                         <td className="mb-0 text-left tableData">{lead.email}</td>
@@ -6314,8 +6405,8 @@ const Leads = () => {
           </div>
         </div>
 
-        <div className="modal fade" id="responseReportHistoryModal" tabIndex="-1">
-          <div className="modal-dialog modal-lg">
+        <div className="modal fade" id="responseReportHistoryModal" data-bs-backdrop="static" tabIndex="-1">
+          <div className="modal-dialog modal-dialog-centered modal-xl">
             <div className="modal-content">
 
               <div className="modal-header">
@@ -6326,45 +6417,59 @@ const Leads = () => {
               </div>
 
               <div className="modal-body">
-                {reportHistory.length === 0 ? (
-                  <div className="d-flex justify-content-center align-items-center gap-2 my-3">
-                    <FaTrash size={20} />
-                    <p className="fw-bold m-0">No history found...</p>
-                  </div>
-                ) : (
-                  <div className="table-responsive">
+                <div className="row">
+                  {responseReportHistory.length === 0 ? (
+                    <div className="d-flex justify-content-center align-items-center gap-2 my-3">
+                      <FaTrash size={20} />
+                      <p className="fw-bold m-0">No history found...</p>
+                    </div>
+                  ) : (
+                    <div className="col-lg-12 col-md-12">
+                      <div className="table-responsive">
 
-                    <table className="table table-bordered">
-                      <thead>
-                        <tr>
-                          <th className="tableHeader">Date</th>
-                          <th className="tableHeader">Applications</th>
-                          <th className="tableHeader">Assessment</th>
-                          <th className="tableHeader">Screening</th>
-                          <th className="tableHeader">Interview</th>
-                          <th className="tableHeader">Completed</th>
-                          <th className="tableHeader">Status</th>
-                          <th className="tableHeader">Reason</th>
-                        </tr>
-                      </thead>
+                        <table className="table table-bordered table-striped">
+                          <thead>
+                            <tr>
+                              <th className="tableHeader">Report Created Date</th>
+                              <th className="tableHeader">Client Name</th>
+                              <th className="tableHeader">Contact No</th>
+                              <th className="tableHeader">Email</th>
+                              <th className="tableHeader">Recruiter Remarks</th>
+                              <th className="tableHeader">Response Type</th>
+                              <th className="tableHeader">Scheduled Date</th>
+                              <th className="tableHeader">Scheduled Time (EST)</th>
+                              <th className="tableHeader">Senior Remarks</th>
+                              <th className="tableHeader">Support</th>
+                              <th className="tableHeader">Support Person Name</th>
+                            </tr>
+                          </thead>
 
-                      <tbody>
-                        {responseReportHistory.map((r, index) => (
-                          <tr key={index}>
-                            <td className="tableData">{new Date(r.createdAt).toLocaleString()}</td>
-                            <td className="tableData">{r.noOfApplications}</td>
-                            <td className="tableData">{r.assessmentTechnical}</td>
-                            <td className="tableData">{r.screening}</td>
-                            <td className="tableData">{r.interview}</td>
-                            <td className="tableData">{r.completed}</td>
-                            <td className="tableData">{r.status}</td>
-                            <td className="tableData" style={{ whiteSpace: "pre-wrap" }}>{r.reason || "N/A"}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                          <tbody>
+                            {responseReportHistory.map((r, index) => (
+                              <tr key={index}>
+                                <td className="tableData">{new Date(r.createdAt).toLocaleString()}</td>
+                                <td className="tableData">{r.clientName}</td>
+                                <td className="tableData">{r.contactNo}</td>
+                                <td className="tableData">{r.email}</td>
+                                <td className="tableData">{r.recruiterRemarks}</td>
+                                <td className="tableData">{r.responseType}</td>
+                                <td className="tableData">{formatDate(r.scheduledDate)} (DD-MM-YYYY)</td>
+                                <td className="tableData">{formatTime12Hour(r.scheduledTime)}</td>
+                                <td className="tableData">{r.seniorRemarks}</td>
+                                <td className="tableData">
+                                  {r.support === true && "Yes"}
+                                  {r.support === false && "No"}
+                                </td>
+                                <td className="tableData">{r.supportPersonName}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                  )}
+                </div>
               </div>
 
             </div>
@@ -6372,6 +6477,15 @@ const Leads = () => {
         </div>
 
       </div>
+
+      {showReportModal && (
+        <MarketingReportModal
+          show={showReportModal}
+          onClose={() => setShowReportModal(false)}
+          dailyReports={dailyReports}
+          responseReports={responseReports}
+        />
+      )}
 
       <InterviewReportModal
         show={showInterviewModal}

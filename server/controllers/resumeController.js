@@ -351,27 +351,41 @@ exports.submitReport = async (req, res) => {
 };
 
 exports.submitResponseReport = async (req, res) => {
-    
+
     try {
+        console.log("REQ BODY:", req.body);
 
         const { id } = req.params;
         const report = req.body;
 
         const candidate = await Candidate.findById(id);
 
-        if(!candidate) return res.status(404).json({message: "Candidate not found"});
+        if (!candidate) return res.status(404).json({ message: "Candidate not found" });
 
         candidate.responseReportHistory.push({
-            ...report,
+            clientName: report.clientName,
+            email: report.email,
+            contactNo: report.number,
+            scheduledDate: report.scheduledDate,
+            scheduledTime: report.scheduledTime,
+            responseType: report.responseType,
+            responseMode: report.responseMode,
+            support: report.support,
+            supportPersonName: report.supportPersonName,
+            interviewStatus: report.interviewStatus,
+            recruiterRemarks: report.recruiterRemarks,
+            finalStatus: report.finalStatus,
+            seniorRemarks: report.seniorRemarks,
             createdAt: new Date()
-        })
+        });
 
         await candidate.save();
 
-        res.status(200).json({message: "Response Report Saved Successfully", candidate});
+        res.status(200).json({ message: "Response Report Saved Successfully", candidate });
 
     } catch (error) {
-        res.status(500).json({message: "Error saving response report"});
+        console.error("Report Save Error:", error);
+        res.status(500).json({ message: "Error saving response report" });
     }
 }
 
@@ -409,6 +423,32 @@ exports.getResponseReportHistory = async (req, res) => {
         console.error("Get History Error:", error);
         res.status(500).json({ message: "Error fetching response report history" })
 
+    }
+}
+
+exports.getMarketingReports = async (req, res) => {
+    try {
+        
+        const { id } = req.params;
+
+        const candidate = await Candidate.findById(id).select("name email phone reportHistory responseReportHistory");
+
+        if(!candidate){
+            return res.status(404).json({message: "Candidate not found"});
+        }
+
+        res.status(200).json({
+            candidate: {
+                name: candidate.name,
+                email: candidate.email,
+                phone: candidate.phone
+            },
+            dailyReports: candidate.reportHistory || [],
+            responseReports: candidate.responseReportHistory || [],
+        });
+    } catch (error) {
+        console.error("Marketing Report Error:", error);
+        res.status(500).json({message: "Failed to fetch respone"});
     }
 }
 
