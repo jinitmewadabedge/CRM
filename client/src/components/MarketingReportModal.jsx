@@ -75,7 +75,7 @@ const MarketingReportModal = ({
                                                 <td className="tableData">{r.noOfApplications}</td>
                                                 <td className="tableData">{r.assessmentTechnical}</td>
                                                 <td className="tableData">{r.screening}</td>
-                                                <td className="tableData">{r.interview}</td>
+                                                <td className="tableData">{r.interviews}</td>
                                                 <td className="tableData">{r.completed}</td>
                                                 <td className="tableData">{r.status}</td>
                                                 <td className="tableData" style={{ whiteSpace: "pre-wrap" }}>
