@@ -18,6 +18,11 @@ const MarketingReportModal = ({
 
     const formatTime12Hour = (time24) => {
         if (!time24) return "-";
+
+        if (time24.toLowerCase().includes("am") || time24.toLowerCase().includes("pm")) {
+            return time24;
+        }
+
         const [hourStr, minute] = time24.split(":");
         let hour = Number(hourStr);
 
@@ -39,7 +44,6 @@ const MarketingReportModal = ({
         >
             <div className="modal-dialog modal-xl modal-dialog-scrollable">
                 <div className="modal-content shadow-lg">
-
                     <div className="modal-header">
                         <div className="d-flex justify-content-between align-items-center">
                             <h5 className="modal-title fw-bold">Candidate Reports</h5>
@@ -89,7 +93,6 @@ const MarketingReportModal = ({
                             </div>
                         )}
 
-                        {/* ================= RESPONSE REPORTS ================= */}
                         <h5 className="fw-bold mb-3">Response Reports</h5>
 
                         {responseReports.length === 0 ? (
