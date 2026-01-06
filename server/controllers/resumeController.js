@@ -330,6 +330,7 @@ exports.submitReport = async (req, res) => {
     try {
         const { id } = req.params;
         const report = req.body;
+        console.log("Report Recieve Backend", report);
 
         const candidate = await Candidate.findById(id);
 

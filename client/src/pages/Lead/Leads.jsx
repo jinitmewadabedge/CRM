@@ -6375,8 +6375,8 @@ const Leads = () => {
                   type="number"
                   className="form-control mb-2 leadReport"
                   placeholder="Enter Interview"
-                  value={reportData.interviews}
-                  onChange={(e) => setReportData({ ...reportData, interviews: e.target.value })}
+                  value={reportData.interview}
+                  onChange={(e) => setReportData({ ...reportData, interview: e.target.value })}
                 />
 
                 <label className="form-label leadReportLabel">Completed</label>

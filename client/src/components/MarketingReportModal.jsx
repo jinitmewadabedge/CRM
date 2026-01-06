@@ -62,7 +62,7 @@ const MarketingReportModal = ({
                                             <th className="tableHeader">Applications</th>
                                             <th className="tableHeader">Assessment</th>
                                             <th className="tableHeader">Screening</th>
-                                            <th className="tableHeader">Interview</th>
+                                            <th className="tableHeader">Interviews</th>
                                             <th className="tableHeader">Completed</th>
                                             <th className="tableHeader">Status</th>
                                             <th className="tableHeader">Reason</th>
@@ -71,6 +71,7 @@ const MarketingReportModal = ({
                                     <tbody>
                                         {dailyReports.map((r, index) => (
                                             <tr key={index}>
+                                                {console.log("ROW DATA:", r)}
                                                 <td className="tableData">{formatDateTime(r.createdAt)}</td>
                                                 <td className="tableData">{r.noOfApplications}</td>
                                                 <td className="tableData">{r.assessmentTechnical}</td>
