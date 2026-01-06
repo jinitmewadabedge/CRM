@@ -53,6 +53,7 @@ const Leads = () => {
   const [currentFollowUpPage, setCurrentFollowUpPage] = useState(1);
   const [currentInDiscussionPage, setCurrentInDiscussionPage] = useState(1);
   const [currentEnrolledPage, setCurrentEnrolledPage] = useState(1);
+  const [currentCompletedPage, setCurrentCompletedPage] = useState(1);
   const [modalSource, setModalSource] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [trainingLeads, setTrainingLeads] = useState([]);
@@ -177,19 +178,22 @@ const Leads = () => {
   });
 
   const [assignedFilters, setAssignedFilters] = useState({
+    search: "",
     sortByDate: "desc",
   });
 
   const [unassignedFilters, setUnassignedFilters] = useState({
     search: "",
     sortByDate: "desc"
-  })
+  });
 
   const [revertedFilters, setRevertedFilters] = useState({
     search: ""
   });
 
   const [currentRevertedPage, setCurrentRevertedPage] = useState(1);
+  const [currentUntouchedPage, setCurrentUntouchedPage] = useState(1);
+  const [currentTouchedPage, setCurrentTouchedPage] = useState(1);
 
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
   // const [stats, setStats] = useState({ total: 0, assigned: 0, unassigned: 0 });
@@ -312,6 +316,18 @@ const Leads = () => {
     hour = hour % 12 || 12;
 
     return `${hour}:${minute} ${ampm}`;
+  };
+
+  const normalizeLead = (lead) => {
+    const base = lead.leadId || lead.candidate || lead;
+
+    return {
+      name: base.candidate_name || base.name || "",
+      email: base.candidate_email || base.email || "",
+      phone: base.candidate_phone_no || base.phone || "",
+      status: lead.status || base.status || "",
+      raw: lead,
+    };
   };
 
   const fetchCandidates = async () => {
@@ -1603,14 +1619,16 @@ const Leads = () => {
 
   const filteredUnassignedLeads = useMemo(() => {
     const searchTerm = unassignedFilters.search.toLowerCase().trim();
+    // if (!searchTerm) return unassignedLeads;
 
     let results = unassignedLeads.filter((lead) => {
+      const n = normalizeLead(lead);
       if (!searchTerm) return true;
 
       return (
-        lead.candidate_name?.toLowerCase().includes(searchTerm) ||
-        lead.candidate_email?.toLowerCase().includes(searchTerm) ||
-        lead.candidate_phone_no?.includes(searchTerm)
+        n.name.toLowerCase().includes(searchTerm) ||
+        n.email.toLowerCase().includes(searchTerm) ||
+        n.phone.toLowerCase().includes(searchTerm)
       );
     });
 
@@ -1618,13 +1636,39 @@ const Leads = () => {
       const dateA = new Date(a.createdAt);
       const dateB = new Date(b.createdAt);
 
-      return unassignedFilters.sortByDate === "newest"
+      return unassignedFilters.sortByDate === "desc"
         ? dateB - dateA
         : dateA - dateB;
     });
 
     return results;
   }, [unassignedLeads, unassignedFilters.search, unassignedFilters.sortByDate]);
+
+  const filteredAssignedLeads = useMemo(() => {
+    const searchTerm = assignedFilters.search.toLowerCase().trim();
+    // if (!searchTerm) return assignedLeads;
+
+    let results = assignedLeads.filter((lead) => {
+      const n = normalizeLead(lead);
+      if (!searchTerm) return true;
+
+      return (
+        n.name.toLowerCase().includes(searchTerm) ||
+        n.email.toLowerCase().includes(searchTerm) ||
+        n.phone.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      return assignedFilters.sortByDate === "desc"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+    return results;
+  }, [assignedLeads, assignedFilters.search, assignedFilters.sortByDate]);
 
   const filteredTouchedLeads = useMemo(() => {
     let results = touchedLeads.filter((lead) => {
@@ -1667,6 +1711,16 @@ const Leads = () => {
 
     return results;
   }, [completedLeads, completedFilters]);
+
+  const indexOfLastCompleted = currentCompletedPage * leadsPerPage;
+  const indexOfFirstCompleted = indexOfLastCompleted - leadsPerPage;
+
+  const currentCompleted = filteredCompletedLeads.slice(
+    indexOfFirstCompleted,
+    indexOfLastCompleted
+  );
+
+  const totalCompletedPages = Math.ceil(filteredCompletedLeads.length / leadsPerPage);
 
   const filteredUntouchedLeads = useMemo(() => {
     let results = untouchedLeads.filter((lead) => {
@@ -1729,7 +1783,6 @@ const Leads = () => {
   const currentLeads = filteredLeads.slice(indexOfFirstLead, indexOfLastLead);
 
   console.log("Unassigned Leads:", unassignedLeads);
-  // console.log("Current Unassigned Leads:", currentUnassignedLeads);
 
   const sortedAssignedLeads = useMemo(() => {
     return [...assignedLeads].sort((a, b) => {
@@ -1773,18 +1826,18 @@ const Leads = () => {
 
   const indexOfLastUnassignedLeads = currentUnassignedPage * leadsPerPage;
   const indexOfFirstUnassignedLeads = indexOfLastUnassignedLeads - leadsPerPage;
-  const currentUnassignedLeads = sortedUnassignedLeads.slice(indexOfFirstUnassignedLeads, indexOfLastUnassignedLeads);
+  const currentUnassignedLeads = filteredUnassignedLeads.slice(indexOfFirstUnassignedLeads, indexOfLastUnassignedLeads);
 
   const indexOfLastAssignedLeads = currentAssignedPage * leadsPerPage;
   const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
-  const currentAssignedLeads = sortedAssignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
+  const currentAssignedLeads = filteredAssignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
 
   const indexOfLastInDiscussionLeads = currentInDiscussionPage * leadsPerPage;
   const indexOfFirstInDiscussionLeads = indexOfLastInDiscussionLeads - leadsPerPage;
   const currentInDiscussionLeads = sortedInDiscussionLeads.slice(indexOfFirstInDiscussionLeads, indexOfLastInDiscussionLeads);
 
   const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
-  const totalUnassignedPages = Math.ceil(unassignedLeads.length / leadsPerPage);
+  const totalUnassignedPages = Math.ceil(filteredUnassignedLeads.length / leadsPerPage);
   const totalAssignedPages = Math.ceil(assignedLeads.length / leadsPerPage);
   const totalInDiscussionPages = Math.ceil(inDiscussionLeads.length / leadsPerPage);
 
@@ -1924,6 +1977,24 @@ const Leads = () => {
 
   const totalRevertedPages = Math.ceil(filteredRevertedLeads.length / leadsPerPage);
 
+  const indexOfLastUntouched = currentUntouchedPage * leadsPerPage;
+  const indexOfFirstUntouched = indexOfLastUntouched - leadsPerPage;
+
+  const currentUntouched = filteredUntouchedLeads.slice(
+    indexOfFirstUntouched, indexOfLastUntouched
+  )
+
+  const totalUntouchedPages = Math.ceil(filteredUntouchedLeads.length / leadsPerPage);
+
+
+  const indexOfLastTouched = currentTouchedPage * leadsPerPage;
+  const indexOfFirstTouched = indexOfLastTouched - leadsPerPage;
+
+  const currentTouched = filteredTouchedLeads.slice(
+    indexOfFirstTouched, indexOfLastTouched
+  )
+
+  const totalTouchedPages = Math.ceil(filteredTouchedLeads.length / leadsPerPage);
 
   let filteredInterestedLeads = interestedLeads.filter((lead) => {
     const searchTerm = interestedFilters.search.toLowerCase().trim();
@@ -2957,12 +3028,6 @@ const Leads = () => {
                                 onClick={() => {
                                   setSelectedLead(lead);
                                   setModalSource("all");
-
-                                  // setTimeout(() => {
-                                  //   const el = document.getElementById("viewLead");
-                                  //   if(!el) return;
-                                  //   bootstrap.Modal.getInstance(el).show();
-                                  // }, 100);
                                 }}>
                                 View
                               </button>
@@ -3029,7 +3094,6 @@ const Leads = () => {
                   </button>
                 </div>
 
-
               </div>
             </div>
           )}
@@ -3066,9 +3130,6 @@ const Leads = () => {
                       <option value="asc">Oldest to Newest</option>
                     </select>
                   </div>
-
-
-
 
                 </div>
 
@@ -3149,8 +3210,8 @@ const Leads = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {filteredUnassignedLeads.length > 0 ? (
-                          filteredUnassignedLeads.map((a) => (
+                        {currentUnassignedLeads.length > 0 ? (
+                          currentUnassignedLeads.map((a) => (
                             <tr key={a._id} onClick={() => handleRowClick(a, "unassigned")} style={{ cursor: "pointer" }}>
                               <td>
                                 <input type="checkbox"
@@ -3404,6 +3465,20 @@ const Leads = () => {
                   </div>
                   {/* {user.role === "Sales" && user.role === "Marketing" && ( */}
                   <div className="d-flex justify-content-center align-items-center gap-3">
+                    <div className="input-group input-group-sm w-auto search">
+                      <span className="input-group-text bg-white border-end-0">
+                        <i className="bi bi-search"></i>
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        className="form-control form-control-sm border-start-0"
+                        value={assignedFilters.search}
+                        onChange={(e) =>
+                          setAssignedFilters({ ...assignedFilters, search: e.target.value })
+                        }
+                      />
+                    </div>
                     <select
                       className="form-select form-select-sm selectFont sortSelect"
                       value={assignedFilters.sortByDate}
@@ -3418,7 +3493,6 @@ const Leads = () => {
                       <FaSync className="me-1" /> Refresh
                     </button> */}
                   </div>
-                  {/* )} */}
                 </div>
 
                 <div>
@@ -3491,8 +3565,8 @@ const Leads = () => {
                           }
                           <th className="text-left tableHeader">Source</th>
                           <th className="text-center tableHeader">Status</th>
-                          <th className="text-left tableHeader">Created At</th>
-                          <th className="text-left tableHeader">Updated At</th>
+                          <th className="text-left tableHeader">Created At (DD-MM-YYYY)</th>
+                          <th className="text-left tableHeader">Updated At (DD-MM-YYYY)</th>
                           <th className="text-left tableHeader">Assigned To</th>
                           <th className="text-left tableHeader">Assigned By</th>
                           <th className="text-left tableHeader">Actions</th>
@@ -4431,14 +4505,6 @@ const Leads = () => {
 
                 <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                   <div className="input-group input-group-sm search flex-nowrap w-md-auto">
-                    <select
-                      className="form-select form-select-sm mx-2 selectFont"
-                      value={interestedFilters.sortByDate}
-                      onChange={(e) => setInterestedFilters({ ...interestedFilters, sortByDate: e.target.value })}>
-                      <option value="">----Sort By Order----</option>
-                      <option value="desc">Newest to Oldest</option>
-                      <option value="asc">Oldest to Newest</option>
-                    </select>
                     <span className="input-group-text bg-white border-end-0">
                       <i className="bi bi-search"></i>
                     </span>
@@ -4451,6 +4517,15 @@ const Leads = () => {
                         setInterestedFilters({ ...interestedFilters, search: e.target.value })
                       }
                     />
+                    <select
+                      className="form-select form-select-sm mx-2 selectFont"
+                      value={interestedFilters.sortByDate}
+                      onChange={(e) => setInterestedFilters({ ...interestedFilters, sortByDate: e.target.value })}>
+                      <option value="">----Sort By Order----</option>
+                      <option value="desc">Newest to Oldest</option>
+                      <option value="asc">Oldest to Newest</option>
+                    </select>
+
                   </div>
                 </div>
               </div>
@@ -4663,14 +4738,6 @@ const Leads = () => {
 
                 <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                   <div className="input-group input-group-sm search flex-nowrap w-md-auto">
-                    <select
-                      className="form-select form-select-sm selectFont"
-                      value={notInterestedFilters.sortByDate}
-                      onChange={(e) => setNotInterestedFilters({ ...notInterestedFilters, sortByDate: e.target.value })}>
-                      <option value="">----Sort By Order----</option>
-                      <option value="desc">Newest to Oldest</option>
-                      <option value="asc">Oldest to Newest</option>
-                    </select>
                     <span className="input-group-text bg-white border-end-0 ms-2">
                       <i className="bi bi-search"></i>
                     </span>
@@ -4684,6 +4751,14 @@ const Leads = () => {
                       }
                     />
                   </div>
+                  <select
+                    className="form-select form-select-sm selectFont"
+                    value={notInterestedFilters.sortByDate}
+                    onChange={(e) => setNotInterestedFilters({ ...notInterestedFilters, sortByDate: e.target.value })}>
+                    <option value="">----Sort By Order----</option>
+                    <option value="desc">Newest to Oldest</option>
+                    <option value="asc">Oldest to Newest</option>
+                  </select>
                 </div>
               </div>
 
@@ -5454,11 +5529,6 @@ const Leads = () => {
 
                   <div className="d-flex flex-wrap align-items-center gap-2">
                     <div className="input-group input-group-sm search w-auto">
-                      <select className="form-select form-select-sm me-2 selectFont" value={untouchedFilters.sortByDate} onChange={(e) => setUntouchedFilters({ ...untouchedFilters, sortByDate: e.target.value })}>
-                        <option value="">---Sort By Date---</option>
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                      </select>
                       <span className="input-group-text bg-white border-end-0">
                         <i className="bi bi-search"></i>
                       </span>
@@ -5471,6 +5541,11 @@ const Leads = () => {
                           setUntouchedFilters({ ...untouchedFilters, search: e.target.value })
                         }
                       />
+                      <select className="form-select form-select-sm me-2 selectFont" value={untouchedFilters.sortByDate} onChange={(e) => setUntouchedFilters({ ...untouchedFilters, sortByDate: e.target.value })}>
+                        <option value="">---Sort By Date---</option>
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                      </select>
                     </div>
                     <button
                       className="btn btn-outline-danger btn-sm me-2 refresh" onClick={handleRefresh} >
@@ -5506,8 +5581,8 @@ const Leads = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUntouchedLeads.length > 0 ? (
-                        filteredUntouchedLeads.map((t, i) => (
+                      {currentUntouched.length > 0 ? (
+                        currentUntouched.map((t, i) => (
                           <tr key={t._id} onClick={() => handleRowClick(t, "untouched")} style={{ cursor: "pointer" }}>
                             <td>
                               <input
@@ -5550,6 +5625,34 @@ const Leads = () => {
                       )}
                     </tbody>
                   </table>
+                </div>
+                <div className="d-flex justify-content-end align-items-center gap-2 mt-3">
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={currentUntouchedPage === 1}
+                    onClick={() => setCurrentUntouchedPage(currentUntouchedPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalUntouchedPages)].map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`btn btn-sm ${currentUntouchedPage === idx + 1 ? "btn-primary" : "btn-outline-primary"
+                        }`}
+                      onClick={() => setCurrentUntouchedPage(idx + 1)}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={currentUntouchedPage === totalUntouchedPages}
+                    onClick={() => setCurrentUntouchedPage(currentUntouchedPage + 1)}
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             </div>
@@ -5644,11 +5747,6 @@ const Leads = () => {
 
                   <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                     <div className="input-group input-group-sm search flex-nowrap w-md-auto">
-                      <select className="form-select form-select-sm me-2 selectFont" value={touchedFilters.sortByDate} onChange={(e) => setTouchedFilters({ ...touchedFilters, sortByDate: e.target.value })}>
-                        <option value="">---Sort By Date---</option>
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                      </select>
                       <span className="input-group-text bg-white border-end-0">
                         <i className="bi bi-search"></i>
                       </span>
@@ -5661,6 +5759,11 @@ const Leads = () => {
                           setTouchedFilters({ ...touchedFilters, search: e.target.value })
                         }
                       />
+                      <select className="form-select form-select-sm me-2 selectFont" value={touchedFilters.sortByDate} onChange={(e) => setTouchedFilters({ ...touchedFilters, sortByDate: e.target.value })}>
+                        <option value="">---Sort By Date---</option>
+                        <option value="newest">Newest</option>
+                        <option value="oldest">Oldest</option>
+                      </select>
                     </div>
                   </div>
 
@@ -5697,8 +5800,8 @@ const Leads = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredTouchedLeads.length > 0 ? (
-                        filteredTouchedLeads.map((t, i) => (
+                      {currentTouched.length > 0 ? (
+                        currentTouched.map((t, i) => (
                           <tr key={t._id} onClick={(e) => {
                             e.stopPropagation();
                             handleRowClick(t, "touched")
@@ -5792,6 +5895,34 @@ const Leads = () => {
 
                   </table>
                 </div>
+                <div className="d-flex justify-content-end align-items-center gap-2 mt-3">
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={currentTouchedPage === 1}
+                    onClick={() => setCurrentTouchedPage(currentTouchedPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalTouchedPages)].map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`btn btn-sm ${currentTouchedPage === idx + 1 ? "btn-primary" : "btn-outline-primary"
+                        }`}
+                      onClick={() => setCurrentRevertedPage(idx + 1)}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={currentTouchedPage === totalTouchedPages}
+                    onClick={() => setCurrentTouchedPage(currentTouchedPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           )
@@ -5814,11 +5945,6 @@ const Leads = () => {
                   </div>
                   <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
                     <div className="input-group input-group-sm search flex-nowrap w-md-auto w-100">
-                      <select className="form-select form-select-sm me-2 selectFont" value={completedFilters.sortByDate} onChange={(e) => setCompletedFilters({ ...completedFilters, sortByDate: e.target.value })}>
-                        <option value="">---Sort By Date---</option>
-                        <option value="newest">Newest</option>
-                        <option value="oldest">Oldest</option>
-                      </select>
                       <span className="input-group-text bg-white border-end-0">
                         <i className="bi bi-search"></i>
                       </span>
@@ -5830,6 +5956,11 @@ const Leads = () => {
                         onChange={(e) => setCompletedFilters({ ...completedFilters, search: e.target.value })}
                       />
                     </div>
+                    <select className="form-select form-select-sm me-2 selectFont" value={completedFilters.sortByDate} onChange={(e) => setCompletedFilters({ ...completedFilters, sortByDate: e.target.value })}>
+                      <option value="">---Sort By Date---</option>
+                      <option value="newest">Newest</option>
+                      <option value="oldest">Oldest</option>
+                    </select>
                   </div>
                 </div>
 
@@ -5857,14 +5988,11 @@ const Leads = () => {
                         <th className="text-left tableHeader">Timeline</th>
                         <th className="text-left tableHeader">Start Date</th>
                         <th className="text-left tableHeader">End Date</th>
-                        {/* <th className="text-left tableHeader">Start Date</th>
-                  <th className="text-left tableHeader">CV Progress</th>
-                  <th className="text-left tableHeader">CV Status</th> */}
                         <th className="text-left tableHeader">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCompletedLeads.map((t, i) => (
+                      {currentCompleted.map((t, i) => (
                         <tr key={t._id} onClick={(e) => {
                           e.stopPropagation();
                           handleRowClick(t, "completed");
@@ -5950,6 +6078,34 @@ const Leads = () => {
                       ))}
                     </tbody>
                   </table>
+                </div>
+                <div className="d-flex justify-content-end align-items-center gap-2 mt-3">
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={currentCompletedPage === 1}
+                    onClick={() => setCurrentCompletedPage(currentCompletedPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalCompletedPages)].map((_, idx) => (
+                    <button
+                      key={idx}
+                      className={`btn btn-sm ${currentCompletedPage === idx + 1 ? "btn-primary" : "btn-outline-primary"
+                        }`}
+                      onClick={() => setCurrentCompletedPage(idx + 1)}
+                    >
+                      {idx + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    disabled={currentCompletedPage === totalCompletedPages}
+                    onClick={() => setCurrentCompletedPage(currentCompletedPage + 1)}
+                  >
+                    Next
+                  </button>
                 </div>
               </div>
             </div>

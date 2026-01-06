@@ -89,7 +89,7 @@ app.use("/api/resume", resumeRoutes);
 app.get("/", (req, res) => res.send("Server running websocket"));
 
 
-const uri = process.env.MONGO_URL_DEV;
+const uri = process.env.MONGO_URL_PROD;
 console.log("MONGO_URI:", uri);
 
 mongoose.connect(uri, {
