@@ -51,6 +51,8 @@ const Leads = () => {
   const [currentUnassignedPage, setCurrentUnassignedPage] = useState(1);
   const [currentAssignedPage, setCurrentAssignedPage] = useState(1);
   const [currentFollowUpPage, setCurrentFollowUpPage] = useState(1);
+  const [currentInterestedPage, setCurrentInterestedPage] = useState(1);
+  const [currentNotInterestedPage, setCurrentNotInterestedPage] = useState(1);
   const [currentInDiscussionPage, setCurrentInDiscussionPage] = useState(1);
   const [currentEnrolledPage, setCurrentEnrolledPage] = useState(1);
   const [currentCompletedPage, setCurrentCompletedPage] = useState(1);
@@ -141,6 +143,21 @@ const Leads = () => {
 
   const [selectedLeadName, setSelectedLeadName] = useState("");
 
+  const [filters, setFilters] = useState({
+    search: "",
+    type: "",
+    status: "",
+    visa: "",
+    technology: "",
+    startDate: "",
+    endDate: "",
+    startTime: "",
+    endTime: "",
+    sortField: "candidate_name",
+    sortOrder: "asc",
+    dateSort: ""
+  });
+
   const [touchedFilters, setTouchedFilters] = useState({
     search: "",
     sortByDate: "newest",
@@ -158,23 +175,27 @@ const Leads = () => {
 
   const [interestedFilters, setInterestedFilters] = useState({
     search: "",
-    sortByDate: "newest"
+    sortByDate: "desc"
   });
 
   const [notInterestedFilters, setNotInterestedFilters] = useState({
     search: "",
+    sortByDate: "desc"
   });
 
   const [inDiscussionFilters, setInDiscussionFilters] = useState({
-    search: ""
+    search: "",
+    sortByDate: "desc"
   });
 
   const [followUpFilters, setFollowUpFilters] = useState({
     search: "",
+    sortByDate: "desc"
   });
 
   const [enrolledFilters, setEnrolledFilters] = useState({
     search: "",
+    sortByDate: "desc"
   });
 
   const [assignedFilters, setAssignedFilters] = useState({
@@ -188,7 +209,8 @@ const Leads = () => {
   });
 
   const [revertedFilters, setRevertedFilters] = useState({
-    search: ""
+    search: "",
+    sortByDate: "desc"
   });
 
   const [currentRevertedPage, setCurrentRevertedPage] = useState(1);
@@ -220,20 +242,7 @@ const Leads = () => {
   });
   const userRole = sessionStorage.getItem("role");
   const [leadsPerPage] = useState(5);
-  const [filters, setFilters] = useState({
-    search: "",
-    type: "",
-    status: "",
-    visa: "",
-    technology: "",
-    startDate: "",
-    endDate: "",
-    startTime: "",
-    endTime: "",
-    sortField: "candidate_name",
-    sortOrder: "asc",
-    dateSort: ""
-  });
+
   const [showEnrollModal, setShowEnrollModal] = useState(false);
   const today = new Date();
   const formattedToday = today.toISOString().split("T")[0];
@@ -1832,10 +1841,6 @@ const Leads = () => {
   const indexOfFirstAssignedLeads = indexOfLastAssignedLeads - leadsPerPage;
   const currentAssignedLeads = filteredAssignedLeads.slice(indexOfFirstAssignedLeads, indexOfLastAssignedLeads);
 
-  const indexOfLastInDiscussionLeads = currentInDiscussionPage * leadsPerPage;
-  const indexOfFirstInDiscussionLeads = indexOfLastInDiscussionLeads - leadsPerPage;
-  const currentInDiscussionLeads = sortedInDiscussionLeads.slice(indexOfFirstInDiscussionLeads, indexOfLastInDiscussionLeads);
-
   const totalPages = Math.ceil(filteredLeads.length / leadsPerPage);
   const totalUnassignedPages = Math.ceil(filteredUnassignedLeads.length / leadsPerPage);
   const totalAssignedPages = Math.ceil(assignedLeads.length / leadsPerPage);
@@ -1850,12 +1855,6 @@ const Leads = () => {
       }
     });
   }, [FollowUpLeads, followUpFilters.sortByDate]);
-
-  const indexOfLastFollowUpLeads = currentFollowUpPage * leadsPerPage;
-  const indexOfFirstFollowUpLeads = indexOfLastFollowUpLeads - leadsPerPage;
-  const currentFollowUpLeads = sortedFollowUpLeads.slice(indexOfFirstFollowUpLeads, indexOfLastFollowUpLeads);
-
-  const totalFollowUpPages = Math.ceil(FollowUpLeads.length / leadsPerPage);
 
   console.log("Unassigned state(render):", unassignedLeads);
   console.log("Assigned state(render):", assignedLeads);
@@ -1932,17 +1931,6 @@ const Leads = () => {
     fetchLeads();
   }, [])
 
-
-  // useEffect(() => {
-  //   const seen = localStorage.getItem("AnnouncementModal");
-
-  //   if (!seen) {
-  //     setShowAnnouncement(true);
-
-  //     localStorage.setItem("AnnouncementModal", "yes")
-  //   }
-  // }, [])
-
   useEffect(() => {
     const fetchActiveLead = async () => {
       try {
@@ -1956,16 +1944,39 @@ const Leads = () => {
     fetchActiveLead();
   }, []);
 
-  const filteredRevertedLeads = revertedLeads.filter((lead) => {
-    const searchTerm = revertedFilters.search.toLowerCase().trim();
-    if (!searchTerm) return true;
+  // const filteredRevertedLeads = revertedLeads.filter((lead) => {
+  //   const searchTerm = revertedFilters.search.toLowerCase().trim();
+  //   if (!searchTerm) return true;
 
-    return (
-      lead.name?.toLowerCase().includes(searchTerm) ||
-      lead.email?.toLowerCase().includes(searchTerm) ||
-      lead.phone?.toString().includes(searchTerm)
-    );
-  });
+  //   return (
+  //     lead.name?.toLowerCase().includes(searchTerm) ||
+  //     lead.email?.toLowerCase().includes(searchTerm) ||
+  //     lead.phone?.toString().includes(searchTerm)
+  //   );
+  // });
+
+  const filteredRevertedLeads = useMemo(() => {
+    let results = revertedLeads.filter((lead) => {
+
+      const searchTerm = revertedFilters.search.toLowerCase();
+
+      return (
+        lead.name?.toLowerCase().includes(searchTerm) ||
+        lead.email?.toLowerCase().includes(searchTerm) ||
+        lead.phone?.toLowerCase().includes(searchTerm)
+      );
+    });
+
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      return revertedFilters.sortByDate === "desc"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+    return results;
+  }, [revertedLeads, revertedFilters]);
 
   const indexOfLastReverted = currentRevertedPage * leadsPerPage;
   const indexOfFirstReverted = indexOfLastReverted - leadsPerPage;
@@ -1996,75 +2007,167 @@ const Leads = () => {
 
   const totalTouchedPages = Math.ceil(filteredTouchedLeads.length / leadsPerPage);
 
-  let filteredInterestedLeads = interestedLeads.filter((lead) => {
-    const searchTerm = interestedFilters.search.toLowerCase().trim();
-    if (!searchTerm) return true;
 
-    return (
-      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_phone_no?.toString().includes(searchTerm) ||
-      lead.technology?.toString().toLowerCase().includes(searchTerm)
-    );
-  });
+  // let filteredInterestedLeads = interestedLeads.filter((lead) => {
+  //   const searchTerm = interestedFilters.search.toLowerCase().trim();
+  //   if (!searchTerm) return true;
 
-  filteredInterestedLeads = filteredInterestedLeads.sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
+  //   return (
+  //     lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+  //     lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+  //     lead.candidate_phone_no?.toString().includes(searchTerm) ||
+  //     lead.technology?.toString().toLowerCase().includes(searchTerm)
+  //   );
+  // });
 
-    if (interestedFilters.sortByDate === "newest") {
-      return dateB - dateA;
-    } else {
-      return dateA - dateB;
-    }
-  });
+  // filteredInterestedLeads = filteredInterestedLeads.sort((a, b) => {
+  //   const dateA = new Date(a.createdAt);
+  //   const dateB = new Date(b.createdAt);
 
-  let filteredNotInterestedLeads = notInterestedLeads.filter((lead) => {
-    const searchTerm = notInterestedFilters.search.toLowerCase().trim();
-    if (!searchTerm) return true;
+  //   if (interestedFilters.sortByDate === "newest") {
+  //     return dateB - dateA;
+  //   } else {
+  //     return dateA - dateB;
+  //   }
+  // });
 
-    return (
-      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_phone_no?.toString().includes(searchTerm) ||
-      lead.technology?.toString().toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredInterestedLeads = useMemo(() => {
+    let results = interestedLeads.filter((lead) => {
+      const searchTerm = interestedFilters.search.toLowerCase().trim();
 
-  filteredNotInterestedLeads = filteredNotInterestedLeads.sort((a, b) => {
-    const dateA = new Date(a.createdAt);
-    const dateB = new Date(b.createdAt);
+      return (
+        lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_phone_no?.toString().includes(searchTerm) ||
+        lead.technology?.toString().toLowerCase().includes(searchTerm)
+      );
+    });
 
-    if (notInterestedFilters.sortByDate === "newest") {
-      return dateB - dateA;
-    } else {
-      return dateA - dateB;
-    }
-  });
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
 
-  const filteredInDiscussionLeads = inDiscussionLeads.filter((lead) => {
-    const searchTerm = inDiscussionFilters.search.toLowerCase().trim();
-    if (!searchTerm) return true;
+      return interestedFilters.sortByDate === "desc"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+    return results;
+  }, [interestedLeads, interestedFilters.search, interestedFilters.sortByDate]);
 
-    return (
-      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_phone_no?.toString().includes(searchTerm) ||
-      lead.technology?.toString().toLowerCase().includes(searchTerm)
-    );
-  });
+  const indexOfLastInterestedLeads = currentInterestedPage * leadsPerPage;
+  const indexOfFirstInterestedLeads = indexOfLastInterestedLeads - leadsPerPage;
+  const currentInterestedLeads = filteredInterestedLeads.slice(indexOfFirstInterestedLeads, indexOfLastInterestedLeads);
 
-  const filteredFollowUpLeads = followUpLeads.filter((lead) => {
-    const searchTerm = followUpFilters.search.toLowerCase().trim();
-    if (!searchTerm) return true;
+  const totalInterestedPages = Math.ceil(filteredInterestedLeads.length / leadsPerPage);
 
-    return (
-      lead.candidate_name?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_email?.toLowerCase().includes(searchTerm) ||
-      lead.candidate_phone_no?.toString().includes(searchTerm) ||
-      lead.technology?.toString().toLowerCase().includes(searchTerm)
-    );
-  });
+  const filteredNotInterestedLeads = useMemo(() => {
+    let results = notInterestedLeads.filter((lead) => {
+      const searchTerm = notInterestedFilters.search.toLowerCase();
+
+      return (
+        lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_phone_no?.toString().includes(searchTerm) ||
+        lead.technology?.toString().toLowerCase().includes(searchTerm)
+      );
+    });
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+      return notInterestedFilters.sortByDate === "desc"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+    return results;
+  }, [notInterestedLeads, notInterestedFilters.search, notInterestedFilters.sortByDate]);
+
+  const indexOfLastNotInterestedLeads = currentNotInterestedPage * leadsPerPage;
+  const indexOfFirstNotInterestedLeads = indexOfLastNotInterestedLeads - leadsPerPage;
+  const currentNotInterestedLeads = filteredNotInterestedLeads.slice(indexOfFirstNotInterestedLeads, indexOfLastNotInterestedLeads);
+
+  const totalNotInterestedPages = Math.ceil(filteredNotInterestedLeads.length / leadsPerPage);
+
+  // const filteredInDiscussionLeads = inDiscussionLeads.filter((lead) => {
+  //   const searchTerm = inDiscussionFilters.search.toLowerCase().trim();
+  //   if (!searchTerm) return true;
+
+  //   return (
+  //     lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+  //     lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+  //     lead.candidate_phone_no?.toString().includes(searchTerm) ||
+  //     lead.technology?.toString().toLowerCase().includes(searchTerm)
+  //   );
+  // });
+
+  const filteredInDiscussionLeads = useMemo(() => {
+    let results = inDiscussionLeads.filter((lead) => {
+      const searchTerm = inDiscussionFilters.search.toLowerCase().trim();
+
+      return (
+        lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_phone_no?.toString().includes(searchTerm) ||
+        lead.technology?.toString().toLowerCase().includes(searchTerm)
+      );
+    });
+
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      return inDiscussionFilters.sortByDate === "desc"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+    return results;
+  }, [inDiscussionLeads, inDiscussionFilters.search, inDiscussionFilters.sortByDate]);
+
+  const indexOfLastInDiscussionLeads = currentInDiscussionPage * leadsPerPage;
+  const indexOfFirstInDiscussionLeads = indexOfLastInDiscussionLeads - leadsPerPage;
+  const currentInDiscussionLeads = filteredInDiscussionLeads.slice(indexOfFirstInDiscussionLeads, indexOfLastInDiscussionLeads);
+
+  // const filteredFollowUpLeads = followUpLeads.filter((lead) => {
+  //   const searchTerm = followUpFilters.search.toLowerCase().trim();
+  //   if (!searchTerm) return true;
+
+  //   return (
+  //     lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+  //     lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+  //     lead.candidate_phone_no?.toString().includes(searchTerm) ||
+  //     lead.technology?.toString().toLowerCase().includes(searchTerm)
+  //   );
+  // });
+
+  const filteredFollowUpLeads = useMemo(() => {
+    let results = followUpLeads.filter((lead) => {
+
+      const searchTerm = followUpFilters.search.toLowerCase().trim();
+
+      return (
+        lead.candidate_name?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_email?.toLowerCase().includes(searchTerm) ||
+        lead.candidate_phone_no?.toString().includes(searchTerm) ||
+        lead.technology?.toString().toLowerCase().includes(searchTerm)
+      )
+    });
+
+    results = results.sort((a, b) => {
+      const dateA = new Date(a.createdAt);
+      const dateB = new Date(b.createdAt);
+
+      return followUpFilters.sortByDate === "desc"
+        ? dateB - dateA
+        : dateA - dateB;
+    });
+    return results;
+  }, [followUpLeads, followUpFilters.search, followUpFilters.sortByDate]);
+
+
+  const indexOfLastFollowUpLeads = currentFollowUpPage * leadsPerPage;
+  const indexOfFirstFollowUpLeads = indexOfLastFollowUpLeads - leadsPerPage;
+  const currentFollowUpLeads = filteredFollowUpLeads.slice(indexOfFirstFollowUpLeads, indexOfLastFollowUpLeads);
+
+  const totalFollowUpPages = Math.ceil(filteredFollowUpLeads.length / leadsPerPage);
 
   const filteredEnrolledLeads = sortedEnrolledLeads.filter((lead) => {
     const searchTerm = enrolledFilters.search.toLowerCase().trim();
@@ -4557,8 +4660,8 @@ const Leads = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredInterestedLeads.length > 0 ? (
-                      filteredInterestedLeads.map((c, index) => (
+                    {currentInterestedLeads.length > 0 ? (
+                      currentInterestedLeads.map((c, index) => (
                         <tr key={c._id}>
                           <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                           <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
@@ -4720,6 +4823,35 @@ const Leads = () => {
                     )}
                   </tbody>
                 </table>
+
+                <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
+                  <button
+                    className="btn btn-sm btn-outline-primary me-2"
+                    disabled={currentInterestedPage === 1}
+                    onClick={() => setCurrentInterestedPage(currentInterestedPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalInterestedPages)].map((_, index) => (
+                    <button
+                      key={index}
+                      className={`btn btn-sm me-1 ${currentInterestedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setCurrentInterestedPage(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary ms-2"
+                    disabled={currentInterestedPage === totalInterestedPages}
+                    onClick={() => setCurrentInterestedPage(currentInterestedPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -4789,8 +4921,8 @@ const Leads = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredNotInterestedLeads.length > 0 ? (
-                      filteredNotInterestedLeads.map((c, index) => (
+                    {currentNotInterestedLeads.length > 0 ? (
+                      currentNotInterestedLeads.map((c, index) => (
                         <tr key={c._id}>
                           <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                           <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
@@ -4931,6 +5063,35 @@ const Leads = () => {
                     )}
                   </tbody>
                 </table>
+
+                <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
+                  <button
+                    className="btn btn-sm btn-outline-primary me-2"
+                    disabled={currentNotInterestedPage === 1}
+                    onClick={() => setCurrentNotInterestedPage(currentNotInterestedPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalNotInterestedPages)].map((_, index) => (
+                    <button
+                      key={index}
+                      className={`btn btn-sm me-1 ${currentNotInterestedPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setCurrentNotInterestedPage(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary ms-2"
+                    disabled={currentNotInterestedPage === totalNotInterestedPages}
+                    onClick={() => setCurrentNotInterestedPage(currentNotInterestedPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
+
               </div>
             </div>
           </div>
@@ -4948,6 +5109,7 @@ const Leads = () => {
                 </div>
 
                 <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+
                   <div className="input-group input-group-sm search flex-nowrap w-md-auto">
                     <span className="input-group-text bg-white border-end-0">
                       <i className="bi bi-search"></i>
@@ -4961,7 +5123,16 @@ const Leads = () => {
                         setInDiscussionFilters({ ...inDiscussionFilters, search: e.target.value })
                       }
                     />
+                    <select
+                      className="form-select form-select-sm selectFont"
+                      value={inDiscussionFilters.sortByDate}
+                      onChange={(e) => setInDiscussionFilters({ ...inDiscussionFilters, sortByDate: e.target.value })}>
+                      <option value="">----Sort By Order----</option>
+                      <option value="desc">Newest to Oldest</option>
+                      <option value="asc">Oldest to Newest</option>
+                    </select>
                   </div>
+
                 </div>
               </div>
 
@@ -4992,8 +5163,8 @@ const Leads = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredInDiscussionLeads.length > 0 ? (
-                      filteredInDiscussionLeads.map((c, index) => (
+                    {currentInDiscussionLeads.length > 0 ? (
+                      currentInDiscussionLeads.map((c, index) => (
                         <tr key={c._id}>
                           <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                           <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
@@ -5069,6 +5240,33 @@ const Leads = () => {
                     )}
                   </tbody>
                 </table>
+                <div className="d-flex justify-content-center justify-content-md-end flex-wrap align-items-center gap-1 mt-2 mb-3 p-0">
+                  <button
+                    className="btn btn-sm btn-outline-primary me-2"
+                    disabled={currentInDiscussionPage === 1}
+                    onClick={() => setCurrentInDiscussionPage(currentInDiscussionPage - 1)}
+                  >
+                    Previous
+                  </button>
+
+                  {[...Array(totalInDiscussionPages)].map((_, index) => (
+                    <button
+                      key={index}
+                      className={`btn btn-sm me-1 ${currentInDiscussionPage === index + 1 ? 'btn-primary' : 'btn-outline-primary'}`}
+                      onClick={() => setCurrentInDiscussionPage(index + 1)}
+                    >
+                      {index + 1}
+                    </button>
+                  ))}
+
+                  <button
+                    className="btn btn-sm btn-outline-primary ms-2"
+                    disabled={currentInDiscussionPage === totalInDiscussionPages}
+                    onClick={() => setCurrentInDiscussionPage(currentInDiscussionPage + 1)}
+                  >
+                    Next
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -5099,6 +5297,14 @@ const Leads = () => {
                         setFollowUpFilters({ ...followUpFilters, search: e.target.value })
                       }
                     />
+                    <select
+                      className="form-select form-select-sm selectFont"
+                      value={followUpFilters.sortByDate}
+                      onChange={(e) => setFollowUpFilters({ ...followUpFilters, sortByDate: e.target.value })}>
+                      <option value="">----Sort By Order----</option>
+                      <option value="desc">Newest to Oldest</option>
+                      <option value="asc">Oldest to Newest</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -5130,8 +5336,8 @@ const Leads = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredFollowUpLeads.length > 0 ? (
-                      filteredFollowUpLeads.map((c, index) => (
+                    {currentFollowUpLeads.length > 0 ? (
+                      currentFollowUpLeads.map((c, index) => (
                         <tr key={c._id}>
                           <td><p className="mb-0 text-left tableData">{index + 1}</p></td>
                           <td><p className="mb-0 text-left tableData">{c.candidate_name}</p></td>
@@ -5321,6 +5527,14 @@ const Leads = () => {
                         setEnrolledFilters({ ...enrolledFilters, search: e.target.value })
                       }
                     />
+                    <select
+                      className="form-select form-select-sm selectFont"
+                      value={enrolledFilters.sortByDate}
+                      onChange={(e) => setEnrolledFilters({ ...enrolledFilters, sortByDate: e.target.value })}>
+                      <option value="">----Sort By Order----</option>
+                      <option value="desc">Newest to Oldest</option>
+                      <option value="asc">Oldest to Newest</option>
+                    </select>
                   </div>
                 </div>
               </div>
@@ -6186,24 +6400,36 @@ const Leads = () => {
                   <h6 className="leadManagementSubtitle">Active Revert Leads</h6>
                 </div>
 
-                {/* Search */}
-                <div className="input-group input-group-sm w-25">
-                  <span className="input-group-text bg-white border-end-0">
-                    <i className="bi bi-search"></i>
-                  </span>
-                  <input
-                    type="text"
-                    className="form-control border-start-0"
-                    placeholder="Search..."
-                    value={revertedFilters.search}
-                    onChange={(e) =>
-                      setRevertedFilters({ ...revertedFilters, search: e.target.value })
-                    }
-                  />
+                <div className="d-flex flex-column flex-md-row align-items-md-center gap-2 w-md-auto">
+                  <div className="input-group input-group-sm search flex-wrap w-md-auto w-100">
+                    <span className="input-group-text bg-white border-end-0">
+                      <i className="bi bi-search"></i>
+                    </span>
+                    <input
+                      type="text"
+                      className="form-control border-start-0"
+                      placeholder="Search..."
+                      value={revertedFilters.search}
+                      onChange={(e) =>
+                        setRevertedFilters({ ...revertedFilters, search: e.target.value })
+                      }
+                    />
+                    <select
+                      className="form-select form-select-sm me-2 selectFont"
+                      value={revertedFilters.sortByDate}
+                      onChange={(e) =>
+                        setRevertedFilters({
+                          ...revertedFilters,
+                          sortByDate: e.target.value
+                        })}>
+                      <option value="">---Sort By Date---</option>
+                      <option value="desc">Newest</option>
+                      <option value="asc">Oldest</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              {/* Table */}
               <table className="table table-hover align-middle">
                 <thead className="bg-light">
                   <tr>
