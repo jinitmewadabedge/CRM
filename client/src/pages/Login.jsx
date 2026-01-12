@@ -70,6 +70,7 @@ const Login = () => {
       }, { withCredentials: true });
 
       const data = res.data;
+      console.log("Login Response Data:", data);
 
       sessionStorage.removeItem("token");
       localStorage.removeItem("token");
