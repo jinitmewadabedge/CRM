@@ -108,6 +108,13 @@ db.once("open", async () => {
 
     console.log("Connected to MongoDB Database:", db.name);
 
+    await User.updateMany(
+        { activeSessionId: { $ne: null } },
+        { $set: { activeSessionId: null } }
+    );
+
+    console.log("✅ Cleared stale sessions on startup");
+
     await Promise.all([
         User.findOne({}, "_id").lean(),
         Role.findOne({}, "_id").lean(),
@@ -120,26 +127,26 @@ server.listen(PORT, () => {
     console.log(`Server+ Websocket running on port ${PORT}`);
 });
 
-// setInterval(async () => {
-//     const timeoutMinutes = 30;
-//     const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
+setInterval(async () => {
+    const timeoutMinutes = 30;
+    const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
 
-//     try {
-//         const result = await User.updateMany({
-//             activeSessionId: { $ne: null },
-//             lastActive: { $lt: cutoff }
-//         },
-//             {
-//                 $set: { activeSessionId: null }
-//             });
+    try {
+        const result = await User.updateMany({
+            activeSessionId: { $ne: null },
+            lastActive: { $lt: cutoff }
+        },
+            {
+                $set: { activeSessionId: null }
+            });
 
-//         if (result.modifiedCount > 0) {
-//             console.log(`Expired in ${result.modifiedCount} inactve sessions`);
-//         }
-//     } catch (error) {
-//         console.error("Session cleanup error:", err.message);
-//     }
-// }, 5 * 60 * 1000);
+        if (result.modifiedCount > 0) {
+            console.log(`Expired in ${result.modifiedCount} inactve sessions`);
+        }
+    } catch (error) {
+        console.error("Session cleanup error:", err.message);
+    }
+}, 5 * 60 * 1000);
 
 // setInterval(async () => {
 //     const timeoutMinutes = 5;
