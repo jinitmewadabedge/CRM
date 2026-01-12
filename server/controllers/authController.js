@@ -23,6 +23,8 @@ exports.login = async (req, res) => {
             .select("+password")
             .populate("role");
 
+        console.log("USER FOUND:", user?.role?.name);
+
         if (!user) {
             return res.status(401).json({ message: "Invalid Credentials" });
         }
@@ -42,7 +44,9 @@ exports.login = async (req, res) => {
             { _id: user._id, activeSessionId: null },
             { $set: { activeSessionId: sessionId, isLoggedIn: true } },
             { new: true }
-        );
+        ).populate("role");
+
+        console.log("UPDATED USER AFTER LOGIN:", updatedUser);
 
         if (!updatedUser) {
             return res.status(403).json({
