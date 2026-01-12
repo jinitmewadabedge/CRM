@@ -38,8 +38,8 @@ exports.login = async (req, res) => {
 
         const sessionId = uuidv4();
 
-        const updatedUser = await User.findByIdAndUpdate({
-            user: user._id, activeSessionId: null
+        const updatedUser = await User.findOneAndUpdate({
+            id: user._id, activeSessionId: null
         }, { $set: { activeSessionId: sessionId } }, { new: true });
 
         if (!updatedUser) {
