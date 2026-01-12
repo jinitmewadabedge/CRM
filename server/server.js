@@ -17,6 +17,7 @@ const responseTime = require("response-time");
 const compression = require("compression");
 const http = require("http");
 const { Server } = require("socket.io");
+const { log } = require("console");
 
 dotenv.config();
 
@@ -119,20 +120,40 @@ server.listen(PORT, () => {
     console.log(`Server+ Websocket running on port ${PORT}`);
 });
 
-setInterval(async () => {
-    const timeoutMinutes = 5;
-    const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
+// setInterval(async () => {
+//     const timeoutMinutes = 30;
+//     const cutoff = new Date(Date.now() - timeoutMinutes * 60 * 1000);
 
-    try {
-        const inactiveUsers = await User.updateMany(
-            { isLoggedIn: true, lastActive: { $lt: cutoff } },
-            { $set: { isLoggedIn: false, activeToken: null } }
-        );
+//     try {
+//         const result = await User.updateMany({
+//             activeSessionId: { $ne: null },
+//             lastActive: { $lt: cutoff }
+//         },
+//             {
+//                 $set: { activeSessionId: null }
+//             });
 
-        if (inactiveUsers.modifiedCount > 0) {
-            console.log(`Cleaned up ${inactiveUsers.modifiedCount} inactive users`);
-        }
-    } catch (err) {
-        console.error("Cleanup error:", err.message);
-    }
-}, 2 * 60 * 1000);
+//         if (result.modifiedCount > 0) {
+//             console.log(`Expired in ${result.modifiedCount} inactve sessions`);
+//         }
+//     } catch (error) {
+//         console.error("Session cleanup error:", err.message);
+//     }
+// }, 5 * 60 * 1000);
+
+// setInterval(async () => {
+//     const timeoutMinutes = 5;
+
+//     try {
+//         const inactiveUsers = await User.updateMany(
+//             { isLoggedIn: true, lastActive: { $lt: cutoff } },
+//             { $set: { isLoggedIn: false, activeToken: null } }
+//         );
+
+//         if (inactiveUsers.modifiedCount > 0) {
+//             console.log(`Cleaned up ${inactiveUsers.modifiedCount} inactive users`);
+//         }
+//     } catch (err) {
+//         console.error("Cleanup error:", err.message);
+//     }
+// }, 2 * 60 * 1000);

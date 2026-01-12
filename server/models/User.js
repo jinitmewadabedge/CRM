@@ -45,9 +45,13 @@ const userSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    isLoggedIn: {
-        type: Boolean,
-        default: false
+    // isLoggedIn: {
+    //     type: Boolean,
+    //     default: false
+    // },
+    activeSessionId: {
+        type: String,
+        default: true
     },
     activeToken: {
         type: String,

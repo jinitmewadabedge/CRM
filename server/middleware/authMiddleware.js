@@ -22,13 +22,18 @@ exports.protect = async (req, res, next) => {
         const user = await User.findById(decoded.id).populate("role", "name");
         if (!user) return res.status(401).json({ message: "User not found" });
 
+        if (!user.activeSessionId || user.activeSessionId !== decoded.sessionId) {
+            return res.status(401).json({
+                message: "Session expired or user logged in from another device"
+            });
+        }
+
         req.user = user;
         console.log("req.user set in middleware:", req.user);
 
         next();
     } catch (error) {
         console.log("Token verification failed:", error.message);
-
         res.status(401).json({ message: 'Token Failed' });
     }
 };

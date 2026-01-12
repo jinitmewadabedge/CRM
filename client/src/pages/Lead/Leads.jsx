@@ -200,6 +200,7 @@ const Leads = () => {
 
   const [assignedFilters, setAssignedFilters] = useState({
     search: "",
+    type: "",
     sortByDate: "desc",
   });
 
@@ -1661,11 +1662,14 @@ const Leads = () => {
       const n = normalizeLead(lead);
       if (!searchTerm) return true;
 
-      return (
-        n.name.toLowerCase().includes(searchTerm) ||
+      const searchMatch = !searchTerm
+        ? true
+        : n.name.toLowerCase().includes(searchTerm) ||
         n.email.toLowerCase().includes(searchTerm) ||
-        n.phone.toLowerCase().includes(searchTerm)
-      );
+        n.phone.includes(searchTerm);
+
+      return searchMatch;
+
     });
 
     results.sort((a, b) => {
@@ -1677,7 +1681,7 @@ const Leads = () => {
         : dateA - dateB;
     });
     return results;
-  }, [assignedLeads, assignedFilters.search, assignedFilters.sortByDate]);
+  }, [assignedLeads, assignedFilters.search, assignedFilters.sortByDate,]);
 
   const filteredTouchedLeads = useMemo(() => {
     let results = touchedLeads.filter((lead) => {
@@ -2822,8 +2826,7 @@ const Leads = () => {
                     <select
                       className="form-select form-select-sm w-auto status selectFont"
                       value={filters.status}
-                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                    >
+                      onChange={(e) => setFilters({ ...filters, status: e.target.value })}>
                       <option value="">Status</option>
                       <option value="New">New</option>
                       <option value="Assigned">Assigned</option>

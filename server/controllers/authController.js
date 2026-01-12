@@ -6,12 +6,15 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { error, log } = require('console');
 const { permission } = require('process');
+const { v4: uuidv4 } = require('uuid');
 
 let resetToken = {};
 
 exports.login = async (req, res) => {
     try {
+
         const { email, role, password } = req.body;
+
         if (!email || !role || !password) {
             return res.status(400).json({ message: "Please enter all fields" });
         }
@@ -33,32 +36,48 @@ exports.login = async (req, res) => {
             return res.status(401).json({ message: "Invalid Password" });
         }
 
-        const freshUser = await User.findById(user._id);
-        if (freshUser.isLoggedIn) {
-            return res.status(403).json({ message: "User already logged in." });
+        const sessionId = uuidv4();
+
+        const updatedUser = await User.findByIdAndUpdate({
+            user: user._id, activeSessionId: null
+        }, { $set: { activeSessionId: sessionId } }, { new: true });
+
+        if (!updatedUser) {
+            return res.status(403).json({
+                message: "User already logged in on other device"
+            });
         }
 
-        await User.findByIdAndUpdate(
-            user._id,
-            { $set: { isLoggedIn: true } },
-            { new: true }
-        );
+
+        // user.activeSessionId = sessionId;
+        // await user.save();
+
+        // const freshUser = await User.findById(user._id);
+        // if (freshUser.isLoggedIn) {
+        //     return res.status(403).json({ message: "User already logged in." });
+        // }
+
+        // await User.findByIdAndUpdate(
+        //     user._id,
+        //     { $set: { isLoggedIn: true } },
+        //     { new: true }
+        // );
 
         const token = jwt.sign(
-            { id: user._id, role: user.role.name },
+            { id: updatedUser._id, role: updatedUser.role.name, sessionId },
             process.env.JWT_SECRET || "bedge",
-            { expiresIn: "1d" }
+            { expiresIn: "30m" }
         );
 
         res.status(200).json({
             message: "Login Successful",
             token,
             user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role.name,
-                permission: user.role.permissions,
+                id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role.name,
+                permission: updatedUser.role.permissions,
             },
         });
     } catch (err) {
@@ -73,19 +92,23 @@ exports.logout = async (req, res) => {
         console.log("🔔 Logout endpoint hit via:", req.method);
         console.log("Received body:", req.body);
 
-        const token = req.headers.authorization?.split(" ")[1] || req.body.token;
+        // const token = req.headers.authorization?.split(" ")[1] || req.body.token;
 
-        if (!token) return res.status(400).json({ message: "No token provided" });
+        // if (!token) return res.status(400).json({ message: "No token provided" });
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "bedge");
-        const user = await User.findById(decoded.id);
+        // const decoded = jwt.verify(token, process.env.JWT_SECRET || "bedge");
+        // const user = await User.findById(req.user_id);
+        const user = req.user;
 
         if (!user) return res.status(404).json({ message: "User not found" });
 
         console.log("Logging out user:", user._id, "current isLoggedIn:", user.isLoggedIn);
 
-        user.isLoggedIn = false;
-        user.activeToken = null;
+        // user.isLoggedIn = false;
+        // user.activeToken = null;
+        // await user.save();
+
+        user.activeSessionId = null;
         await user.save();
 
         console.log("✅ Logout success for user:", user._id);
