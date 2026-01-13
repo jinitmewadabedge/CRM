@@ -61,10 +61,10 @@ const Loading = () => {
   }, []);
 
   useEffect(() => {
-    
+
     socket.on("new_notification", (data) => {
       console.log("Global Notification:", data);
-      
+
       toast.info(`${data.title}: ${data.message}`);
 
       setNotificationCount((prev) => prev + 1);
@@ -72,7 +72,7 @@ const Loading = () => {
 
     return () => socket.off("new_notification");
 
-  },[]);
+  }, []);
 
   return (
     <div className="loading-glass-container">
@@ -99,7 +99,7 @@ const Loading = () => {
 
 function App() {
   const BASE_URL = import.meta.env.VITE_BACKEND_URL;
-  useHeartbeat(BASE_URL);
+  // useHeartbeat(BASE_URL);
 
   useEffect(() => {
     let logoutSent = false;
@@ -130,12 +130,11 @@ function App() {
       <Router>
         <Suspense fallback={<Loading />}>
           <Routes>
-            {/* Public routes */}
+    
             <Route path="/" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/resetpassword/:token" element={<ResetPassword />} />
 
-            {/* Admin dashboard with nested routes */}
             <Route
               path="/admin-dashboard/*"
               element={
@@ -153,7 +152,6 @@ function App() {
               <Route path="settings" element={<Settings />} />
             </Route>
 
-            {/* Lead routes (restore old UI behavior) */}
             <Route
               path="/leads/*"
               element={
@@ -167,7 +165,6 @@ function App() {
               <Route path=":id" element={<LeadDetails />} />
             </Route>
 
-            {/* Role-based dashboards */}
             <Route
               path="/sales-dashboard"
               element={

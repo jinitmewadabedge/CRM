@@ -1267,6 +1267,7 @@ const Leads = () => {
 
   const handleRowClick = (lead, source = "unassigned") => {
 
+    // console.log("All Customer is Clicked");
     console.log("Row Click:", lead._id);
 
     // setSelectedLeadId(lead._id);
@@ -3026,7 +3027,7 @@ const Leads = () => {
                       </thead>
                       <tbody>
                         {currentLeads.map((lead, index) => (
-                          <tr key={lead._id} onClick={() => handleRowClick(a, "all")} style={{ cursor: "pointer" }}>
+                          <tr key={lead._id} onClick={() => handleRowClick(lead, "all")} style={{ cursor: "pointer" }}>
                             <td>
                               <input type="checkbox"
                                 checked={selectedAllLeads.includes(lead._id)}

@@ -72,7 +72,7 @@ exports.login = async (req, res) => {
         const token = jwt.sign(
             { id: updatedUser._id, role: updatedUser.role.name, sessionId },
             process.env.JWT_SECRET || "bedge",
-            { expiresIn: "30m" }
+            { expiresIn: "1m" }
         );
 
         res.status(200).json({
@@ -110,11 +110,11 @@ exports.logout = async (req, res) => {
 
         console.log("Logging out user:", user._id, "current isLoggedIn:", user.isLoggedIn);
 
-        // user.isLoggedIn = false;
         // user.activeToken = null;
         // await user.save();
-
+        
         user.activeSessionId = null;
+        user.isLoggedIn = false;
         await user.save();
 
         console.log("✅ Logout success for user:", user._id);

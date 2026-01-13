@@ -24,7 +24,7 @@ exports.protect = async (req, res, next) => {
 
         if (!user.activeSessionId || user.activeSessionId !== decoded.sessionId) {
             return res.status(401).json({
-                message: "Session expired or user logged in from another device"
+                message: "Session expired. Please login again."
             });
         }
 
@@ -33,16 +33,32 @@ exports.protect = async (req, res, next) => {
 
         next();
     } catch (error) {
-        console.log("Token verification failed:", error.message);
-        res.status(401).json({ message: 'Token Failed' });
-    }
-};
+        if (error.name === "TokenExpiredError") {
 
-exports.authorizedRoles = (...roles) => {
-    return (req, res, next) => {
-        if (!roles.includes(req.user.role)) {
-            return res.json({ message: 'Access Denied' });
+            const decoded = jwt.decode(token);
+
+            if (decoded?.id) {
+                await User.findByIdAndUpdate(decoded.id, {
+                    activeSessionId: null,
+                    isLoggedIn: false
+                });
+            }
+
+            return res.status(401).json({
+                message: "Session expired. Please login again."
+            });
         }
-        next();
+
+        return res.status(401).json({ message: "Token invalid" });
+    }
+
+
+    exports.authorizedRoles = (...roles) => {
+        return (req, res, next) => {
+            if (!roles.includes(req.user.role)) {
+                return res.json({ message: 'Access Denied' });
+            }
+            next();
+        }
     }
 }
